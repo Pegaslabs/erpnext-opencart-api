@@ -30,9 +30,9 @@ Following instructions [here](https://github.com/frappe/bench) to install Frappe
 In your shell, run:
 
 ```
-bench get-app opencart_api https://github.com/nathando/erpnext-opencart-api.git
+bench get-app opencart_api https://github.com/olhonko/erpnext-opencart-api.git
 ```
-App will create 2 extra **DocTypes**: Opencart Config and Opencart Site  
+App will create 2 extra **DocTypes**: Opencart Config and Opencart Site
 There are some more preparation steps before trying:
 
 * Create one Item Group which will be the root for all Ecommerce sites (Let's say 'Opencart').
