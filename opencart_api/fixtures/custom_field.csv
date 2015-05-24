@@ -24,3 +24,5 @@
 "","""Item-oc_cb""","Item","Column Break","Opencart Column Break","opencart_site","","","","oc_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_enable""","Item","Check","Enable on Opencart","oc_cb","","","","oc_enable",0,0,0,0,"","1",0,"eval:doc.sell_on_opencart=='1'",0,0,0,0,0,0
 "","""Item-oc_product_id""","Item","Data","Opencart Product ID","oc_enable","","","","oc_product_id",0,0,1,0,"","",0,"eval:doc.sell_on_opencart=='1'",0,0,0,0,0,0
+"","""ItemGroup-opencart_last_sync""","Item Group","Datetime","Opencart last sync","description","","","","opencart_last_sync",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""ItemGroup-opencart_category_id""","Item Group","Text","Opencart category id","opencart_last_sync","","","","opencart_category_id",0,0,0,0,"","",0,"",0,0,0,0,0,0
