@@ -73,10 +73,10 @@ def get_api_map(site_doc):
 
 def authenticated_opencart(fn):
     def auth_oc_fn(item_doc, *args, **kw):
-        if (item_doc.get('sell_on_opencart') == 0):
-            return False
-        if (item_doc.get('opencart_site')):
-            site_doc = frappe.get_doc('Opencart Site', item_doc.get('opencart_site'))
+        # if (item_doc.get('sell_on_opencart') == 0):
+        #     return False
+        if (item_doc.get('oc_site')):
+            site_doc = frappe.get_doc('Opencart Site', item_doc.get('oc_site'))
 
             # Verify the secret key
             if (not site_doc.get('opencart_header_key') or not site_doc.get('opencart_header_value')):
@@ -101,5 +101,5 @@ def authenticated_opencart(fn):
                 handle_failure(-10, "Exception:\n" +  str(e), traceback.format_exc())
                 return False
         else:
-            handle_failure(-2, "Cannot find Opencart Site with name %s" %item_doc.get('opencart_site'))
+            handle_failure(-2, "Cannot find Opencart Site with name %s" %item_doc.get('oc_site'))
     return auth_oc_fn

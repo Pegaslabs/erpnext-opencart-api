@@ -15,17 +15,17 @@ app_url = "https://github.com/nathando/erpnext-opencart-api.git"
 app_version = "0.0.1"
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/css/opencart_api.css"
-# app_include_js = "/assets/js/opencart_api.js"
+# app_include_css = "/assets/css/opencart_api.css"
+app_include_js = "/assets/js/opencart_site.js"
 
 doc_events = {
 	"Item": {
-		"validate": "opencart_api.items.oc_validate_item",
-		"on_trash": "opencart_api.items.oc_delete_item"
+		# "validate": "opencart_api.items.oc_validate_item",
+		# "on_trash": "opencart_api.items.oc_delete_item"
 	},
 	"Item Group": {
-		"validate": "opencart_api.item_groups.oc_validate_group",
-		"on_trash": "opencart_api.item_groups.oc_delete_group"
+		# "validate": "opencart_api.item_groups.oc_validate_group",
+		# "on_trash": "opencart_api.item_groups.oc_delete_group"
 	},
 	"Purchase Receipt": {
 		"on_submit": "opencart_api.events.oc_pr_submitted",
@@ -48,12 +48,12 @@ doc_events = {
 fixtures = ["Custom Field", "Custom Script"]
 
 scheduler_events = {
-	# "all": [
-	# 	"opencart_api.tasks.all"
-	# ],
-	"daily": [
+	"all": [
 		"opencart_api.tasks.daily"
-	]
+	],
+	# "daily": [
+	# 	"opencart_api.tasks.daily"
+	# ]
 }
 
 # Includes in <head>
@@ -65,7 +65,8 @@ scheduler_events = {
 
 # include js, css files in header of web template
 # web_include_css = "/assets/opencart_api/css/opencart_api.css"
-# web_include_js = "/assets/opencart_api/js/opencart_api.js"
+# web_include_js = "/assets/opencart_api/js/opencart_site.js"
+web_include_js = "/assets/js/opencart_site.js"
 
 # Home Pages
 # ----------
@@ -125,7 +126,7 @@ scheduler_events = {
 
 # scheduler_events = {
 # 	"all": [
-# 		"opencart_api.tasks.all"
+#	    "opencart_api.tasks.daily"
 # 	],
 # 	"daily": [
 # 		"opencart_api.tasks.daily"

@@ -11,10 +11,15 @@ from item_qty import get_item_qty
 from datetime import datetime
 from frappe.utils import get_files_path, flt, cint
 import frappe, json, os, traceback, base64
-from opencart_api.doctype.opencart_api_map_item.opencart_api_map_item import get_api_url
+
+from models import ProductItemComp
+import oc_api
+import item_groups
+import item_attributes
+
 
 OC_PROD_ID = 'oc_product_id'
-OC_CAT_ID = 'opencart_category_id'
+OC_CAT_ID = 'oc_category_id'
 
 # Insert/Update Item
 @authenticated_opencart
@@ -47,7 +52,7 @@ def oc_validate_item (doc, site_doc, api_map, headers, method=None):
     	"model": doc.get('item_code'),
     	"sku": doc.get('item_code'),
     	"price": doc.get('oc_price'),
-    	"status": doc.get('oc_enable'),
+    	# "status": doc.get('oc_enable'),
         "quantity": str(cint(qty)),
         "product_store": ["0"],
         "product_category": product_categories,
@@ -76,7 +81,7 @@ def oc_validate_item (doc, site_doc, api_map, headers, method=None):
         if (not res.get('success')):
             frappe.msgprint('Product not %s on Opencart. Error: %s' %(action, res.get('error')))
         else:
-            doc.update({'last_sync_oc': datetime.now()})
+            doc.update({'oc_last_sync_from': datetime.now()})
             if (not is_updating):
                 doc.update({OC_PROD_ID: res.get('product_id')})
             frappe.msgprint('Product successfully %s on Opencart'%action)
@@ -140,7 +145,7 @@ def sync_all_items(server_base_url, api_map, header_key, header_value, silent=Fa
 
     # Query for items that has synced time < modified time
     items = frappe.db.sql("""select name, oc_product_id, item_code, item_name, description, \
-    oc_meta_keyword, oc_meta_description, oc_price, oc_enable, item_group, modified, last_sync_oc from `tabItem` where last_sync_oc<modified and oc_product_id is not null""")
+    oc_meta_keyword, oc_meta_description, oc_price, oc_enable, item_group, modified, oc_last_sync_from from `tabItem` where oc_last_sync_from<modified and oc_product_id is not null""")
 
     # Init results
     results = []
@@ -182,7 +187,7 @@ def sync_all_items(server_base_url, api_map, header_key, header_value, silent=Fa
             if (not res.get('success')):
                 sync_info(logs, 'Some product not updated on Opencart. Error: %s' %(res.get('error')), stop=False, silent=silent)
             else:
-                frappe.db.sql("""update `tabItem` set last_sync_oc = Now() where name in (%s)""" %(','.join(names)))
+                frappe.db.sql("""update `tabItem` set oc_last_sync_from = Now() where name in (%s)""" %(','.join(names)))
                 sync_info(logs, '%d Product(s) successfully updated to Opencart site' %len(items), stop=False, silent=silent)
                 success = True
     return {
@@ -221,3 +226,170 @@ def sync_all_items(server_base_url, api_map, header_key, header_value, silent=Fa
 # subtract (integer, optional): subtract,
 # minimum (integer, optional): minimum,
 # status (integer) = ['1-Enabled' or '0-Disabled']: Product status
+
+
+def get_item(site_name, oc_product_id):
+    db_item = frappe.db.get("Item", {"oc_site": site_name, "oc_product_id": oc_product_id})
+    if db_item:
+        return frappe.get_doc('Item', db_item.get("name"))
+
+
+@frappe.whitelist()
+def pull_products_from_oc(site_name, silent=False):
+    # init for result
+    results = {}
+    results_list = []
+    check_count = 0
+    update_count = 0
+    add_count = 0
+    skip_count = 0
+    success = True
+
+    site_doc = frappe.get_doc("Opencart Site", site_name)
+    opencart_api = oc_api.get(site_name)
+    default_warehouse = site_doc.get("default_warehouse")
+    if not default_warehouse:
+        sync_info([], 'Please specify a Default Warehouse and proceed.', stop=True, silent=silent)
+    for oc_category in opencart_api.get_all_categories():
+        doc_item_group = item_groups.get_item_group(site_name, oc_category.id)
+        for oc_product in opencart_api.get_products_by_category(oc_category.id):
+            check_count += 1
+            doc_item = get_item(site_name, oc_product.id)
+            if doc_item_group:
+                if doc_item:
+                    # update existed Item
+                    # if ProductItemComp(oc_product, doc_item).equal:
+                    #     continue
+                    params = {
+                        "item_name": oc_product.name,
+                        "description": oc_product.meta_description or 'No description',
+                        "show_in_website": 1,
+                        "oc_last_sync_from": datetime.now()
+                    }
+                    doc_item.update(params)
+                    doc_item.save()
+                    update_count += 1
+                    extras = (1, 'updated', 'Updated')
+                    results_list.append((doc_item.get('name'),
+                                         doc_item_group.get('name'),
+                                         doc_item.get('oc_product_id'),
+                                         doc_item.get_formatted('oc_last_sync_from'),
+                                         doc_item.get('modified')) + extras)
+                else:
+                    # creating new Item
+
+
+#     def validate_variants_are_unique(self):
+#         if not self.has_variants:
+#             self.variants = []
+#             return
+
+#         if self.variants:
+#             if self.variant_of:
+#                 frappe.throw(_("Item cannot be a variant of a variant"))
+    
+#             variants, attributes = [], {}
+#             for d in self.variants:
+#                 key = (d.item_attribute, d.item_attribute_value)
+#                 if key in variants:
+#                     frappe.throw(_("{0} {1} is entered more than once in Item Variants table")
+#                         .format(d.item_attribute, d.item_attribute_value), DuplicateVariant)
+#                 variants.append(key)
+
+#                 attributes.setdefault(d.item_attribute, [t.attribute_value for t in frappe.db.get_all("Item Attribute Value",
+#                     fields=["attribute_value"], filters={"parent": d.item_attribute })])
+                
+#                 if d.item_attribute_value not in attributes.get(d.item_attribute):
+#                     frappe.throw(_("Attribute value {0} does not exist in Item Attribute Master.").format(d.item_attribute_value))
+#         else:
+#             frappe.throw(_("Please enter atleast one attribute row in Item Variants table"))
+
+# ==============================
+#         item.has_variants = 1
+#         item.append("variants", {"item_attribute": "Test Size", "item_attribute_value": "Small"})
+
+#         ===================
+
+                    variants_list = []
+                    missed_item_attribute = ''
+                    missed_item_attribute_value = ''
+                    for option in oc_product.options_list:
+                        if missed_item_attribute_value or not item_attributes.get(site_name, option.id):
+                            if not missed_item_attribute_value:
+                                missed_item_attribute = option.name
+                            break
+                        for option_value in option.option_values_list:
+                            if not item_attributes.get_value(site_name, option_value.id):
+                                missed_item_attribute_value = option_value.name
+                                break
+                            variants_list.append({
+                                "item_attribute": option.name,
+                                "item_attribute_value": option_value.name,
+                                "image": "http://shop.fortaonline.ca/image/cache/catalog/product/h20_180_57299__04576.1410751785.1280.1280__39537-100x100.jpg"
+                            })
+                    if missed_item_attribute or missed_item_attribute_value:
+                        skip_count += 1
+                        if missed_item_attribute:
+                            skip_msg = 'Skipped: missed item attribute "%s"' % missed_item_attribute
+                        else:
+                            skip_msg = 'Skipped: missed item attribute value "%s"' % missed_item_attribute_value
+                        extras = (1, 'skipped', skip_msg)
+                        results_list.append((oc_product.name,
+                                            doc_item_group.get('name'),
+                                            oc_product.id,
+                                            '',
+                                            '') + extras)
+                        continue
+                    params = {
+                        "doctype": "Item",
+                        "item_group": doc_item_group.get('name'),
+                        'has_variants': bool(variants_list),
+                        "variants": variants_list,
+                        "oc_last_sync_from": datetime.now(),
+                        "is_group": "No",
+                        "default_warehouse": default_warehouse,
+                        "item_name": oc_product.name,
+                        "description_html": oc_product.description,
+                        "description": oc_product.meta_description,
+                        "show_in_website": 1,
+                        "image": oc_product.image,
+                        "min_order_qty": oc_product.minimum,
+                        "oc_meta_title": oc_product.meta_title,
+                        "oc_meta_keyword": oc_product.meta_keyword,
+                        "oc_meta_description": oc_product.meta_description,
+                        "oc_price": oc_product.price,
+                        "oc_sync_from": True,
+                        "oc_last_sync_from": datetime.now(),
+                        "oc_sync_to": True,
+                        "oc_last_sync_to": datetime.now(),
+                    }
+                    doc_item = frappe.get_doc(params)
+                    doc_item.insert(ignore_permissions=True)
+                    params = {
+                        "oc_site": site_name,
+                        "oc_product_id": oc_product.id,
+                    }
+                    doc_item.update(params)
+                    doc_item.save()
+
+                    add_count += 1
+                    extras = (1, 'added', 'Added')
+                    results_list.append((doc_item.get('name'),
+                                        doc_item_group.get('name'),
+                                        doc_item.get('oc_product_id'),
+                                        doc_item.get_formatted('oc_last_sync_from'),
+                                        doc_item.get('modified')) + extras)
+            else:
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: missed parent category')
+                results_list.append((oc_product.name, doc_item_group.get('name'), oc_product.id, '', '') + extras)
+
+    results = {
+        'check_count': check_count,
+        'add_count': add_count,
+        'update_count': update_count,
+        'skip_count': skip_count,
+        'results': results_list,
+        'success': success,
+    }
+    return results

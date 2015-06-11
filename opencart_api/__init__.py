@@ -182,7 +182,7 @@ def get_current_item_qty(config, site_doc):
     if not item:
         return {"status": -2, "error": "Item does not exist"}
     # Compare Item's Opencart Site with the Opencart Site that this user tight to
-    if (item.get('opencart_site')!=site_doc.get('name')):
+    if (item.get('oc_site')!=site_doc.get('name')):
         return {"status": -2, "error": "Mismatched opencart site user"}
     return get_item_qty(item)
 
@@ -210,7 +210,7 @@ def get_current_multi_item_qty(config, site_doc):
             # Log ?
             continue
         # Compare Item's Opencart Site with the Opencart Site that this user tight to
-        if (item.get('opencart_site')!=site_doc.get('name')):
+        if (item.get('oc_site')!=site_doc.get('name')):
             # Log ?
             continue
         results[prod_id] = get_item_qty(item)

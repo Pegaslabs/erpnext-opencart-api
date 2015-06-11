@@ -1,12 +1,7 @@
-"""
-Author: Nathan Do
-Email: nathan.dole@gmail.com
-Description: Utils for Opencart API app
-"""
+from __future__ import unicode_literals
 import frappe, json, os, traceback, requests
 import httplib, urllib
 from datetime import datetime
-from opencart_api.doctype.opencart_api_map_item.opencart_api_map_item import get_api_url
 
 # Sync Log format
 def sync_log_create(error, message):
@@ -32,6 +27,12 @@ def get_api_by_name(api_map, name):
         if obj.get('api_name') == name:
             return obj
     return None
+
+def get_api_url(obj, url_params=None):
+    url = obj.get('api_url')
+    if (url_params is not None):
+        url = url.format(**url_params)
+    return url
 
 # Handle all request to oc
 def oc_requests(server_base_url, headers, api_map, api_name, url_params=None, file_path=None, stop=False, silent=False, logs=[], data=None):
@@ -70,6 +71,7 @@ def oc_requests(server_base_url, headers, api_map, api_name, url_params=None, fi
         elif (method.lower()=="delete"):
             response = requests.delete(url, headers=headers, data=data)
         #
+        # raise Exception('|||||response=%s' % (str(response),))
         if (response is None or response.status_code!=200):
             frappe.msgprint('Error occur when posting image to opencart. Status code: %s'%str(response.status_code))
         else:
@@ -84,6 +86,25 @@ def oc_requests(server_base_url, headers, api_map, api_name, url_params=None, fi
     except Exception as e:
         sync_info(logs, 'Unknown error: %s. Please sync this with opencart again later!'%str(e), stop=stop, silent=silent, error=True)
     return None
+
+
+def oc_get_request(url, headers, stop=True, silent=False, error=False, logs=[], data=None):
+    try:
+        response = requests.get(url, headers=headers, data=data)
+        # json_resp = json.loads(response.text, strict=False)
+        # return json_resp.get('success'), json_resp.get('data')
+        json_resp = response.json(strict=False)
+        return json_resp.get('success'), json_resp.get('data')
+    except requests.exceptions.RequestException as e:
+        sync_info(logs, 'Error occurred while requesting Opencart site: %s\n%s' % (str(e), str(url)), stop=stop, silent=silent, error=error)
+    except ValueError:
+        sync_info(logs, 'JSON error: %s' % str(url), stop=stop, silent=silent, error=error)
+    except Exception as e:
+        if response.status_code != requests.codes.ok:
+            sync_info(logs, 'Error occurred while requesting Opencart site. Status code: %s\n%s' % (str(response.status_code), str(url)), stop=stop, silent=silent, error=True)
+        else:
+            sync_info(logs, 'Unknown error: %s' % str(url), stop=stop, silent=silent, error=error)
+
 
 def oc_upload_file(url, headers, data, file_path):
     files = {'file': open(file_path, 'rb')}

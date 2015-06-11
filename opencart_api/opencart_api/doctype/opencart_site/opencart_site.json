@@ -92,6 +92,7 @@
    "precision": ""
   }, 
   {
+   "description": "e.g. http://example.com",
    "fieldname": "server_base_url", 
    "fieldtype": "Data", 
    "label": "Server Base URL", 
@@ -107,22 +108,92 @@
    "precision": ""
   }, 
   {
-   "description": "Header key to add in on every request as a means to authenticate", 
-   "fieldname": "opencart_header_key", 
+   "description": "Header key of REST Admin API to add in every request to authenticate", 
+   "fieldname": "opencart_admin_header_key", 
    "fieldtype": "Data", 
-   "label": "Opencart Header Key", 
+   "label": "Opencart Rest Admin Api Header Key", 
    "permlevel": 0, 
    "precision": "", 
-   "reqd": 1
+   "reqd": 1, 
+   "default": "X-Oc-Restadmin-Id" 
   }, 
   {
-   "description": "Value of the Header record", 
-   "fieldname": "opencart_header_value", 
+   "description": "Value of the Admin REST API Header record", 
+   "fieldname": "opencart_admin_header_value", 
    "fieldtype": "Data", 
-   "label": "Opencart Header Value", 
+   "label": "Opencart Rest Admin Api Header Value", 
    "permlevel": 0, 
    "precision": "", 
-   "reqd": 1
+   "reqd": 1 
+  }, 
+  {
+   "fieldname": "oc_warehouses", 
+   "fieldtype": "Section Break", 
+   "label": "OC Warehouses", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "allow_on_submit": 0, 
+   "description": "Select a default warehouse that will be used for items when syncing them from Opencart site", 
+   "fieldname": "default_warehouse", 
+   "fieldtype": "Link", 
+   "hidden": 0, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 1, 
+   "label": "Default Warehouse", 
+   "no_copy": 0, 
+   "options": "Warehouse", 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 0, 
+   "search_index": 0, 
+   "set_only_once": 0
+  }, 
+  {
+   "description": "Press this button to sync manually Warehouses (Stores) from Opencart site. ", 
+   "fieldname": "pull_warehouses_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Warehouses from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Warehouse Sync Log", 
+   "fieldname": "warehouse_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Warehouse Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  }, 
+  {
+   "fieldname": "oc_item_attributes", 
+   "fieldtype": "Section Break", 
+   "label": "OC Item Attributes", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Press this button to sync manually Item Attributes (Product Options) from Opencart site. ", 
+   "fieldname": "pull_item_attributes_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Item Attributes from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Item Attributes Sync Log", 
+   "fieldname": "item_attributes_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Item Attributes Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
   }, 
   {
    "fieldname": "oc_item_groups", 
@@ -133,7 +204,7 @@
   }, 
   {
    "allow_on_submit": 0, 
-   "description": "Select a root group and all children group will be added to valid group list when you want to sell on this OC site", 
+   "description": "Select a root group for which all children groups and items will be synchronized with Opencart site", 
    "fieldname": "root_item_group", 
    "fieldtype": "Link", 
    "hidden": 0, 
@@ -153,7 +224,15 @@
    "set_only_once": 0
   }, 
   {
-   "description": "Sync Log", 
+   "description": "Press this button to sync manually Categories from Opencart site.", 
+   "fieldname": "pull_item_groups_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Item Groups from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Group Sync Log", 
    "fieldname": "group_sync_log", 
    "fieldtype": "HTML", 
    "label": "Group Sync Log", 
@@ -162,28 +241,136 @@
    "read_only": 0
   }, 
   {
-   "description": "Press this button to manually sync children group of Root Item Group to Opencart site. ", 
-   "fieldname": "sync_with_oc_site", 
+   "description": "Press this button to sync manually Products from Opencart site.", 
+   "fieldname": "pull_items_from_oc_site", 
    "fieldtype": "Button", 
-   "label": "Sync with OC site", 
+   "label": "Pull Items from OC site",
    "permlevel": 0, 
    "precision": ""
   }, 
   {
-   "fieldname": "oc_api_map", 
+   "description": "Item Sync Log", 
+   "fieldname": "item_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Item Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  }, 
+  {
+   "fieldname": "oc_customer_groups", 
    "fieldtype": "Section Break", 
-   "label": "OC API Map", 
+   "label": "OC Customer Groups", 
    "permlevel": 0, 
    "precision": ""
   }, 
   {
-   "fieldname": "api_map", 
-   "fieldtype": "Table", 
-   "label": "API Map", 
-   "options": "Opencart API Map Item", 
+   "allow_on_submit": 0, 
+   "description": "Select a Root Customer Group which will be a parent for all Customer Groups from Opencart site", 
+   "fieldname": "root_customer_group", 
+   "fieldtype": "Link", 
+   "hidden": 0, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 1, 
+   "label": "Root Customer Group", 
+   "no_copy": 0, 
+   "options": "Customer Group", 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 1, 
+   "search_index": 0, 
+   "set_only_once": 0
+  }, 
+  {
+   "description": "Press this button to sync manually Customer Groups from Opencart site.", 
+   "fieldname": "pull_customer_groups_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Customer Groups from OC site",
    "permlevel": 0, 
    "precision": ""
-  }
+  }, 
+  {
+   "description": "Customer Group Sync Log", 
+   "fieldname": "customer_group_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Customer Group Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  }, 
+  {
+   "fieldname": "oc_customers", 
+   "fieldtype": "Section Break", 
+   "label": "OC Customers", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "allow_on_submit": 0, 
+   "description": "Select a Default Customer Territory", 
+   "fieldname": "default_customer_territory", 
+   "fieldtype": "Link", 
+   "hidden": 0, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 1, 
+   "label": "Default Territory", 
+   "no_copy": 0, 
+   "options": "Territory", 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 0, 
+   "search_index": 0, 
+   "set_only_once": 0
+  }, 
+  {
+   "description": "Press this button to sync manually Customers from Opencart site.", 
+   "fieldname": "pull_customers_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Customers from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Customer Sync Log", 
+   "fieldname": "customers_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Customer Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  }, 
+  {
+   "fieldname": "oc_orders", 
+   "fieldtype": "Section Break", 
+   "label": "OC Orders", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Press this button to sync manually Orders from Opencart site.", 
+   "fieldname": "pull_orders_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Orders from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Orders Sync Log", 
+   "fieldname": "orders_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Orders Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  } 
  ], 
  "hide_heading": 0, 
  "hide_toolbar": 0, 

@@ -10,7 +10,7 @@ from datetime import datetime
 from frappe.utils import get_files_path, flt, cint
 import frappe, json, os, traceback, base64
 OC_PROD_ID = 'oc_product_id'
-OC_CAT_ID = 'opencart_category_id'
+OC_CAT_ID = 'oc_category_id'
 
 # Update item quantity
 @authenticated_opencart
