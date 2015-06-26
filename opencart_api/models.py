@@ -168,22 +168,22 @@ class OpencartCustomerGroup(object):
         return 'customer_group_id %s' % (self.id,)
 
 
-class OpencartCustomer(object):
-    obj_attrs = ('store_id', 'customer_id', 'firstname', 'lastname',
-                 'telephone', 'fax', 'email', 'account_custom_field', 'custom_fields')
+# class OpencartCustomer(object):
+#     obj_attrs = ('store_id', 'customer_id', 'firstname', 'lastname',
+#                  'telephone', 'fax', 'email', 'account_custom_field', 'custom_fields')
 
-    def __init__(self, oc_api, attrs):
-        self.api = oc_api
-        for attr in attrs.keys():
-            setattr(self, attr, attrs[attr])
-        self._fixup()
+#     def __init__(self, oc_api, attrs):
+#         self.api = oc_api
+#         for attr in attrs.keys():
+#             setattr(self, attr, attrs[attr])
+#         self._fixup()
 
-    def _fixup(self):
-        setattr(self, 'id', self.customer_id)
-        setattr(self, 'name', self.firstname + ' ' + self.lastname)
+#     def _fixup(self):`
+#         setattr(self, 'id', self.customer_id)
+#         setattr(self, 'name', self.firstname + ' ' + self.lastname)
 
-    def __repr__(self):
-        return 'customer_id %s' % (self.id,)
+#     def __repr__(self):
+#         return 'customer_id %s' % (self.id,)
 
 
 class OpencartOrder(object):

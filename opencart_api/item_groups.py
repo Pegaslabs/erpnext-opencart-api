@@ -301,6 +301,9 @@ def pull_categories_from_oc(site_name, silent=False):
     return results
 
 
+def get_all_by_oc_site(site_name):
+    return frappe.db.sql("""select name, oc_category_id from `tabItem Group` where oc_site=%(site_name)s""", {"site_name": site_name}, as_dict=1)
+
 # Sync item's primary image
 def sync_group_image_handle (doc, site_doc, api_map, headers):
     pass

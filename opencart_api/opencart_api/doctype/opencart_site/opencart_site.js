@@ -1,6 +1,6 @@
 // Copyright (c) 2015, Hoovix Pvt. Ltd. and Contributors
 
-print_sync_log_warehouses = function(message, update) {
+print_sync_log_stores = function(message, update) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
     var $tbody = $('<tbody></tbody>');
@@ -19,20 +19,55 @@ print_sync_log_warehouses = function(message, update) {
     });
     $table.append($th).append($tbody);
     var $panel = $('<div class="panel"></div>');
-    var $header = $('<h4>'+__("Warehouse Sync Log: ")+'</h4>');
+    var $header = $('<h4>'+__("Store Sync Log: ")+'</h4>');
     $panel.append($header);
 
     var $info;
     if (message.add_count || message.update_count || message.skip_count) {
-        $info = $('<p></p>').html('Checked ' + message.check_count + ' warehouses: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
+        $info = $('<p></p>').html('Checked ' + message.check_count + ' stores: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
     }
     else {
-        $info = $('<p>All warehouses are up to date</p>');
+        $info = $('<p>All stores are up to date</p>');
     }
     $panel.append($info);
     $panel.append($table);
     var msg = $('<div>').append($panel).html();
-    $(cur_frm.fields_dict['warehouse_sync_log'].wrapper).html(msg);
+    $(cur_frm.fields_dict['store_sync_log'].wrapper).html(msg);
+}
+
+print_sync_log_item_prices = function(message, update) {
+    var $table = $('<table class="table table-bordered"></table>');
+    var $th = $('<tr></tr>');
+    var $tbody = $('<tbody></tbody>');
+    $th.html('<th>Name</th><th>Opencart Item Price ID</th><th>Last Sync</th><th>Last Modified</th><th>Status</th>');
+    var groups = $.map(update ? message.results: message, function(o){
+        $tr = $('<tr>');
+        // Add class
+        $tr.append('<td>'+o[0]+'</td>');
+        $tr.append('<td>'+o[1]+'</td>');
+        $tr.append('<td>'+o[2]+'</td>');
+        $tr.append('<td>'+o[3]+'</td>');
+        if (o[6]) {
+            $tr.append('<td>'+o[6]+'</td>');
+        }
+        $tbody.append($tr);
+    });
+    $table.append($th).append($tbody);
+    var $panel = $('<div class="panel"></div>');
+    var $header = $('<h4>'+__("Item Price Sync Log: ")+'</h4>');
+    $panel.append($header);
+
+    var $info;
+    if (message.add_count || message.update_count || message.skip_count) {
+        $info = $('<p></p>').html('Checked ' + message.check_count + ' item prices: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
+    }
+    else {
+        $info = $('<p>All item prices are up to date</p>');
+    }
+    $panel.append($info);
+    $panel.append($table);
+    var msg = $('<div>').append($panel).html();
+    $(cur_frm.fields_dict['store_sync_log'].wrapper).html(msg);
 }
 
 print_sync_log_item_attributes = function(message, update) {
@@ -202,7 +237,7 @@ print_sync_log_customers = function(message, update) {
 
     var $info;
     if (message.add_count || message.update_count || message.skip_count) {
-        $info = $('<p></p>').html('Added ' + message.add_count +' customers, Updated ' + message.update_count + ' customers, Skipped ' + message.skip_count + ' customers');
+        $info = $('<p></p>').html('Checked ' + message.check_count +' customers, Added ' + message.add_count +' customers, Updated ' + message.update_count + ' customers, Skipped ' + message.skip_count + ' customers');
     }
     else {
         $info = $('<p>All Customers are up to date</p>');
@@ -237,7 +272,7 @@ print_sync_log_orders = function(message, update) {
 
     var $info;
     if (message.add_count || message.update_count || message.skip_count) {
-        $info = $('<p></p>').html('Added ' + message.add_count +' orders, Updated ' + message.update_count + ' orders, Skipped ' + message.skip_count + ' orders');
+        $info = $('<p></p>').html('Checked ' + message.check_count +' orders, Added ' + message.add_count +' orders, Updated ' + message.update_count + ' orders, Skipped ' + message.skip_count + ' orders');
     }
     else {
         $info = $('<p>All Orders are up to date</p>');
@@ -264,16 +299,16 @@ print_children_group = function(doc, dt, dn) {
 }
 
 
-print_related_warehouses = function(doc, dt, dn) {
+print_related_stores = function(doc, dt, dn) {
     frappe.call({
         type: "GET",
         args: {
-            cmd: "opencart_api.warehouses.get_oc_related_warehouses",
+            cmd: "opencart_api.oc_stores.get_oc_related_stores",
             site_name: doc.name
         },
         callback: function(data) {
             if (data && data.message) {
-                print_sync_log_warehouses(data.message);
+                print_sync_log_stores(data.message);
             }
         }
     });
@@ -285,7 +320,7 @@ cur_frm.cscript.refresh = function(doc, dt, dn) {
     // print_children_group(doc, dt, dn);
     
 
-    // print_related_warehouses(doc, dt, dn);
+    // print_related_stores(doc, dt, dn);
 }
 
 // Handle item root group selected
@@ -315,20 +350,37 @@ cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
     });
 }
 
-cur_frm.cscript.pull_warehouses_from_oc_site = function(doc, dt, dn) {
+cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         type: "GET",
         args: {
-            cmd: "opencart_api.warehouses.pull_warehouses_from_oc",
+            cmd: "opencart_api.oc_stores.pull",
             site_name: doc.name
         },
         callback: function(data) {
             if (data && data.message) {
-                print_sync_log_warehouses(data.message, true);
+                print_sync_log_stores(data.message, true);
             }
         }
     });
 }
+
+
+cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
+    frappe.call({
+        type: "GET",
+        args: {
+            cmd: "opencart_api.item_prices.pull",
+            site_name: doc.name
+        },
+        callback: function(data) {
+            if (data && data.message) {
+                print_sync_log_item_prices(data.message, true);
+            }
+        }
+    });
+}
+
 
 cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
     frappe.call({
@@ -433,6 +485,31 @@ cur_frm.cscript.pull_orders_from_oc_site = function(doc, dt, dn) {
         callback: function(data) {
             if (data && data.message) {
                 print_sync_log_orders(data.message, true);
+            }
+        }
+    });
+}
+
+
+cur_frm.cscript.test_connection = function(doc, dt, dn) {
+    frappe.call({
+        type: "GET",
+        args: {
+            cmd: "opencart_api.oc_site.test_connection",
+            site_name: doc.name
+        },
+        callback: function(data) {
+            if (data && data.message && data.message.rest_api && data.message.rest_admin_api) {
+                if (data.message.rest_api.success && data.message.rest_admin_api.success) {
+                    msgprint(__("Connections to Opencart Rest API and REST Admin API are successful"));
+                } else if (data.message.rest_api.success) {
+                    msgprint(__("Cannot connect to Opencart REST Admin API: " + data.message.rest_admin_api.error));
+                } else if (data.message.rest_admin_api.success) {
+                    msgprint(__("Cannot connect to Opencart REST API: " + data.message.rest_api.error));
+                } else {
+                    msgprint(__("Cannot connect to Opencart REST Admin API: " + data.message.rest_admin_api.error + "\n" 
+                        + "Cannot connect to Opencart REST API: " + data.message.rest_api.error));
+                }
             }
         }
     });

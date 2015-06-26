@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import frappe, json, os, traceback, requests
+from frappe.utils import cstr
 import httplib, urllib
 from datetime import datetime
 
@@ -88,13 +89,22 @@ def oc_requests(server_base_url, headers, api_map, api_name, url_params=None, fi
     return None
 
 
-def oc_get_request(url, headers, stop=True, silent=False, error=False, logs=[], data=None):
+def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False, error=False, logs=[]):
     try:
-        response = requests.get(url, headers=headers, data=data)
-        # json_resp = json.loads(response.text, strict=False)
-        # return json_resp.get('success'), json_resp.get('data')
+        if data is not None:
+            data = json.dumps(data)
+        if method.upper() == 'GET':
+            response = requests.get(url, headers=headers, data=data)
+        elif method.upper() == 'PUT':
+            response = requests.put(url, headers=headers, data=data)
+        elif method.upper() == 'POST':
+            response = requests.post(url, allow_redirects=False, headers=headers, data=data)
+        elif method.upper() == 'DELETE':
+            response = requests.delete(url, headers=headers, data=data)
+        else:
+            sync_info(logs, 'Unknown HTTP method: %s' % str(method), stop=stop, silent=silent, error=error)
         json_resp = response.json(strict=False)
-        return json_resp.get('success'), json_resp.get('data')
+        return (json_resp.get('success', False), json_resp)
     except requests.exceptions.RequestException as e:
         sync_info(logs, 'Error occurred while requesting Opencart site: %s\n%s' % (str(e), str(url)), stop=stop, silent=silent, error=error)
     except ValueError:
@@ -106,6 +116,8 @@ def oc_get_request(url, headers, stop=True, silent=False, error=False, logs=[], 
             sync_info(logs, 'Unknown error: %s' % str(url), stop=stop, silent=silent, error=error)
 
 
-def oc_upload_file(url, headers, data, file_path):
+def oc_upload_file(url, file_path, headers={}, data=None):
     files = {'file': open(file_path, 'rb')}
-    return requests.post(url, files=files, headers=headers, data=data)
+    response = requests.post(url, files=files, headers=headers, data=data)
+    json_resp = response.json(strict=False)
+    return json_resp.get('success', False), json_resp

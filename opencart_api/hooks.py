@@ -19,26 +19,42 @@ app_version = "0.0.1"
 app_include_js = "/assets/js/opencart_site.js"
 
 doc_events = {
-	"Item": {
-		# "validate": "opencart_api.items.oc_validate_item",
-		# "on_trash": "opencart_api.items.oc_delete_item"
-	},
-	"Item Group": {
-		# "validate": "opencart_api.item_groups.oc_validate_group",
-		# "on_trash": "opencart_api.item_groups.oc_delete_group"
-	},
-	"Purchase Receipt": {
-		"on_submit": "opencart_api.events.oc_pr_submitted",
-		"on_cancel": "opencart_api.events.oc_pr_canceled"
-	},
-	"Delivery Note": {
-		"on_submit": "opencart_api.events.oc_dn_submitted",
-		"on_cancel": "opencart_api.events.oc_dn_canceled"
-	},
-	"Stock Entry": {
-		"on_submit": "opencart_api.events.oc_se_changed",
-		"on_cancel": "opencart_api.events.oc_se_changed"
-	}
+    "Opencart Site": {
+        "validate": "opencart_api.oc_site.oc_validate"
+    },
+    "Item": {
+        "validate": "opencart_api.items.oc_validate",
+        # "on_trash": "opencart_api.items.oc_delete"
+    },
+    "Item Group": {
+        # "validate": "opencart_api.item_groups.oc_validate_group",
+        # "on_trash": "opencart_api.item_groups.oc_delete_group"
+    },
+    "Customer": {
+        "validate": "opencart_api.customers.oc_validate",
+        # "on_trash": "opencart_api.customers.oc_delete"
+    },
+    "Sales Order": {
+        # "validate": "opencart_api.orders.oc_validate",
+        # "on_trash": "opencart_api.orders.oc_delete"
+    },
+    "Purchase Receipt": {
+        # "on_submit": "opencart_api.events.oc_pr_submitted",
+        # "on_cancel": "opencart_api.events.oc_pr_canceled"
+    },
+    "Delivery Note": {
+        # "on_submit": "opencart_api.events.oc_dn_submitted",
+        # "on_cancel": "opencart_api.events.oc_dn_canceled"
+    },
+    "Stock Entry": {
+        # "on_submit": "opencart_api.events.oc_se_changed",
+        # "on_cancel": "opencart_api.events.oc_se_changed"
+    }
+}
+
+
+doctype_js = {
+    "Sales Order": ["custom_scripts/sales_order.js"]
 }
 
 # Note on Fixtures (Nathan Do):
@@ -48,12 +64,12 @@ doc_events = {
 fixtures = ["Custom Field", "Custom Script"]
 
 scheduler_events = {
-	"all": [
-		"opencart_api.tasks.daily"
-	],
-	# "daily": [
-	# 	"opencart_api.tasks.daily"
-	# ]
+    "all": [
+        "opencart_api.tasks.daily"
+    ],
+    # "daily": [
+    #   "opencart_api.tasks.daily"
+    # ]
 }
 
 # Includes in <head>
@@ -76,7 +92,7 @@ web_include_js = "/assets/js/opencart_site.js"
 
 # website user home page (by Role)
 # role_home_page = {
-#	"Role": "home_page"
+#   "Role": "home_page"
 # }
 
 # Generators
@@ -102,11 +118,11 @@ web_include_js = "/assets/js/opencart_site.js"
 # Permissions evaluated in scripted ways
 
 # permission_query_conditions = {
-# 	"Event": "frappe.core.doctype.event.event.get_permission_query_conditions",
+#   "Event": "frappe.core.doctype.event.event.get_permission_query_conditions",
 # }
 #
 # has_permission = {
-# 	"Event": "frappe.core.doctype.event.event.has_permission",
+#   "Event": "frappe.core.doctype.event.event.has_permission",
 # }
 
 # Document Events
@@ -114,32 +130,32 @@ web_include_js = "/assets/js/opencart_site.js"
 # Hook on document methods and events
 
 # doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
+#   "*": {
+#       "on_update": "method",
+#       "on_cancel": "method",
+#       "on_trash": "method"
+#   }
 # }
 
 # Scheduled Tasks
 # ---------------
 
 # scheduler_events = {
-# 	"all": [
-#	    "opencart_api.tasks.daily"
-# 	],
-# 	"daily": [
-# 		"opencart_api.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"opencart_api.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"opencart_api.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"opencart_api.tasks.monthly"
-# 	]
+#   "all": [
+#       "opencart_api.tasks.daily"
+#   ],
+#   "daily": [
+#       "opencart_api.tasks.daily"
+#   ],
+#   "hourly": [
+#       "opencart_api.tasks.hourly"
+#   ],
+#   "weekly": [
+#       "opencart_api.tasks.weekly"
+#   ]
+#   "monthly": [
+#       "opencart_api.tasks.monthly"
+#   ]
 # }
 
 # Testing
@@ -151,5 +167,5 @@ web_include_js = "/assets/js/opencart_site.js"
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.core.doctype.event.event.get_events": "opencart_api.event.get_events"
+#   "frappe.core.doctype.event.event.get_events": "opencart_api.event.get_events"
 # }

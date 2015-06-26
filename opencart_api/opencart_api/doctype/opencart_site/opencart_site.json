@@ -57,6 +57,46 @@
    "set_only_once": 0
   }, 
   {
+   "allow_on_submit": 0, 
+   "description": "Shipping methods Raw JSON", 
+   "fieldname": "shipping_methods_json", 
+   "fieldtype": "Long Text", 
+   "hidden": 1, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 0, 
+   "label": "Shipping methods Raw JSON", 
+   "no_copy": 0, 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 0, 
+   "search_index": 0, 
+   "set_only_once": 0
+  }, 
+  {
+   "allow_on_submit": 0, 
+   "description": "Payment methods Raw JSON", 
+   "fieldname": "payment_methods_json", 
+   "fieldtype": "Long Text", 
+   "hidden": 1, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 0, 
+   "label": "Payment methods Raw JSON", 
+   "no_copy": 0, 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 0, 
+   "search_index": 0, 
+   "set_only_once": 0
+  }, 
+  {
    "fieldname": "cb", 
    "fieldtype": "Column Break", 
    "label": "cb", 
@@ -108,6 +148,25 @@
    "precision": ""
   }, 
   {
+   "description": "Header key of REST API to add in every request to authenticate", 
+   "fieldname": "opencart_header_key", 
+   "fieldtype": "Data", 
+   "label": "Opencart Rest Api Header Key", 
+   "permlevel": 0, 
+   "precision": "", 
+   "reqd": 1, 
+   "default": "X-Oc-Merchant-Id" 
+  }, 
+  {
+   "description": "Value of the REST API Header record", 
+   "fieldname": "opencart_header_value", 
+   "fieldtype": "Data", 
+   "label": "Opencart Rest Api Header Value", 
+   "permlevel": 0, 
+   "precision": "", 
+   "reqd": 1 
+  }, 
+  {
    "description": "Header key of REST Admin API to add in every request to authenticate", 
    "fieldname": "opencart_admin_header_key", 
    "fieldtype": "Data", 
@@ -127,46 +186,64 @@
    "reqd": 1 
   }, 
   {
-   "fieldname": "oc_warehouses", 
-   "fieldtype": "Section Break", 
-   "label": "OC Warehouses", 
+   "description": "Test connection to the REST APIs", 
+   "fieldname": "test_connection", 
+   "fieldtype": "Button", 
+   "label": "Test connection",
    "permlevel": 0, 
    "precision": ""
   }, 
   {
-   "allow_on_submit": 0, 
-   "description": "Select a default warehouse that will be used for items when syncing them from Opencart site", 
-   "fieldname": "default_warehouse", 
-   "fieldtype": "Link", 
-   "hidden": 0, 
-   "ignore_user_permissions": 0, 
-   "in_filter": 0, 
-   "in_list_view": 1, 
-   "label": "Default Warehouse", 
-   "no_copy": 0, 
-   "options": "Warehouse", 
+   "fieldname": "oc_stores", 
+   "fieldtype": "Section Break", 
+   "label": "OC Stores", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Press this button to sync manually Stores from Opencart site. ", 
+   "fieldname": "pull_stores_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Stores from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "fieldname": "cb3", 
+   "fieldtype": "Column Break", 
+   "label": "cb3", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Press this button to sync manually Item Prices of linked Price Lists from Opencart site. ", 
+   "fieldname": "pull_item_prices_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Item Prices from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "fieldname": "oc_sb_store_sync_log", 
+   "fieldtype": "Section Break", 
+   "label": "", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Store Sync Log", 
+   "fieldname": "store_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Store Sync Log", 
    "permlevel": 0, 
    "precision": "", 
-   "print_hide": 0, 
-   "read_only": 0, 
-   "report_hide": 0, 
-   "reqd": 0, 
-   "search_index": 0, 
-   "set_only_once": 0
+   "read_only": 0
   }, 
   {
-   "description": "Press this button to sync manually Warehouses (Stores) from Opencart site. ", 
-   "fieldname": "pull_warehouses_from_oc_site", 
-   "fieldtype": "Button", 
-   "label": "Pull Warehouses from OC site",
-   "permlevel": 0, 
-   "precision": ""
-  }, 
-  {
-   "description": "Warehouse Sync Log", 
-   "fieldname": "warehouse_sync_log", 
+   "description": "Store Sync Log", 
+   "fieldname": "item_price_sync_log", 
    "fieldtype": "HTML", 
-   "label": "Warehouse Sync Log", 
+   "label": "Item Price Sync Log", 
    "permlevel": 0, 
    "precision": "", 
    "read_only": 0
@@ -239,6 +316,27 @@
    "permlevel": 0, 
    "precision": "", 
    "read_only": 0
+  }, 
+  {
+   "allow_on_submit": 0, 
+   "description": "Select a default Warehouse that will be used for items when syncing them from Opencart site", 
+   "fieldname": "items_default_warehouse", 
+   "fieldtype": "Link", 
+   "hidden": 0, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 1, 
+   "label": "Default Warehouse", 
+   "no_copy": 0, 
+   "options": "Warehouse", 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 1, 
+   "search_index": 0, 
+   "set_only_once": 0
   }, 
   {
    "description": "Press this button to sync manually Products from Opencart site.", 
@@ -353,6 +451,35 @@
    "label": "OC Orders", 
    "permlevel": 0, 
    "precision": ""
+  }, 
+  {
+  "description": "Order Statuses to pull from Opencart site", 
+   "fieldname": "order_statuses_to_pull", 
+   "fieldtype": "Table", 
+   "label": "Order Statuses to pull from Opencart site", 
+   "options": "Opencart Order Status", 
+   "permlevel": 0, 
+   "precision": ""
+  },
+  {
+   "allow_on_submit": 0, 
+   "description": "Order Statuses Raw JSON", 
+   "fieldname": "order_statuses_json", 
+   "fieldtype": "Long Text", 
+   "hidden": 1, 
+   "ignore_user_permissions": 0, 
+   "in_filter": 0, 
+   "in_list_view": 0, 
+   "label": "Order Statuses Raw JSON", 
+   "no_copy": 0, 
+   "permlevel": 0, 
+   "precision": "", 
+   "print_hide": 0, 
+   "read_only": 0, 
+   "report_hide": 0, 
+   "reqd": 0, 
+   "search_index": 0, 
+   "set_only_once": 0
   }, 
   {
    "description": "Press this button to sync manually Orders from Opencart site.", 
