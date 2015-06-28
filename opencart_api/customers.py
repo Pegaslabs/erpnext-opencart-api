@@ -149,7 +149,7 @@ def pull_customers_from_oc(site_name, silent=False):
     # root_customer_group = site_doc.get('root_customer_group')
     default_customer_territory = site_doc.get('default_customer_territory') or 'All Territories'
     doc_customer_groups_cache = {}
-    for oc_customer in oc_api.get(site_name).get_customers():
+    for success, oc_customer in oc_api.get(site_name).get_customers():
         check_count += 1
 
         oc_customer_name = oc_customer.get('firstname') + ' ' + oc_customer.get('lastname')
@@ -182,8 +182,8 @@ def pull_customers_from_oc(site_name, silent=False):
                 'customer_name': oc_customer_name,
                 'customer_group': doc_customer_group.get('name'),
                 'oc_last_sync_from': datetime.now(),
-                'oc_is_updating': '1',
-                'oc_status': oc_customer.get('status'),
+                'oc_is_updating': 1,
+                'oc_status': 1,
                 'oc_firstname': oc_customer.get('firstname'),
                 'oc_lastname': oc_customer.get('lastname'),
                 'oc_telephone': oc_customer.get('telephone'),
@@ -216,10 +216,10 @@ def pull_customers_from_oc(site_name, silent=False):
                 'customer_group': doc_customer_group.get('name'),
                 'naming_series': 'CUST-',
                 'default_price_list': default_price_list,
-                'oc_is_updating': '1',
+                'oc_is_updating': 1,
                 'oc_site': site_name,
                 'oc_customer_id': customer_id,
-                'oc_status': oc_customer.get('status'),
+                'oc_status': 1,
                 'oc_sync_from': True,
                 'oc_last_sync_from': datetime.now(),
                 'oc_sync_to': True,
@@ -241,8 +241,6 @@ def pull_customers_from_oc(site_name, silent=False):
                                  doc_customer_group.get('name'),
                                  doc_customer.get_formatted('oc_last_sync_from'),
                                  doc_customer.get('modified')) + extras)
-            if update_count == 1 or add_count == 1:
-                break
     results = {
         'check_count': check_count,
         'add_count': add_count,

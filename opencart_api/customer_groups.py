@@ -12,7 +12,7 @@ def get(site_name, oc_customer_group_id):
 
 
 def get_all_by_oc_site(site_name):
-    return frappe.db.sql("""select name, oc_customer_group_id from `tabCustomer Group` where oc_site=%(site_name)s""", {"site_name": site_name}, as_dict=1)
+    return frappe.db.sql('''select name, oc_customer_group_id from `tabCustomer Group` where oc_site=%(site_name)s''', {'site_name': site_name}, as_dict=1)
 
 
 @frappe.whitelist()

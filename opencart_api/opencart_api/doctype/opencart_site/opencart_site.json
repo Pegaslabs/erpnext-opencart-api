@@ -216,14 +216,6 @@
    "precision": ""
   }, 
   {
-   "description": "Press this button to sync manually Item Prices of linked Price Lists from Opencart site. ", 
-   "fieldname": "pull_item_prices_from_oc_site", 
-   "fieldtype": "Button", 
-   "label": "Pull Item Prices from OC site",
-   "permlevel": 0, 
-   "precision": ""
-  }, 
-  {
    "fieldname": "oc_sb_store_sync_log", 
    "fieldtype": "Section Break", 
    "label": "", 
@@ -235,15 +227,6 @@
    "fieldname": "store_sync_log", 
    "fieldtype": "HTML", 
    "label": "Store Sync Log", 
-   "permlevel": 0, 
-   "precision": "", 
-   "read_only": 0
-  }, 
-  {
-   "description": "Store Sync Log", 
-   "fieldname": "item_price_sync_log", 
-   "fieldtype": "HTML", 
-   "label": "Item Price Sync Log", 
    "permlevel": 0, 
    "precision": "", 
    "read_only": 0
@@ -351,6 +334,30 @@
    "fieldname": "item_sync_log", 
    "fieldtype": "HTML", 
    "label": "Item Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  }, 
+  {
+   "fieldname": "oc_item_prices", 
+   "fieldtype": "Section Break", 
+   "label": "OC Item Prices", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Press this button to sync manually Item Prices of linked Price Lists from Opencart site. ", 
+   "fieldname": "pull_item_prices_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Item Prices from OC site",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Store Sync Log", 
+   "fieldname": "item_price_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Item Price Sync Log", 
    "permlevel": 0, 
    "precision": "", 
    "read_only": 0

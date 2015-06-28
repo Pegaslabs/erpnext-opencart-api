@@ -45,7 +45,6 @@ def pull(site_name, silent=False):
         doc_item_attr = get(site_name, oc_product_option.id)
         if doc_item_attr:
             # update existed Item Attribute
-            # check here for a need to update Item Attribute
             params = {
                 'attribute_name': oc_product_option.name,
                 'oc_last_sync_from': datetime.now(),

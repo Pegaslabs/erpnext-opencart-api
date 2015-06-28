@@ -48,99 +48,99 @@ def oc_validate(doc, method=None):
     #     frappe.throw('To sync Order to Opencart Site, Order Group must be one of the following:\n%s' % cstr(', '.join(valid_order_group_names)))
 
     data = {
-        # "store_id": "0",
-        "customer": {
-            "customer_id": doc_customer.get('oc_customer_id'),
-            "customer_group_id": oc_customer_group_id,
-            "firstname": doc_customer.get('oc_firstname'),
-            "lastname": doc_customer.get('oc_lastname'),
-            "telephone": doc_customer.get('oc_telephone'),
-            "fax": doc_customer.get('oc_fax'),
-            "email": doc_customer.get('oc_email'),
-            "custom_field": ""
+        # 'store_id': '0',
+        'customer': {
+            'customer_id': doc_customer.get('oc_customer_id'),
+            'customer_group_id': oc_customer_group_id,
+            'firstname': doc_customer.get('oc_firstname'),
+            'lastname': doc_customer.get('oc_lastname'),
+            'telephone': doc_customer.get('oc_telephone'),
+            'fax': doc_customer.get('oc_fax'),
+            'email': doc_customer.get('oc_email'),
+            'custom_field': ''
         },
-        "payment_address": {
-            "firstname": doc_customer.get('oc_firstname'),
-            "lastname": doc_customer.get('oc_lastname')
-            # "company": "company",
-            # "company_id": "company",
-            # "tax_id": "1",
-            # "address_1": "Test street 88",
-            # "address_2": "test",
-            # "postcode": "1111",
-            # "city": "Berlin",
-            # "zone_id": "1433",
-            # "zone": "Budapest",
-            # "zone_code": "BU",
-            # "country_id": "97",
-            # "country": "Hungary"
+        'payment_address': {
+            'firstname': doc_customer.get('oc_firstname'),
+            'lastname': doc_customer.get('oc_lastname')
+            # 'company': 'company',
+            # 'company_id': 'company',
+            # 'tax_id': '1',
+            # 'address_1': 'Test street 88',
+            # 'address_2': 'test',
+            # 'postcode': '1111',
+            # 'city': 'Berlin',
+            # 'zone_id': '1433',
+            # 'zone': 'Budapest',
+            # 'zone_code': 'BU',
+            # 'country_id': '97',
+            # 'country': 'Hungary'
         },
-        "payment_method": {
-            "title": "",
-            "code": ""
+        'payment_method': {
+            'title': '',
+            'code': ''
         },
-        "shipping_address": {
-            "firstname": doc_customer.get('oc_firstname'),
-            "lastname": doc_customer.get('oc_lastname')
-            # "company": "company",
-            # "address_1": "Kos",
-            # "address_2": "test",
-            # "postcode": "1111",
-            # "city": "Budapest",
-            # "zone_id": "1433",
-            # "zone": "Budapest",
-            # "zone_code": "BU",
-            # "country_id": "97",
-            # "country": "Hungary"
+        'shipping_address': {
+            'firstname': doc_customer.get('oc_firstname'),
+            'lastname': doc_customer.get('oc_lastname')
+            # 'company': 'company',
+            # 'address_1': 'Kos',
+            # 'address_2': 'test',
+            # 'postcode': '1111',
+            # 'city': 'Budapest',
+            # 'zone_id': '1433',
+            # 'zone': 'Budapest',
+            # 'zone_code': 'BU',
+            # 'country_id': '97',
+            # 'country': 'Hungary'
         },
-        "shipping_method": {
-            # "title": "Flat Shipping Rate",
-            # "code": "flat.flat"
+        'shipping_method': {
+            # 'title': 'Flat Shipping Rate',
+            # 'code': 'flat.flat'
         },
-        "comment": doc_customer.get('oc_comment'),
-        # "order_status_id": "2",
-        # "order_status": "Processing",
-        # "affiliate_id": "",
-        # "commission": "",
-        # "marketing_id": "",
-        # "tracking": "",
-        # "products": [
+        'comment': doc_customer.get('oc_comment'),
+        # 'order_status_id': '2',
+        # 'order_status': 'Processing',
+        # 'affiliate_id': '',
+        # 'commission': '',
+        # 'marketing_id': '',
+        # 'tracking': '',
+        # 'products': [
         #     {
-        #         "product_id": "46",
-        #         "quantity": "3",
-        #         "price": "10",
-        #         "total": "10",
-        #         "name": "Sony VAIO",
-        #         "model": "Product 19",
-        #         "tax_class_id": "10",
-        #         "reward": "0",
-        #         "subtract": "0",
-        #         "download": "",
-        #         "option": [
+        #         'product_id': '46',
+        #         'quantity': '3',
+        #         'price': '10',
+        #         'total': '10',
+        #         'name': 'Sony VAIO',
+        #         'model': 'Product 19',
+        #         'tax_class_id': '10',
+        #         'reward': '0',
+        #         'subtract': '0',
+        #         'download': '',
+        #         'option': [
         #             {
-        #                 "product_option_id": "product_option_id",
-        #                 "product_option_value_id": "product_option_value_id",
-        #                 "option_id": "option_id",
-        #                 "option_value_id": "option_value_id",
-        #                 "name": "name",
-        #                 "value": "value",
-        #                 "type": "type"
+        #                 'product_option_id': 'product_option_id',
+        #                 'product_option_value_id': 'product_option_value_id',
+        #                 'option_id': 'option_id',
+        #                 'option_value_id': 'option_value_id',
+        #                 'name': 'name',
+        #                 'value': 'value',
+        #                 'type': 'type'
         #             }
         #         ]
         #     }
         # ],
-        # "totals": [
+        # 'totals': [
         #     {
-        #         "code": "coupon",
-        #         "title": "my coupon",
-        #         "value": "10$",
-        #         "sort_order": "1"
+        #         'code': 'coupon',
+        #         'title': 'my coupon',
+        #         'value': '10$',
+        #         'sort_order': '1'
         #     },
         #     {
-        #         "code": "discount",
-        #         "title": "my discount",
-        #         "value": "10$",
-        #         "sort_order": "2"
+        #         'code': 'discount',
+        #         'title': 'my discount',
+        #         'value': '10$',
+        #         'sort_order': '2'
         #     }
         # ]
     }
@@ -148,35 +148,35 @@ def oc_validate(doc, method=None):
     # products
     products = []
     for doc_sales_order_item in doc.items:
-        db_item = frappe.db.get("Item", {"oc_site": site_name,
-                                         "item_code": doc_sales_order_item.get('item_code'),
-                                         "item_name": doc_sales_order_item.get('item_name')})
+        db_item = frappe.db.get('Item', {'oc_site': site_name,
+                                         'item_code': doc_sales_order_item.get('item_code'),
+                                         'item_name': doc_sales_order_item.get('item_name')})
         if not db_item:
             frappe.throw('Could not found "%s %s" Item related to "%s" Opencart Site' % (doc_sales_order_item.get('item_code'),
                                                                                          doc_sales_order_item.get('item_name'),
                                                                                          site_name))
 
         products.append({
-            "product_id": db_item.get('oc_product_id'),
-            "quantity": doc_sales_order_item.get('qty'),
-            "price": doc_sales_order_item.get('rate'),
-            "total": doc_sales_order_item.get('amount'),
-            "name": db_item.get('item_name'),
-            "model": db_item.get('oc_model'),
-            "sku": db_item.get('oc_sku')
-            # "tax_class_id": "10",
-            # "reward": "0",
-            # "subtract": "0",
-            # "download": "",
-            # "option": [
+            'product_id': db_item.get('oc_product_id'),
+            'quantity': doc_sales_order_item.get('qty'),
+            'price': doc_sales_order_item.get('rate'),
+            'total': doc_sales_order_item.get('amount'),
+            'name': db_item.get('item_name'),
+            'model': db_item.get('oc_model'),
+            'sku': db_item.get('oc_sku')
+            # 'tax_class_id': '10',
+            # 'reward': '0',
+            # 'subtract': '0',
+            # 'download': '',
+            # 'option': [
             #     {
-            #         "product_option_id": "product_option_id",
-            #         "product_option_value_id": "product_option_value_id",
-            #         "option_id": "option_id",
-            #         "option_value_id": "option_value_id",
-            #         "name": "name",
-            #         "value": "value",
-            #         "type": "type"
+            #         'product_option_id': 'product_option_id',
+            #         'product_option_value_id': 'product_option_value_id',
+            #         'option_id': 'option_id',
+            #         'option_value_id': 'option_value_id',
+            #         'name': 'name',
+            #         'value': 'value',
+            #         'type': 'type'
             #     }
             # ]
         })
@@ -247,7 +247,7 @@ def pull_orders_from_oc(site_name, silent=False):
     site_doc = frappe.get_doc('Opencart Site', site_name)
     company = site_doc.get('company')
 
-    order_statuses = oc_api.get(site_name, use_pure_rest_api=True).get_order_statuses()
+    get_order_statuses_success, order_statuses = oc_api.get(site_name, use_pure_rest_api=True).get_order_statuses()
     statuses_to_pull = [doc_status.get('status') for doc_status in site_doc.order_statuses_to_pull]
     name_to_order_status_id_map = {}
     order_status_id_to_name_map = {}
@@ -322,7 +322,7 @@ def pull_orders_from_oc(site_name, silent=False):
                     'doctype': 'Sales Order',
                     'territory': 'Ontario',
                     'selling_price_list': price_list_name,
-                    'price_list_currency': doc_price_list.get('currency'),
+                    # 'price_list_currency': doc_price_list.get('currency'),
                     'currency': oc_order.currency_code,
                     'warehouse': warehouse_name,
                     'base_net_total': oc_order.total,
@@ -380,12 +380,12 @@ def pull_orders_from_oc(site_name, silent=False):
                 # shipping related part
                 doc_store = oc_stores.get(site_name, oc_order.store_id)
 
-                doc_order.update({
-                    # 'apply_discount_on': "Net Total",
-                    # 'discount_amount': 35.0,
-                    'taxes_and_charges': doc_template.get('name') or '',
-                    'shipping_rule': doc_store.get('oc_shipping_rule') or ''
-                })
+                # doc_order.update({
+                #     # 'apply_discount_on': 'Net Total',
+                #     # 'discount_amount': 35.0,
+                #     'taxes_and_charges': doc_template.get('name') or '',
+                #     'shipping_rule': doc_store.get('oc_shipping_rule') or ''
+                # })
 
                 # doc_order.append_taxes_from_master()
                 doc_order.set_taxes()
@@ -402,8 +402,13 @@ def pull_orders_from_oc(site_name, silent=False):
                                      doc_order.get('oc_order_id'),
                                      doc_order.get_formatted('oc_last_sync_from'),
                                      doc_order.get('modified')) + extras)
-                if add_count == 1 or update_count == 1:
-                    break
+
+        #         if add_count > 1:
+        #             break
+        #     if add_count > 1:
+        #         break
+        # if add_count > 1:
+        #     break
     results = {
         'check_count': check_count,
         'add_count': add_count,

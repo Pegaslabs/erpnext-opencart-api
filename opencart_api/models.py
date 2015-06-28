@@ -34,19 +34,35 @@ class OpencartCategory(object):
 class OpencartProduct(object):
     def __init__(self, oc_api, attrs, parent=None):
         self.api = oc_api
+        self.attrs = attrs
         for attr in attrs.keys():
             setattr(self, attr, attrs[attr])
         setattr(self, 'category_id', cstr(parent) if parent else '')
         self._fixup()
+# 'product_description': {
+#               u'1': {
+#                    u'meta_description': u'', 
+#                    u'meta_title': u'RING014005', 
+#                    u'description': u'', 
+#                    u'tag': u'', 
+#                    u'language_id': u'1', 
+#                    u'meta_keyword': u'', 
+#                    u'name': u'Aragorn Rings Black '}
+#             }
 
     def _fixup(self):
         setattr(self, 'id', cstr(self.id))
         for i, attrs_list in self.product_description.items():
-            attrs = attrs_list[0]
-            for attr in attrs.keys():
-                setattr(self, attr, attrs[attr])
-            break
-
+            try:  ## to_remove!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                attrs = attrs_list[0]
+                for attr in attrs.keys():
+                    setattr(self, attr, attrs[attr])
+                break
+            except:
+                for attr in attrs_list.keys():
+                    setattr(self, attr, attrs_list[attr])
+                # raise Exception(str(self.attrs))
+                # pass
     @property
     def categories_id_name_pairs(self):
         return [(c.get('id'), c.get('name')) for c in self.category] if self.category else []
@@ -200,33 +216,3 @@ class OpencartOrder(object):
 
     def __repr__(self):
         return 'order_id %s' % (self.id,)
-
-
-class CategoryItemGroupComp(object):
-    attrs_map = (('id', 'oc_category_id'), ('name', 'item_group_name'), ('description', 'description'))
-
-    def __init__(self, oc_category, doc_item_group, attrs_map=None):
-        if attrs_map:
-            self.attrs_map = attrs_map
-        self.oc_category = oc_category
-        self.doc_item_group = doc_item_group
-
-    @property
-    def equal(self):
-        return all(getattr(self.oc_category, category_attr) == self.doc_item_group.get(item_group_attr)
-                   for category_attr, item_group_attr in self.attrs_map)
-
-
-class ProductItemComp(object):
-    attrs_map = (('id', 'oc_category_id'), ('name', 'item_group_name'), ('description', 'description'))
-
-    def __init__(self, oc_product, doc_item, attrs_map=None):
-        if attrs_map:
-            self.attrs_map = attrs_map
-        self.oc_product = oc_product
-        self.doc_item = doc_item
-
-    @property
-    def equal(self):
-        return all(getattr(self.oc_product, product_attr) == self.doc_item.get(item_attr)
-                   for product_attr, item_attr in self.attrs_map)

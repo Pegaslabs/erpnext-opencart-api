@@ -39,7 +39,7 @@ print_sync_log_item_prices = function(message, update) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
     var $tbody = $('<tbody></tbody>');
-    $th.html('<th>Name</th><th>Opencart Item Price ID</th><th>Last Sync</th><th>Last Modified</th><th>Status</th>');
+    $th.html('<th>Name</th><th>Item Code</th><th>Price List</th><th>Currency</th><th>Rate</th><th>Status</th>');
     var groups = $.map(update ? message.results: message, function(o){
         $tr = $('<tr>');
         // Add class
@@ -47,9 +47,8 @@ print_sync_log_item_prices = function(message, update) {
         $tr.append('<td>'+o[1]+'</td>');
         $tr.append('<td>'+o[2]+'</td>');
         $tr.append('<td>'+o[3]+'</td>');
-        if (o[6]) {
-            $tr.append('<td>'+o[6]+'</td>');
-        }
+        $tr.append('<td>'+o[4]+'</td>');
+        $tr.append('<td>'+o[7]+'</td>');
         $tbody.append($tr);
     });
     $table.append($th).append($tbody);
@@ -67,7 +66,7 @@ print_sync_log_item_prices = function(message, update) {
     $panel.append($info);
     $panel.append($table);
     var msg = $('<div>').append($panel).html();
-    $(cur_frm.fields_dict['store_sync_log'].wrapper).html(msg);
+    $(cur_frm.fields_dict['item_price_sync_log'].wrapper).html(msg);
 }
 
 print_sync_log_item_attributes = function(message, update) {
@@ -97,7 +96,7 @@ print_sync_log_item_attributes = function(message, update) {
         $info = $('<p></p>').html('Checked ' + message.check_count + ' item attributes: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
     }
     else {
-        $info = $('<p>All item attributes are up to date</p>');
+        $info = $('<p>All item attributes are up to date. Checked ' + message.check_count + ' item attributes </p>');
     }
     $panel.append($info);
     $panel.append($table);
@@ -285,6 +284,7 @@ print_sync_log_orders = function(message, update) {
 
 print_children_group = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.item_groups.get_child_groups",
@@ -301,6 +301,7 @@ print_children_group = function(doc, dt, dn) {
 
 print_related_stores = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.oc_stores.get_oc_related_stores",
@@ -333,6 +334,7 @@ cur_frm.cscript.root_item_group = function(doc, dt, dn) {
 cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
     // TODO: Give some warnings if some categories already has an opencart site
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.items.sync_all_items",
@@ -352,6 +354,7 @@ cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.oc_stores.pull",
@@ -368,6 +371,7 @@ cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.item_prices.pull",
@@ -384,6 +388,7 @@ cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.item_attributes.pull",
@@ -417,6 +422,7 @@ cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_item_groups_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.item_groups.pull_categories_from_oc",
@@ -432,6 +438,7 @@ cur_frm.cscript.pull_item_groups_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_items_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.items.pull_products_from_oc",
@@ -447,6 +454,7 @@ cur_frm.cscript.pull_items_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_customer_groups_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.customer_groups.pull",
@@ -462,6 +470,7 @@ cur_frm.cscript.pull_customer_groups_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_customers_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.customers.pull_customers_from_oc",
@@ -477,6 +486,7 @@ cur_frm.cscript.pull_customers_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.pull_orders_from_oc_site = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.orders.pull_orders_from_oc",
@@ -493,6 +503,7 @@ cur_frm.cscript.pull_orders_from_oc_site = function(doc, dt, dn) {
 
 cur_frm.cscript.test_connection = function(doc, dt, dn) {
     frappe.call({
+        freeze: true,
         type: "GET",
         args: {
             cmd: "opencart_api.oc_site.test_connection",

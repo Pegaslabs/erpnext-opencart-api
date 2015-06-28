@@ -22,7 +22,10 @@
 "","""Item-oc_is_updating""","Item","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Item-oc_site""","Item","Link","Site","oc_is_updating","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,1,0,0,0,0
 "","""Item-oc_product_id""","Item","Data","Opencart Product ID","oc_site","","","","oc_product_id",0,0,1,0,"","",0,"",0,1,0,0,0,0
-"","""Item-oc_model""","Item","Data","Model","oc_product_id","","","","oc_model",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_manufacturer_id""","Item","Data","Opencart Manufacturer ID","oc_product_id","","","","oc_manufacturer_id",0,0,1,0,"","",0,"",0,1,0,0,0,0
+"","""Item-oc_tax_class_id""","Item","Data","Opencart Tax Class ID","oc_manufacturer_id","","","","oc_tax_class_id",0,0,1,0,"","",0,"",0,1,0,0,0,0
+"","""Item-oc_stock_status""","Item","Data","Opencart Stock Status","oc_tax_class_id","","","","oc_stock_status",0,0,1,0,"","",0,"",0,1,0,0,0,0
+"","""Item-oc_model""","Item","Data","Model","oc_stock_status","","","","oc_model",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_sku""","Item","Data","SKU","oc_model","","","","oc_sku",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_quantity""","Item","Float","Quantity","oc_sku","","","","oc_quantity",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_status""","Item","Check","Status (Enabled/Disabled)","oc_quantity","","","","oc_status",0,0,0,0,"","1",0,"",0,0,0,0,0,0
@@ -35,9 +38,7 @@
 "","""Item-oc_last_sync_from""","Item","Datetime","Last sync","oc_sync_from","","","","oc_last_sync_from",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_sync_to""","Item","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_last_sync_to""","Item","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_discount_settings""","Item","Section Break","Opencart Discount Settings","oc_last_sync_to","","","","oc_discount_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_discounts""","Item","Table","Discounts","oc_discount_settings","","Opencart Discount","","oc_discounts",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_special_settings""","Item","Section Break","Opencart Special Settings","oc_discounts","","","","oc_special_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_special_settings""","Item","Section Break","Opencart Special Settings","oc_last_sync_to","","","","oc_special_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_specials""","Item","Table","Specials","oc_special_settings","","Opencart Special","","oc_specials",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_settings""","Item Attribute","Section Break","Opencart Settings","item_attribute_values","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_is_updating""","Item Attribute","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
@@ -102,34 +103,39 @@
 "","""Sales Order-oc_sync_to""","Sales Order","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_last_sync_to""","Sales Order","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_payment_settings""","Sales Order","Section Break","Opencart Payment Settings","oc_last_sync_to","","","","oc_payment_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pm_title""","Sales Order","Data","Payment Method Title","oc_payment_settings","","","","oc_pm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pm_code""","Sales Order","Data","Payment Method Code","oc_pm_title","","","","oc_pm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pm_title""","Sales Order","Small Text","Payment Method Title","oc_payment_settings","","","","oc_pm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pm_code""","Sales Order","Small Text","Payment Method Code","oc_pm_title","","","","oc_pm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_firstname""","Sales Order","Data","First Name","oc_pm_code","","First Name","","oc_pa_firstname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_lastname""","Sales Order","Data","Last Name","oc_pa_firstname","","Last Name","","oc_pa_lastname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_company""","Sales Order","Data","Company","oc_pa_lastname","","Company","","oc_pa_company",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_company_id""","Sales Order","Data","Company ID","oc_pa_company","","Company ID","","oc_pa_company_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_tax_id""","Sales Order","Data","Tax ID","oc_pa_company_id","","Tax ID","","oc_pa_tax_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_company_id""","Sales Order","Small Text","Company ID","oc_pa_company","","Company ID","","oc_pa_company_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_tax_id""","Sales Order","Small Text","Tax ID","oc_pa_company_id","","Tax ID","","oc_pa_tax_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_address_1""","Sales Order","Data","Address 1","oc_pa_tax_id","","Address 1","","oc_pa_address_1",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_address_2""","Sales Order","Data","Address 2","oc_pa_address_1","","Address 2","","oc_pa_address_2",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_postcode""","Sales Order","Data","Postcode","oc_pa_address_2","","Postcode","","oc_pa_postcode",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_city""","Sales Order","Data","City","oc_pa_postcode","","City","","oc_pa_city",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_zone_id""","Sales Order","Data","Zone ID","oc_pa_city","","Zone ID","","oc_pa_zone_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_zone""","Sales Order","Data","Zone","oc_pa_zone_id","","Zone","","oc_pa_zone",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_zone_code""","Sales Order","Data","Zone Code","oc_pa_zone","","Zone Code","","oc_pa_zone_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_country_id""","Sales Order","Data","Country ID","oc_pa_zone_code","","Country ID","","oc_pa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Sales Order-oc_pa_country""","Sales Order","Data","Country","oc_pa_country_id","","Country","","oc_pa_country",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_postcode""","Sales Order","Small Text","Postcode","oc_pa_address_2","","Postcode","","oc_pa_postcode",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_city""","Sales Order","Small Text","City","oc_pa_postcode","","City","","oc_pa_city",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_zone_id""","Sales Order","Small Text","Zone ID","oc_pa_city","","Zone ID","","oc_pa_zone_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_zone""","Sales Order","Small Text","Zone","oc_pa_zone_id","","Zone","","oc_pa_zone",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_zone_code""","Sales Order","Small Text","Zone Code","oc_pa_zone","","Zone Code","","oc_pa_zone_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_country_id""","Sales Order","Small Text","Country ID","oc_pa_zone_code","","Country ID","","oc_pa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_pa_country""","Sales Order","Small Text","Country","oc_pa_country_id","","Country","","oc_pa_country",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_shipping_settings""","Sales Order","Section Break","Opencart Shipping Settings","oc_pa_country","","","","oc_shipping_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sm_title""","Sales Order","Data","Shipping Method Title","oc_shipping_settings","","","","oc_sm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sm_code""","Sales Order","Data","Shipping Method Code","oc_sm_title","","","","oc_sm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sm_title""","Sales Order","Small Text","Shipping Method Title","oc_shipping_settings","","","","oc_sm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sm_code""","Sales Order","Small Text","Shipping Method Code","oc_sm_title","","","","oc_sm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_firstname""","Sales Order","Data","First Name","oc_sm_code","","First Name","","oc_sa_firstname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_lastname""","Sales Order","Data","Last Name","oc_sa_firstname","","Last Name","","oc_sa_lastname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_company""","Sales Order","Data","Company","oc_sa_lastname","","Company","","oc_sa_company",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_address_1""","Sales Order","Data","Address 1","oc_sa_company","","Address 1","","oc_sa_address_1",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_address_2""","Sales Order","Data","Address 2","oc_sa_address_1","","Address 2","","oc_sa_address_2",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_postcode""","Sales Order","Data","Postcode","oc_sa_address_2","","Postcode","","oc_sa_postcode",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_city""","Sales Order","Data","City","oc_sa_postcode","","City","","oc_sa_city",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_zone_id""","Sales Order","Data","Zone ID","oc_sa_city","","Zone ID","","oc_sa_zone_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_zone""","Sales Order","Data","Zone","oc_sa_zone_id","","Zone","","oc_sa_zone",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_zone_code""","Sales Order","Data","Zone Code","oc_sa_zone","","Zone Code","","oc_sa_zone_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_country_id""","Sales Order","Data","Country ID","oc_sa_zone_code","","Country ID","","oc_sa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Sales Order-oc_sa_country""","Sales Order","Data","Country","oc_sa_country_id","","Country","","oc_sa_country",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_postcode""","Sales Order","Small Text","Postcode","oc_sa_address_2","","Postcode","","oc_sa_postcode",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_city""","Sales Order","Small Text","City","oc_sa_postcode","","City","","oc_sa_city",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_zone_id""","Sales Order","Small Text","Zone ID","oc_sa_city","","Zone ID","","oc_sa_zone_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_zone""","Sales Order","Small Text","Zone","oc_sa_zone_id","","Zone","","oc_sa_zone",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_zone_code""","Sales Order","Small Text","Zone Code","oc_sa_zone","","Zone Code","","oc_sa_zone_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_country_id""","Sales Order","Small Text","Country ID","oc_sa_zone_code","","Country ID","","oc_sa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Sales Order-oc_sa_country""","Sales Order","Small Text","Country","oc_sa_country_id","","Country","","oc_sa_country",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Item Price-oc_discount_settings""","Item Price","Section Break","Opencart Discount Settings","item_description","","","","oc_discount_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item Price-oc_discounts""","Item Price","Table","Discounts","oc_discount_settings","","Opencart Discount","","oc_discounts",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item Price-oc_is_updating""","Item Price","Check","Is Updating","oc_discounts","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Price List-oc_settings""","Price List","Section Break","Opencart Settings","territories","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Price List-oc_customer_group""","Price List","Link","Customer Group","oc_settings","","Customer Group","","oc_customer_group",0,0,0,0,"","",0,"",0,0,0,0,0,0

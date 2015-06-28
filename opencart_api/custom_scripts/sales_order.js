@@ -12,30 +12,6 @@ cur_frm.cscript.refresh = function(doc) {
 				}
 			}
 		});
-
-		frappe.call({
-			method: "opencart_api.oc_site.get_payment_method_code_list",
-			args: {
-				"site_name": doc.oc_site,
-			},
-			callback: function(r) {
-				if(!r.exc) {
-					set_field_options("oc_payment_method", [""].concat(r.message).join("\n"));
-				}
-			}
-		});
-
-		frappe.call({
-			method: "opencart_api.oc_site.get_shipping_method_code_list",
-			args: {
-				"site_name": doc.oc_site,
-			},
-			callback: function(r) {
-				if(!r.exc) {
-					set_field_options("oc_shipping_method", [""].concat(r.message).join("\n"));
-				}
-			}
-		});
 	}
 }
 

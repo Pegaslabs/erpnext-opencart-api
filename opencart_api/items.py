@@ -21,15 +21,17 @@ def oc_validate(doc, method=None):
         frappe.throw('To sync Item to Opencart Site, Item Group must be one of the following:\n%s' % cstr(', '.join(valid_group_names)))
     doc_item_group = frappe.get_doc('Item Group', item_group_name)
     doc.update({'oc_sku': doc.get('oc_sku') or doc.get('name')})
+
     data = {
         'model': doc.get('oc_model') or doc.get('name'),  # mandatory
         'sku': doc.get('oc_sku'),  # mandatory
         'quantity': doc.get('oc_quantity') or '0',  # mandatory
-        'price': doc.get('oc_price') or '0',
-        'tax_class_id': '9',  # mandatory
-        'manufacturer_id': '29',  # mandatory
-        'sort_order': '1',  # mandatory
-        'status': doc.get('oc_status'),
+        # 'price': doc.get('oc_price') or '0',
+        'tax_class_id': doc.get('oc_tax_class_id'),  # mandatory
+        'manufacturer_id': doc.get('oc_manufacturer_id'),  # mandatory
+        # 'sort_order': '1',  # mandatory
+        'status': doc.get('oc_status')
+        # ,
         # 'upc': '',
         # 'ean': '',
         # 'jan': '',
@@ -39,7 +41,7 @@ def oc_validate(doc, method=None):
         # 'stock_status_id': '6',
         # 'reward': '400',
         # 'points': '200',
-        # 'image': 'catalog/image/image.png',
+        # 'image': doc.get('image'),
         # 'other_images': [
         #     'catalog/image/image2.png',
         #     'catalog/image/image3.png'
@@ -56,28 +58,28 @@ def oc_validate(doc, method=None):
         # 'product_store': [  # mandatory
         #     '12'
         # ],
-        'product_category': [
-            doc_item_group.get('oc_category_id')
-        ],
-        'product_description': [
-            {
-                'language_id': 1,
-                'name': doc.get('item_name'),
-                'description': doc.get('description_html'),
-                'meta_description': doc.get('oc_meta_description'),
-                'meta_title': doc.get('oc_meta_title'),
-                'meta_keyword': doc.get('oc_meta_keyword'),
-            }
-            # ,
-            # {
-            # 'language_id': 2,
-            # 'name': 'test product hun',
-            # 'meta_title': 'test product meta_title',
-            # 'meta_description': 'test product meta_description hu',
-            # 'meta_keyword': 'test product meta_keyword hun',
-            # 'description': 'test product description hu'
-            # }
-        ]
+        # 'product_category': [
+        #     doc_item_group.get('oc_category_id')
+        # ],
+        # 'product_description': [
+        #     {
+        #         'language_id': 1,
+        #         'name': doc.get('item_name'),
+        #         'description': doc.get('description_html'),
+        #         'meta_description': doc.get('oc_meta_description'),
+        #         'meta_title': doc.get('oc_meta_title'),
+        #         'meta_keyword': doc.get('oc_meta_keyword'),
+        #     }
+        #     # ,
+        #     # {
+        #     # 'language_id': 2,
+        #     # 'name': 'test product hun',
+        #     # 'meta_title': 'test product meta_title',
+        #     # 'meta_description': 'test product meta_description hu',
+        #     # 'meta_keyword': 'test product meta_keyword hun',
+        #     # 'description': 'test product description hu'
+        #     # }
+        # ]
         # 'product_option': [
         # {
         #     'product_option_value': [
@@ -184,22 +186,22 @@ def oc_validate(doc, method=None):
         data['product_special'] = product_special
 
     # discounts
-    product_discount = []
-    for doc_oc_discount in doc.oc_discounts:
-        doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
-        customer_group_id = doc_customer_group.get('oc_customer_group_id')
-        if not customer_group_id:
-            continue
-        product_discount.append({
-            'customer_group_id': customer_group_id,
-            'price': doc_oc_discount.price,
-            'priority': doc_oc_discount.priority,
-            'quantity': doc_oc_discount.quantity,
-            'date_start': doc_oc_discount.date_start,
-            'date_end': doc_oc_discount.date_end,
-        })
-    if product_discount:
-        data['product_discount'] = product_discount
+    # product_discount = []
+    # for doc_oc_discount in doc.oc_discounts:
+    #     doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
+    #     customer_group_id = doc_customer_group.get('oc_customer_group_id')
+    #     if not customer_group_id:
+    #         continue
+    #     product_discount.append({
+    #         'customer_group_id': customer_group_id,
+    #         'price': doc_oc_discount.price,
+    #         'priority': doc_oc_discount.priority,
+    #         'quantity': doc_oc_discount.quantity,
+    #         'date_start': doc_oc_discount.date_start,
+    #         'date_end': doc_oc_discount.date_end,
+    #     })
+    # if product_discount:
+    #     data['product_discount'] = product_discount
 
     # updating or creating product
     oc_product_id = doc.get('oc_product_id')
@@ -210,7 +212,6 @@ def oc_validate(doc, method=None):
         if success:
             frappe.msgprint('Product is updated successfully on Opencart site')
             doc.update({'oc_last_sync_to': datetime.now()})
-            push_image(doc)
         else:
             frappe.msgprint('Product is not updated on Opencart site. Error: Unknown')
     else:
@@ -260,14 +261,17 @@ def push_image(doc):
 
 
 def get_item(site_name, oc_product_id):
-    db_item = frappe.db.get("Item", {"oc_site": site_name, "oc_product_id": oc_product_id})
+    db_item = frappe.db.get('Item', {'oc_site': site_name, 'oc_product_id': oc_product_id})
     if db_item:
-        return frappe.get_doc('Item', db_item.get("name"))
+        return frappe.get_doc('Item', db_item.get('name'))
+
+
+def get_all_dict(site_name, fields=['name']):
+    return frappe.get_all('Item', fields=fields, filters={'oc_site': site_name})
 
 
 @frappe.whitelist()
 def pull_products_from_oc(site_name, silent=False):
-    # init for result
     results = {}
     results_list = []
     check_count = 0
@@ -276,9 +280,9 @@ def pull_products_from_oc(site_name, silent=False):
     skip_count = 0
     success = True
 
-    site_doc = frappe.get_doc("Opencart Site", site_name)
+    site_doc = frappe.get_doc('Opencart Site', site_name)
     opencart_api = oc_api.get(site_name)
-    items_default_warehouse = site_doc.get("items_default_warehouse")
+    items_default_warehouse = site_doc.get('items_default_warehouse')
     if not items_default_warehouse:
         sync_info([], 'Please specify a Default Warehouse and proceed.', stop=True, silent=silent)
     for oc_category in opencart_api.get_all_categories():
@@ -288,13 +292,25 @@ def pull_products_from_oc(site_name, silent=False):
             doc_item = get_item(site_name, oc_product.id)
             if doc_item_group:
                 if doc_item:
-                    # update existed Item
-                    # if ProductItemComp(oc_product, doc_item).equal:
-                    #     continue
                     params = {
-                        "item_name": oc_product.name,
-                        "description": oc_product.meta_description or '',
-                        "oc_last_sync_from": datetime.now()
+                        'item_name': oc_product.name,
+                        'description_html': oc_product.description,
+                        'description': oc_product.meta_description,
+                        'image': oc_product.image,
+                        'min_order_qty': oc_product.minimum,
+                        'oc_is_updating': 1,
+                        'oc_manufacturer_id': oc_product.manufacturer_id,
+                        'oc_tax_class_id': oc_product.tax_class_id,
+                        'oc_stock_status': oc_product.stock_status,
+                        'oc_model': oc_product.model,
+                        'oc_sku': oc_product.sku,
+                        'oc_quantity': oc_product.quantity,
+                        'oc_status': int(oc_product.status or 0),
+                        'oc_meta_title': oc_product.meta_title,
+                        'oc_meta_keyword': oc_product.meta_keyword,
+                        'oc_meta_description': oc_product.meta_description,
+                        'oc_price': oc_product.price,
+                        'oc_last_sync_from': datetime.now()
                     }
                     doc_item.update(params)
 
@@ -324,9 +340,8 @@ def pull_products_from_oc(site_name, silent=False):
                                 missed_item_attribute_value = option_value.name
                                 break
                             variants_list.append({
-                                "item_attribute": option.name,
-                                "item_attribute_value": option_value.name,
-                                "image": "http://shop.fortaonline.ca/image/cache/catalog/product/h20_180_57299__04576.1410751785.1280.1280__39537-100x100.jpg"
+                                'item_attribute': option.name,
+                                'item_attribute_value': option_value.name
                             })
                     if missed_item_attribute or missed_item_attribute_value:
                         skip_count += 1
@@ -339,35 +354,39 @@ def pull_products_from_oc(site_name, silent=False):
                         continue
 
                     params = {
-                        "doctype": "Item",
-                        "item_group": doc_item_group.get('name'),
+                        'doctype': 'Item',
+                        'item_group': doc_item_group.get('name'),
                         'has_variants': bool(variants_list),
-                        "variants": variants_list,
-                        "oc_last_sync_from": datetime.now(),
-                        "is_group": "No",
-                        "default_warehouse": items_default_warehouse,
-                        "item_name": oc_product.name,
-                        "description_html": oc_product.description,
-                        "description": oc_product.meta_description,
-                        "show_in_website": 1,
-                        "image": oc_product.image,
-                        "min_order_qty": oc_product.minimum,
-                        "oc_meta_title": oc_product.meta_title,
-                        "oc_meta_keyword": oc_product.meta_keyword,
-                        "oc_meta_description": oc_product.meta_description,
-                        "oc_price": oc_product.price,
-                        "oc_sync_from": True,
-                        "oc_last_sync_from": datetime.now(),
-                        "oc_sync_to": True,
-                        "oc_last_sync_to": datetime.now(),
+                        'variants': variants_list,
+                        'is_group': 'No',
+                        'default_warehouse': items_default_warehouse,
+                        'item_name': oc_product.name,
+                        'description_html': oc_product.description,
+                        'description': oc_product.meta_description,
+                        'show_in_website': 1,
+                        'image': oc_product.image,
+                        'min_order_qty': oc_product.minimum,
+                        'oc_is_updating': 1,
+                        'oc_site': site_name,
+                        'oc_product_id': oc_product.id,
+                        'oc_manufacturer_id': oc_product.manufacturer_id,
+                        'oc_tax_class_id': oc_product.tax_class_id,
+                        'oc_stock_status': oc_product.stock_status,
+                        'oc_model': oc_product.model,
+                        'oc_sku': oc_product.sku,
+                        'oc_quantity': oc_product.quantity,
+                        'oc_status': int(oc_product.status or 0),
+                        'oc_meta_title': oc_product.meta_title,
+                        'oc_meta_keyword': oc_product.meta_keyword,
+                        'oc_meta_description': oc_product.meta_description,
+                        'oc_price': oc_product.price,
+                        'oc_sync_from': True,
+                        'oc_last_sync_from': datetime.now(),
+                        'oc_sync_to': True,
+                        'oc_last_sync_to': datetime.now(),
                     }
                     doc_item = frappe.get_doc(params)
                     doc_item.insert(ignore_permissions=True)
-                    params = {
-                        "oc_site": site_name,
-                        "oc_product_id": oc_product.id,
-                    }
-                    doc_item.update(params)
 
                     # cpesials
                     for oc_special in oc_product.special:
@@ -382,24 +401,8 @@ def pull_products_from_oc(site_name, silent=False):
                             'date_start': oc_special.get('date_start'),
                             'date_end': oc_special.get('date_end'),
                         })
-
-                    # discounts
-                    for discount in oc_product.discounts:
-                        customer_group = customer_groups.get(site_name, discount.get('customer_group_id'))
-                        if not customer_group:
-                            continue
-                        doc_item.append('oc_discounts', {
-                            'item_name': doc_item.get('name'),
-                            'customer_group': customer_group.get('name'),
-                            'quantity': discount.get('quantity'),
-                            'priority': discount.get('priority'),
-                            'price': discount.get('price'),
-                            'date_start': discount.get('date_start'),
-                            'date_end': discount.get('date_end'),
-                        })
-
+                    doc_item.update({'oc_is_updating': 1})
                     doc_item.save()
-
                     add_count += 1
                     extras = (1, 'added', 'Added')
                     results_list.append((doc_item.get('name'),

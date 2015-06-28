@@ -108,7 +108,8 @@ def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False
     except requests.exceptions.RequestException as e:
         sync_info(logs, 'Error occurred while requesting Opencart site: %s\n%s' % (str(e), str(url)), stop=stop, silent=silent, error=error)
     except ValueError:
-        sync_info(logs, 'JSON error: %s' % str(url), stop=stop, silent=silent, error=error)
+        return (False, {})
+        # sync_info(logs, 'JSON error: %s' % str(url), stop=stop, silent=silent, error=error)
     except Exception as e:
         if response.status_code != requests.codes.ok:
             sync_info(logs, 'Error occurred while requesting Opencart site. Status code: %s\n%s' % (str(response.status_code), str(url)), stop=stop, silent=silent, error=True)

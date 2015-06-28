@@ -7,9 +7,13 @@ import oc_api
 
 
 def get(site_name, oc_store_id):
-    db_opencart_store = frappe.db.get("Opencart Store", {"oc_site": site_name, "oc_store_id": oc_store_id})
+    db_opencart_store = frappe.db.get('Opencart Store', {'oc_site': site_name, 'oc_store_id': oc_store_id})
     if db_opencart_store:
-        return frappe.get_doc('Opencart Store', db_opencart_store.get("name"))
+        return frappe.get_doc('Opencart Store', db_opencart_store.get('name'))
+
+
+def get_all(site_name):
+    return [frappe.get_doc('Opencart Store', db_store.get('name')) for db_store in frappe.get_all('Opencart Store')]
 
 
 @frappe.whitelist()
@@ -30,8 +34,8 @@ def pull(site_name, silent=False):
             # update existed Opencart Store
             # check here for a need to update Opencart Store
             params = {
-                "store_name": oc_store.name,
-                "oc_last_sync_from": datetime.now(),
+                'store_name': oc_store.name,
+                'oc_last_sync_from': datetime.now(),
             }
             doc_oc_store.update(params)
             doc_oc_store.save()
@@ -45,13 +49,13 @@ def pull(site_name, silent=False):
         else:
             # creating new Opencart Store
             params = {
-                "doctype": "Opencart Store",
-                "name": oc_store.name,
-                "store_name": oc_store.name,
-                "oc_site": site_name,
-                "oc_store_id": oc_store.id,
-                "oc_sync_from": True,
-                "oc_last_sync_from": datetime.now()
+                'doctype': 'Opencart Store',
+                'name': oc_store.name,
+                'store_name': oc_store.name,
+                'oc_site': site_name,
+                'oc_store_id': oc_store.id,
+                'oc_sync_from': True,
+                'oc_last_sync_from': datetime.now()
             }
             doc_oc_store = frappe.get_doc(params)
             doc_oc_store.insert(ignore_permissions=True)
@@ -75,5 +79,5 @@ def pull(site_name, silent=False):
 @frappe.whitelist()
 def get_oc_related_stores(site_name):
     '''Get related stores of Opencart site'''
-    stores = frappe.db.sql("""select name, oc_store_id, oc_last_sync_from, modified, oc_last_sync_from from `tabOpencart Store` where oc_site=%(site_name)s""", {"site_name": site_name})
+    stores = frappe.db.sql('''select name, oc_store_id, oc_last_sync_from, modified, oc_last_sync_from from `tabOpencart Store` where oc_site=%(site_name)s''', {'site_name': site_name})
     return stores
