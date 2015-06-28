@@ -63,9 +63,9 @@ doctype_js = {
 fixtures = ["Custom Field", "Custom Script"]
 
 scheduler_events = {
-    "all": [
-        "opencart_api.tasks.daily"
-    ],
+    # "all": [
+    #     "opencart_api.tasks.daily"
+    # ],
     # "daily": [
     #   "opencart_api.tasks.daily"
     # ]
