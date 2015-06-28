@@ -160,7 +160,7 @@ def pull_customers_from_oc(site_name, silent=False):
         if missed_mandatory_fields:
             skip_count += 1
             extras = (1, 'skipped', 'Skipped: mandatory fileds missed: %s' % ', '.join(missed_mandatory_fields))
-            results_list.append((oc_customer_name, customer_id, '', '') + extras)
+            results_list.append((oc_customer_name, customer_id, '', '', '') + extras)
             continue
 
         doc_customer_group = doc_customer_groups_cache.get(oc_customer.get('customer_group_id'))
@@ -171,7 +171,7 @@ def pull_customers_from_oc(site_name, silent=False):
         if not doc_customer_group:
             skip_count += 1
             extras = (1, 'skipped', 'Skipped: parent group missed')
-            results_list.append((oc_customer_name, customer_id, '', '') + extras)
+            results_list.append((oc_customer_name, customer_id, '', '', '') + extras)
             continue
 
         doc_customer = get_customer(site_name, customer_id)
@@ -203,10 +203,12 @@ def pull_customers_from_oc(site_name, silent=False):
         else:
             default_price_list = doc_customer_group.get('default_price_list')
             # do not allow to aad new customer if default_price_list is missed in customer's group
-            if not default_price_list:
-                skip_count += 1
-                extras = (1, 'skipped', 'Skipped: missed default price list in customer group')
-                results_list.append((oc_customer_name, customer_id, '', '') + extras)
+            # if not default_price_list:
+            #     skip_count += 1
+            #     extras = (1, 'skipped', 'Skipped: missed default price list in customer group')
+            #     results_list.append((oc_customer_name, customer_id, '', '', '') + extras)
+            #     continue
+
             # create new Customer
             params = {
                 'doctype': 'Customer',
