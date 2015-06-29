@@ -1,5 +1,3 @@
-// Copyright (c) 2015, Hoovix Pvt. Ltd. and Contributors
-
 print_sync_log_stores = function(message, update) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
@@ -298,7 +296,6 @@ print_children_group = function(doc, dt, dn) {
     });
 }
 
-
 print_related_stores = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
@@ -315,22 +312,20 @@ print_related_stores = function(doc, dt, dn) {
     });
 }
 
-// Refresh
 cur_frm.cscript.refresh = function(doc, dt, dn) {
-    // Get all its child group to
-    // print_children_group(doc, dt, dn);
-    
 
-    // print_related_stores(doc, dt, dn);
+    var $msg = $('<div></div>');
+    $msg.append('<h4>'+ 'Before you proceed, make sure that you have:' +'</h4>');
+    $msg.append('<p>'+ ' - set Default Price List for each Customer Group' +'</p>');
+    $msg.append('<p>'+ ' - specified Opencart Customer Group Rules for each Customer Group if needed' +'</p>');
+    $(cur_frm.fields_dict['order_notice'].wrapper).html($msg.html());
 }
 
-// Handle item root group selected
 cur_frm.cscript.root_item_group = function(doc, dt, dn) {
     // Get all its child group to
     //print_children_group(doc, dt, dn);
 }
 
-// Handle sync categories button pressed
 cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
     // TODO: Give some warnings if some categories already has an opencart site
     frappe.call({
@@ -368,7 +363,6 @@ cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
     });
 }
 
-
 cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
@@ -385,7 +379,6 @@ cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
     });
 }
 
-
 cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
@@ -401,24 +394,6 @@ cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
         }
     });
 }
-
-// cur_frm.cscript.pull_from_oc_site = function(doc, dt, dn) {
-//     frappe.call({
-//         type: "GET",
-//         args: {
-//             cmd: "opencart_api.tasks.daily",
-//             site_name: doc.name
-//         },
-//         callback: function(data) {
-//             if (data && data.message && data.message.groups) {
-//                 print_sync_log_cat(data.message.groups, true);
-//             }
-//             if (data && data.message && data.message.items) {
-//                 print_sync_log_item(data.message.items, true);
-//             }
-//         }
-//     });
-// }
 
 cur_frm.cscript.pull_item_groups_from_oc_site = function(doc, dt, dn) {
     frappe.call({
@@ -500,6 +475,21 @@ cur_frm.cscript.pull_orders_from_oc_site = function(doc, dt, dn) {
     });
 }
 
+cur_frm.cscript.pull_orders_modified_from = function(doc, dt, dn) {
+    frappe.call({
+        freeze: true,
+        type: "GET",
+        args: {
+            cmd: "opencart_api.orders.pull_modified_from",
+            site_name: doc.name
+        },
+        callback: function(data) {
+            if (data && data.message) {
+                print_sync_log_orders(data.message, true);
+            }
+        }
+    });
+}
 
 cur_frm.cscript.test_connection = function(doc, dt, dn) {
     frappe.call({

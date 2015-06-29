@@ -14,6 +14,8 @@ def get(site_name):
 
 def oc_validate(doc, method=None):
     site_name = doc.get('site_name')
+    if not get(site_name):
+        return
 
     # order status
     success, order_statuses = oc_api.get(site_name, use_pure_rest_api=True).get_order_statuses()
