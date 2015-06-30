@@ -156,12 +156,12 @@ def pull_customers_from_oc(site_name, silent=False):
         customer_id = oc_customer.get('customer_id')
 
         # validation
-        missed_mandatory_fields = [field for field in OC_MANDATORY_FIELDS if not oc_customer.get(field)]
-        if missed_mandatory_fields:
-            skip_count += 1
-            extras = (1, 'skipped', 'Skipped: mandatory fileds missed: %s' % ', '.join(missed_mandatory_fields))
-            results_list.append((oc_customer_name, customer_id, '', '', '') + extras)
-            continue
+        # missed_mandatory_fields = [field for field in OC_MANDATORY_FIELDS if not oc_customer.get(field)]
+        # if missed_mandatory_fields:
+        #     skip_count += 1
+        #     extras = (1, 'skipped', 'Skipped: mandatory fileds missed: %s' % ', '.join(missed_mandatory_fields))
+        #     results_list.append((oc_customer_name, customer_id, '', '', '') + extras)
+        #     continue
 
         doc_customer_group = doc_customer_groups_cache.get(oc_customer.get('customer_group_id'))
         if not doc_customer_group:
