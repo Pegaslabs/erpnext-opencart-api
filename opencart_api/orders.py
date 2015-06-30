@@ -271,20 +271,36 @@ def pull_modified_from(site_name, silent=False):
     while True:
         success, oc_orders = oc_api.get(site_name).get_orders_modified_from_to(modified_from.strftime("%Y-%m-%d"), modified_to.strftime("%Y-%m-%d"))
         for oc_order in oc_orders:
+    # if True:
+    #     if True:
+    #         oc_order = oc_api.get(site_name).get_order('1333')
             check_count += 1
-            doc_order = get_order(site_name, oc_order.get('order_id'))
+            order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
+            if order_status_name not in statuses_to_pull:
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
+                results_list.append(('', oc_order.id, '', '') + extras)
+                continue
+            doc_order = get_order(site_name, oc_order.id)
+            doc_customer = customers.get_customer(site_name, oc_order.customer_id)
             if doc_order:
                 # update existed Sales Order
-                params = {
-                    'currency': oc_order.get('currency_code'),
-                    'conversion_rate': float(oc_order.get('currency_value')),
-                    'total': oc_order.get('total'),
+                params = {}
+                resolve_customer_group_rules(oc_order, doc_customer, params)
+
+                params.update({
+                    'currency': oc_order.currency_code,
+                    # 'conversion_rate': float(oc_order.currency_value),
+                    'base_net_total': oc_order.total,
+                    'total': oc_order.total,
                     'company': company,
                     'oc_is_updating': 1,
+                    'oc_status': order_status_name,
                     'oc_last_sync_from': datetime.now(),
-                }
+                })
                 doc_order.update(params)
                 doc_order.save()
+                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                 update_count += 1
                 extras = (1, 'updated', 'Updated')
                 results_list.append((doc_order.get('name'),
@@ -293,72 +309,52 @@ def pull_modified_from(site_name, silent=False):
                                      doc_order.get('modified')) + extras)
 
             else:
-                order_status_name = order_status_id_to_name_map.get(oc_order.get('order_status_id'))
-                if order_status_name not in statuses_to_pull:
-                    skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
-                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
-                    continue
-
-                doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
                 if not doc_customer:
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed customer')
-                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                    results_list.append(('', oc_order.id, '', '') + extras)
                     continue
 
-                territory_to_price_list_map = {}
-                territory_to_warehouse_map = {}
-                doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
-                rules = doc_customer_group.get('oc_customer_group_rule')
-                for rule in rules:
-                    if rule.get('condition') == 'If Territory of Customer is':
-                        territory_to_price_list_map[rule.get('condition_territory')] = rule.get('action_price_list')
-                        territory_to_warehouse_map[rule.get('condition_territory')] = rule.get('action_warehouse')
-
-                territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
-                price_list_name = territory_to_price_list_map.get(territory_name, doc_customer.get('default_price_list'))
-                doc_price_list = price_lists.get_by_name(site_name, price_list_name)
-
-                warehouse_name = territory_to_warehouse_map.get(territory_name, '')
-
-                if territory_name != doc_customer.get('territory'):
-                    doc_customer.update({'territory': territory_name})
-                    doc_customer.update({'oc_is_updating': 1})
-                    doc_customer.save()
+                params = {}
+                resolve_customer_group_rules(oc_order, doc_customer, params)
 
                 # creating new Sales Order
-                params = {
+                params.update({
                     'doctype': 'Sales Order',
-                    'territory': 'Ontario',
-                    'selling_price_list': price_list_name,
-                    # 'price_list_currency': doc_price_list.get('currency'),
-                    'currency': oc_order.get('currency_code'),
-                    'warehouse': warehouse_name,
-                    'base_net_total': oc_order.get('total'),
-                    'total': oc_order.get('total'),
+                    'currency': oc_order.currency_code,
+                    'base_net_total': oc_order.total,
+                    'total': oc_order.total,
                     'company': company,
                     'customer': doc_customer.name,
                     'delivery_date': add_days(nowdate(), 7),
                     'oc_is_updating': 1,
                     'oc_site': site_name,
-                    'oc_order_id': oc_order.get('order_id'),
+                    'oc_order_id': oc_order.id,
+                    'oc_status': order_status_name,
                     'oc_sync_from': True,
                     'oc_last_sync_from': datetime.now(),
                     'oc_sync_to': True,
                     'oc_last_sync_to': datetime.now(),
-                }
+                })
                 doc_order = frappe.get_doc(params)
-                if not oc_order.get('products'):
+                if not oc_order.products:
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed products')
-                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                    results_list.append(('', oc_order.id, '', '') + extras)
                     continue
 
                 items_count = 0
-                for product in oc_order.get('products'):
+                for product in oc_order.products:
                     doc_item = items.get_item(site_name, product.get('product_id'))
                     if not doc_item:
+                        skip_count += 1
+                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" cannot be found' % (product.get('name'), product.get('product_id')))
+                        results_list.append(('', oc_order.id, '', '') + extras)
+                        break
+                    if doc_item.get('has_variants'):
+                        skip_count += 1
+                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" is a tempalte' % (product.get('name'), product.get('product_id')))
+                        results_list.append(('', oc_order.id, '', '') + extras)
                         break
 
                     # price_list_rate = frappe.db.get_value('Item Price', {'price_list': price_list_name, 'item_code': doc_item.get('item_code')}, 'price_list_rate') or 0
@@ -377,42 +373,27 @@ def pull_modified_from(site_name, silent=False):
                         'description': product.get('name')
                     })
                     items_count += 1
-                if not items_count:
-                    skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: no products')
-                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
-                    continue
+                else:
+                    if not items_count:
+                        skip_count += 1
+                        extras = (1, 'skipped', 'Skipped: no products')
+                        results_list.append(('', oc_order.id, '', '') + extras)
+                        continue
 
-                doc_order.insert(ignore_permissions=True)
-
-                # taxes related part
-                doc_template = sales_taxes_and_charges_template.get_first_by_territory(territory_name)
-
-                # shipping related part
-                doc_store = oc_stores.get(site_name, oc_order.get('store_id'))
-
-                # doc_order.update({
-                #     # 'apply_discount_on': 'Net Total',
-                #     # 'discount_amount': 35.0,
-                #     'taxes_and_charges': doc_template.get('name') or '',
-                #     'shipping_rule': doc_store.get('oc_shipping_rule') or ''
-                # })
-
-                # doc_order.append_taxes_from_master()
-                doc_order.set_taxes()
-                doc_order.calculate_taxes_and_totals()
-
-                doc_order.apply_shipping_rule()
-                doc_order.calculate_taxes_and_totals()
-                doc_order.update({'oc_is_updating': 1})
-                doc_order.save()
-
-                add_count += 1
-                extras = (1, 'added', 'Added')
-                results_list.append((doc_order.get('name'),
-                                     doc_order.get('oc_order_id'),
-                                     doc_order.get_formatted('oc_last_sync_from'),
-                                     doc_order.get('modified')) + extras)
+                    doc_order.insert(ignore_permissions=True)
+                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
+                    add_count += 1
+                    extras = (1, 'added', 'Added')
+                    results_list.append((doc_order.get('name'),
+                                         doc_order.get('oc_order_id'),
+                                         doc_order.get_formatted('oc_last_sync_from'),
+                                         doc_order.get('modified')) + extras)
+        #         if add_count > 10:
+        #             break
+        #     if add_count > 10:
+        #         break
+        # if add_count > 10:
+        #     break
         if modified_to >= now_date:
             break
         modified_from = add_days(modified_to, 1)
