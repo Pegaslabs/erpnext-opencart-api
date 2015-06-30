@@ -311,7 +311,7 @@ def pull_modified_from(site_name, silent=False):
             else:
                 if not doc_customer:
                     skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: missed customer')
+                    extras = (1, 'skipped', 'Skipped: missed customer customer_id "%s"' % oc_order.get('customer_id', ''))
                     results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                     continue
 
