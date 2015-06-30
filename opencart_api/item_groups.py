@@ -21,26 +21,25 @@ def pull_categories_from_oc(site_name, silent=False):
     skip_count = 0
     success = True
 
-    doc_item_group_cache = {}
     site_doc = frappe.get_doc('Opencart Site', site_name)
     root_item_group = site_doc.get('root_item_group')
     opencart_api = oc_api.get(site_name)
     doc_root_item_group = frappe.get_doc('Item Group', root_item_group)
     for oc_category in opencart_api.get_all_categories():
-        doc_item_group_cache[oc_category.id] = oc_category.name
-        if not doc_root_item_group.get('oc_category_id'):
-            doc_root_item_group.update({'oc_category_id': oc_category.id})
-            doc_root_item_group.save()
-
+        # if not doc_root_item_group.get('oc_category_id'):
+        #     doc_root_item_group.update({'oc_category_id': oc_category.id})
+        #     doc_root_item_group.save()
         check_count += 1
-        db_item_group = frappe.db.get('Item Group', {'oc_category_id': oc_category.id, 'name': oc_category.name})
-        if db_item_group:
+        doc_item_group = get_item_group(site_name, oc_category.id)
+        doc_parent_item_group = doc_root_item_group
+        if oc_category.parent_id:
+            doc_parent_item_group = get_item_group(site_name, oc_category.parent_id)
+        if doc_item_group:
             # update existed Item Group
-            doc_item_group = frappe.get_doc('Item Group', oc_category.name)
             params = {
                 'description': oc_category.description,
                 'show_in_website': 1,
-                'parent_item_group': doc_item_group_cache.get(oc_category.parent_id, root_item_group),
+                'parent_item_group': doc_parent_item_group.get('name'),
                 'oc_last_sync_from': datetime.now()
             }
             doc_item_group.update(params)
@@ -61,7 +60,7 @@ def pull_categories_from_oc(site_name, silent=False):
                 doc_item_group = frappe.get_doc('Item Group', oc_category.name)
                 skip_count += 1
                 extras = (1, 'skipped', 'Skipped: duplicate name')
-                results_list.append((oc_category.name, doc_item_group_cache.get(oc_category.parent_id, root_item_group), oc_category.id, '', '') + extras)
+                results_list.append((oc_category.name, doc_parent_item_group.get('name'), oc_category.id, '', '') + extras)
                 continue
             else:
                 # creating new Item Group
@@ -69,7 +68,7 @@ def pull_categories_from_oc(site_name, silent=False):
                     'doctype': 'Item Group',
                     'oc_site': site_name,
                     'item_group_name': oc_category.name,
-                    'parent_item_group': doc_item_group_cache.get(oc_category.parent_id, root_item_group),
+                    'parent_item_group': doc_parent_item_group.get('name'),
                     'oc_category_id': oc_category.id,
                     'description': oc_category.description,
                     'show_in_website': 'Yes',
@@ -83,7 +82,7 @@ def pull_categories_from_oc(site_name, silent=False):
                 doc_item_group.insert(ignore_permissions=True)
                 add_count += 1
                 extras = (1, 'added', 'Added')
-                results_list.append((doc_item_group.get('item_group_name'),
+                results_list.append((doc_item_group.get('name'),
                                     doc_item_group.get('parent_item_group'),
                                     doc_item_group.get('oc_category_id') or '',
                                     doc_item_group.get_formatted('oc_last_sync_from') or '',

@@ -198,6 +198,8 @@ def oc_validate(doc, method=None):
         else:
             frappe.msgprint('Order is not updated on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
     else:
+        # disabled for now creating new Sales Orders from ERPNext
+        return
         # add new order on Opencart site
         success, resp = oc_api.get(site_name).create_order(data)
         if success:
@@ -456,13 +458,24 @@ def pull_orders_from_oc(site_name, silent=False):
             sync_info([], 'Order Status "%s" cannot be found on this Opencart site' % status_name_to_pull, stop=True)
 
     db_customers = frappe.db.sql('select oc_customer_id from `tabCustomer` where oc_site = \'%s\'' % site_name, as_dict=1)
-    for db_customer in db_customers:
-        for oc_order in oc_api.get(site_name).get_orders_by_customer(db_customer.get('oc_customer_id')):
+    # for db_customer in db_customers:
+    #     for oc_order in oc_api.get(site_name).get_orders_by_customer(db_customer.get('oc_customer_id')):
+    if True:
+        if True:
+            oc_order = oc_api.get(site_name).get_order('1333')
+            # to remove
+            # uncomment coninue
             check_count += 1
+            order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
+            if order_status_name not in statuses_to_pull:
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
+                results_list.append(('', oc_order.id, '', '') + extras)
+                # continue
             doc_order = get_order(site_name, oc_order.id)
+            doc_customer = customers.get_customer(site_name, oc_order.customer_id)
             if doc_order:
                 # update existed Sales Order
-                doc_customer = customers.get_customer(site_name, oc_order.customer_id)
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
 
@@ -473,10 +486,12 @@ def pull_orders_from_oc(site_name, silent=False):
                     'total': oc_order.total,
                     'company': company,
                     'oc_is_updating': 1,
+                    'oc_status': order_status_name,
                     'oc_last_sync_from': datetime.now(),
                 })
                 doc_order.update(params)
                 doc_order.save()
+                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name)
                 update_count += 1
                 extras = (1, 'updated', 'Updated')
                 results_list.append((doc_order.get('name'),
@@ -485,19 +500,11 @@ def pull_orders_from_oc(site_name, silent=False):
                                      doc_order.get('modified')) + extras)
 
             else:
-                order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
-                if order_status_name not in statuses_to_pull:
-                    skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
-                    results_list.append(('', oc_order.id, '', '') + extras)
-                    continue
-
-                doc_customer = customers.get_customer(site_name, oc_order.customer_id)
                 if not doc_customer:
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed customer')
                     results_list.append(('', oc_order.id, '', '') + extras)
-                    continue
+                    # continue
 
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
@@ -514,6 +521,7 @@ def pull_orders_from_oc(site_name, silent=False):
                     'oc_is_updating': 1,
                     'oc_site': site_name,
                     'oc_order_id': oc_order.id,
+                    'oc_status': order_status_name,
                     'oc_sync_from': True,
                     'oc_last_sync_from': datetime.now(),
                     'oc_sync_to': True,
@@ -524,7 +532,7 @@ def pull_orders_from_oc(site_name, silent=False):
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed products')
                     results_list.append(('', oc_order.id, '', '') + extras)
-                    continue
+                    # continue
 
                 items_count = 0
                 for product in oc_order.products:
@@ -532,6 +540,11 @@ def pull_orders_from_oc(site_name, silent=False):
                     if not doc_item:
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" cannot be found' % (product.get('name'), product.get('product_id')))
+                        results_list.append(('', oc_order.id, '', '') + extras)
+                        break
+                    if doc_item.get('has_variants'):
+                        skip_count += 1
+                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" is a tempalte' % (product.get('name'), product.get('product_id')))
                         results_list.append(('', oc_order.id, '', '') + extras)
                         break
 
@@ -556,32 +569,10 @@ def pull_orders_from_oc(site_name, silent=False):
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: no products')
                         results_list.append(('', oc_order.id, '', '') + extras)
-                        continue
+                        # continue
 
                     doc_order.insert(ignore_permissions=True)
-
-                    # taxes related part
-                    # doc_template = sales_taxes_and_charges_template.get_first_by_territory(territory_name)
-
-                    # shipping related part
-                    # doc_store = oc_stores.get(site_name, oc_order.store_id)
-
-                    # doc_order.update({
-                    #     # 'apply_discount_on': 'Net Total',
-                    #     # 'discount_amount': 35.0,
-                    #     'taxes_and_charges': doc_template.get('name') or '',
-                    #     'shipping_rule': doc_store.get('oc_shipping_rule') or ''
-                    # })
-
-                    # doc_order.append_taxes_from_master()
-                    doc_order.set_taxes()
-                    doc_order.calculate_taxes_and_totals()
-
-                    doc_order.apply_shipping_rule()
-                    doc_order.calculate_taxes_and_totals()
-                    doc_order.update({'oc_is_updating': 1})
-                    doc_order.save()
-
+                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name)
                     add_count += 1
                     extras = (1, 'added', 'Added')
                     results_list.append((doc_order.get('name'),
@@ -633,3 +624,27 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
             # 'price_list_currency': doc_price_list.get('currency'),
             'warehouse': warehouse_name,
         })
+
+
+def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name):
+        # taxes related part
+        doc_template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'))
+
+        # shipping related part
+        doc_store = oc_stores.get(site_name, oc_order.store_id)
+
+        doc_order.update({
+            # 'apply_discount_on': 'Net Total',
+            # 'discount_amount': 35.0,
+            'taxes_and_charges': doc_template.get('name') or '',
+            'shipping_rule': doc_store.get('oc_shipping_rule') or ''
+        })
+
+        # doc_order.append_taxes_from_master()
+        doc_order.set_taxes()
+        doc_order.calculate_taxes_and_totals()
+
+        doc_order.apply_shipping_rule()
+        doc_order.calculate_taxes_and_totals()
+        doc_order.update({'oc_is_updating': 1})
+        doc_order.save()

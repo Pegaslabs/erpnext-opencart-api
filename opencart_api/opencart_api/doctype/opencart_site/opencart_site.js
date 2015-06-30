@@ -318,6 +318,7 @@ cur_frm.cscript.refresh = function(doc, dt, dn) {
     $msg.append('<h4>'+ 'Before you proceed, make sure that you have:' +'</h4>');
     $msg.append('<p>'+ ' - set Default Price List for each Customer Group' +'</p>');
     $msg.append('<p>'+ ' - specified Opencart Customer Group Rules for each Customer Group if needed' +'</p>');
+    $msg.append('<p>'+ ' - specified Shipping Rule for each Opencart Store' +'</p>');
     $(cur_frm.fields_dict['order_notice'].wrapper).html($msg.html());
 }
 
