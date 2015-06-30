@@ -491,7 +491,7 @@ def pull_orders_from_oc(site_name, silent=False):
                 })
                 doc_order.update(params)
                 doc_order.save()
-                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name)
+                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                 update_count += 1
                 extras = (1, 'updated', 'Updated')
                 results_list.append((doc_order.get('name'),
@@ -572,7 +572,7 @@ def pull_orders_from_oc(site_name, silent=False):
                         # continue
 
                     doc_order.insert(ignore_permissions=True)
-                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name)
+                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                     add_count += 1
                     extras = (1, 'added', 'Added')
                     results_list.append((doc_order.get('name'),
@@ -626,9 +626,9 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
         })
 
 
-def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name):
+def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company):
         # taxes related part
-        doc_template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'))
+        doc_template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'), company_name=company)
 
         # shipping related part
         doc_store = oc_stores.get(site_name, oc_order.store_id)
