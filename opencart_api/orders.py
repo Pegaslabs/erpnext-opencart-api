@@ -275,24 +275,24 @@ def pull_modified_from(site_name, silent=False):
     #     if True:
     #         oc_order = oc_api.get(site_name).get_order('1333')
             check_count += 1
-            order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
+            order_status_name = order_status_id_to_name_map.get(oc_order.get('order_status_id'))
             if order_status_name not in statuses_to_pull:
                 skip_count += 1
                 extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
-                results_list.append(('', oc_order.id, '', '') + extras)
+                results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                 continue
-            doc_order = get_order(site_name, oc_order.id)
-            doc_customer = customers.get_customer(site_name, oc_order.customer_id)
+            doc_order = get_order(site_name, oc_order.get('order_id'))
+            doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
             if doc_order:
                 # update existed Sales Order
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
 
                 params.update({
-                    'currency': oc_order.currency_code,
+                    'currency': oc_order.get('currency_code'),
                     # 'conversion_rate': float(oc_order.currency_value),
-                    'base_net_total': oc_order.total,
-                    'total': oc_order.total,
+                    'base_net_total': oc_order.get('total'),
+                    'total': oc_order.get('total'),
                     'company': company,
                     'oc_is_updating': 1,
                     'oc_status': order_status_name,
@@ -312,7 +312,7 @@ def pull_modified_from(site_name, silent=False):
                 if not doc_customer:
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed customer')
-                    results_list.append(('', oc_order.id, '', '') + extras)
+                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                     continue
 
                 params = {}
@@ -321,15 +321,15 @@ def pull_modified_from(site_name, silent=False):
                 # creating new Sales Order
                 params.update({
                     'doctype': 'Sales Order',
-                    'currency': oc_order.currency_code,
-                    'base_net_total': oc_order.total,
-                    'total': oc_order.total,
+                    'currency': oc_order.get('currency_code'),
+                    'base_net_total': oc_order.get('total'),
+                    'total': oc_order.get('total'),
                     'company': company,
                     'customer': doc_customer.name,
                     'delivery_date': add_days(nowdate(), 7),
                     'oc_is_updating': 1,
                     'oc_site': site_name,
-                    'oc_order_id': oc_order.id,
+                    'oc_order_id': oc_order.get('order_id'),
                     'oc_status': order_status_name,
                     'oc_sync_from': True,
                     'oc_last_sync_from': datetime.now(),
@@ -337,24 +337,24 @@ def pull_modified_from(site_name, silent=False):
                     'oc_last_sync_to': datetime.now(),
                 })
                 doc_order = frappe.get_doc(params)
-                if not oc_order.products:
+                if not oc_order.get('products'):
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed products')
-                    results_list.append(('', oc_order.id, '', '') + extras)
+                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                     continue
 
                 items_count = 0
-                for product in oc_order.products:
+                for product in oc_order.get('products'):
                     doc_item = items.get_item(site_name, product.get('product_id'))
                     if not doc_item:
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" cannot be found' % (product.get('name'), product.get('product_id')))
-                        results_list.append(('', oc_order.id, '', '') + extras)
+                        results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         break
                     if doc_item.get('has_variants'):
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" is a tempalte' % (product.get('name'), product.get('product_id')))
-                        results_list.append(('', oc_order.id, '', '') + extras)
+                        results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         break
 
                     # price_list_rate = frappe.db.get_value('Item Price', {'price_list': price_list_name, 'item_code': doc_item.get('item_code')}, 'price_list_rate') or 0
@@ -377,7 +377,7 @@ def pull_modified_from(site_name, silent=False):
                     if not items_count:
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: no products')
-                        results_list.append(('', oc_order.id, '', '') + extras)
+                        results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
 
                     doc_order.insert(ignore_permissions=True)
