@@ -458,20 +458,18 @@ def pull_orders_from_oc(site_name, silent=False):
             sync_info([], 'Order Status "%s" cannot be found on this Opencart site' % status_name_to_pull, stop=True)
 
     db_customers = frappe.db.sql('select oc_customer_id from `tabCustomer` where oc_site = \'%s\'' % site_name, as_dict=1)
-    # for db_customer in db_customers:
-    #     for oc_order in oc_api.get(site_name).get_orders_by_customer(db_customer.get('oc_customer_id')):
-    if True:
-        if True:
-            oc_order = oc_api.get(site_name).get_order('1333')
-            # to remove
-            # uncomment coninue
+    for db_customer in db_customers:
+        for oc_order in oc_api.get(site_name).get_orders_by_customer(db_customer.get('oc_customer_id')):
+    # if True:
+    #     if True:
+    #         oc_order = oc_api.get(site_name).get_order('1333')
             check_count += 1
             order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
             if order_status_name not in statuses_to_pull:
                 skip_count += 1
                 extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
                 results_list.append(('', oc_order.id, '', '') + extras)
-                # continue
+                continue
             doc_order = get_order(site_name, oc_order.id)
             doc_customer = customers.get_customer(site_name, oc_order.customer_id)
             if doc_order:
@@ -504,7 +502,7 @@ def pull_orders_from_oc(site_name, silent=False):
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed customer')
                     results_list.append(('', oc_order.id, '', '') + extras)
-                    # continue
+                    continue
 
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
@@ -532,7 +530,7 @@ def pull_orders_from_oc(site_name, silent=False):
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed products')
                     results_list.append(('', oc_order.id, '', '') + extras)
-                    # continue
+                    continue
 
                 items_count = 0
                 for product in oc_order.products:
@@ -569,7 +567,7 @@ def pull_orders_from_oc(site_name, silent=False):
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: no products')
                         results_list.append(('', oc_order.id, '', '') + extras)
-                        # continue
+                        continue
 
                     doc_order.insert(ignore_permissions=True)
                     resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
