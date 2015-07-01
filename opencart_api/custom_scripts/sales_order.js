@@ -1,5 +1,9 @@
 
 cur_frm.cscript.refresh = function(doc) {
+	if(doc.__islocal) {
+		delivery_date = frappe.datetime.add_days(frappe.datetime.nowdate(), 7);
+		this.frm.set_value("delivery_date", delivery_date);
+	}
 	if(doc.oc_site) {
 		frappe.call({
 			method: "opencart_api.oc_site.get_order_status_name_list",
@@ -15,8 +19,9 @@ cur_frm.cscript.refresh = function(doc) {
 	}
 }
 
-
-
+cur_frm.cscript.validate = function(doc) {
+	
+}
 
 // cur_frm.cscript.refresh = function(doc, cdt, cdn) {
 
