@@ -81,7 +81,8 @@
 "","""Customer-oc_site""","Customer","Link","Site","oc_is_updating","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_customer_id""","Customer","Data","Opencart Customer ID","oc_site","","Opencart Customer ID","","oc_customer_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_status""","Customer","Check","Status (Enabled/Disabled)","oc_customer_id","","","","oc_status",0,0,0,0,"","1",0,"",0,0,0,0,0,0
-"","""Customer-oc_firstname""","Customer","Data","First Name","oc_status","","First Name","","oc_firstname",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Customer-oc_guest""","Customer","Check","Is Guest Customer","oc_customer_id","","","","oc_guest",0,0,1,0,"","0",0,"",0,0,0,0,0,0
+"","""Customer-oc_firstname""","Customer","Data","First Name","oc_guest","","First Name","","oc_firstname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_lastname""","Customer","Data","Last Name","oc_firstname","","Last Name","","oc_lastname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_telephone""","Customer","Data","Telephone","oc_lastname","","Telephone","","oc_telephone",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_fax""","Customer","Data","Fax","oc_telephone","","Fax","","oc_fax",0,0,0,0,"","",0,"",0,0,0,0,0,0

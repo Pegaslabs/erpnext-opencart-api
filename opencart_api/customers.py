@@ -5,8 +5,10 @@ import uuid
 import frappe
 from frappe.utils import cstr
 
-import oc_api
 import customer_groups
+import territories
+import oc_api
+import oc_stores
 from decorators import sync_to_opencart
 
 
@@ -118,6 +120,12 @@ def get_customer(site_name, oc_customer_id):
         return frappe.get_doc('Customer', db_customer.get('name'))
 
 
+def get_guest_customer(site_name, email, first_name, last_name):
+    db_customer = frappe.db.get('Customer', {'oc_site': site_name, 'oc_email': email, 'oc_firstname': first_name, 'oc_lastname': last_name})
+    if db_customer:
+        return frappe.get_doc('Customer', db_customer.get('name'))
+
+
 def get_customer_group(site_name, oc_customer_id, doc_customer=None):
     if doc_customer:
         return frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
@@ -132,6 +140,51 @@ def get_customer_group_id(site_name, oc_customer_id, doc_customer=None):
     doc_customer_group = get_customer_group(site_name, oc_customer_id, doc_customer)
     if doc_customer_group:
         return doc_customer_group.get('oc_customer_group_id')
+
+
+def make_full_name(first_name, last_name):
+    return first_name + ' ' + last_name
+
+
+def create_guest_from_order(site_name, oc_order):
+    doc_store = oc_stores.get(site_name, oc_order.get('store_id'))
+    if doc_store:
+        customer_group_name = doc_store.get('oc_customer_group')
+        if customer_group_name:
+            doc_customer_group = frappe.get_doc('Customer Group', customer_group_name)
+            default_price_list = doc_customer_group.get('default_price_list')
+            territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+            # create new Customer
+            params = {
+                'doctype': 'Customer',
+                'customer_type': 'Individual',
+                'territory': territory_name,
+                'customer_name': make_full_name(oc_order.get('firstname'), oc_order.get('lastname')),
+                'customer_group': doc_customer_group.get('name'),
+                'naming_series': 'CUST-',
+                'default_price_list': default_price_list,
+                'oc_guest': 1,
+                'oc_is_updating': 1,
+                'oc_site': site_name,
+                'oc_customer_id': oc_order.get('customer_id'),
+                'oc_status': 1,
+                'oc_sync_from': True,
+                'oc_last_sync_from': datetime.now(),
+                'oc_sync_to': True,
+                'oc_last_sync_to': datetime.now(),
+                'oc_firstname': oc_order.get('firstname'),
+                'oc_lastname': oc_order.get('lastname'),
+                'oc_telephone': oc_order.get('telephone'),
+                'oc_fax': oc_order.get('fax'),
+                'oc_email': oc_order.get('email')
+            }
+            doc_customer = frappe.get_doc(params)
+            doc_customer.insert(ignore_permissions=True)
+            return doc_customer
+        else:
+            frappe.throw('Customer Group is not set in Opencart Store "%s"' % doc_store.get('name'))
+    else:
+        frappe.throw('Opencart Store with store_id "%s" does not exist' % oc_order.get('store_id'))
 
 
 @frappe.whitelist()
@@ -152,7 +205,7 @@ def pull_customers_from_oc(site_name, silent=False):
     for success, oc_customer in oc_api.get(site_name).get_customers():
         check_count += 1
 
-        oc_customer_name = oc_customer.get('firstname') + ' ' + oc_customer.get('lastname')
+        oc_customer_name = make_full_name(oc_customer.get('firstname'), oc_customer.get('lastname'))
         customer_id = oc_customer.get('customer_id')
 
         # validation

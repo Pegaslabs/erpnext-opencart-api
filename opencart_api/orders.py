@@ -278,15 +278,23 @@ def pull_modified_from(site_name, silent=False):
             order_status_name = order_status_id_to_name_map.get(oc_order.get('order_status_id'))
             if order_status_name not in statuses_to_pull:
                 skip_count += 1
-                extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
-                results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                # extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
+                # results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                 continue
             doc_order = get_order(site_name, oc_order.get('order_id'))
-            doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
+            if oc_order.get('customer_id') == '0':
+                # trying to get guest customer
+                doc_customer = customers.get_guest_customer(site_name, oc_order.get('email'), oc_order.get('firstname'), oc_order.get('lastname'))
+                if not doc_customer:
+                    # create new guest customer
+                    doc_customer = customers.create_guest_from_order(site_name, oc_order)
+            else:
+                doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
+
             if doc_order:
                 # update existed Sales Order
                 params = {}
-                resolve_customer_group_rules(oc_order, doc_customer, params)
+                resolve_customer_group_rules2(oc_order, doc_customer, params)
 
                 params.update({
                     'currency': oc_order.get('currency_code'),
@@ -300,7 +308,7 @@ def pull_modified_from(site_name, silent=False):
                 })
                 doc_order.update(params)
                 doc_order.save()
-                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
+                resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
                 update_count += 1
                 extras = (1, 'updated', 'Updated')
                 results_list.append((doc_order.get('name'),
@@ -316,7 +324,7 @@ def pull_modified_from(site_name, silent=False):
                     continue
 
                 params = {}
-                resolve_customer_group_rules(oc_order, doc_customer, params)
+                resolve_customer_group_rules2(oc_order, doc_customer, params)
 
                 # creating new Sales Order
                 params.update({
@@ -381,7 +389,7 @@ def pull_modified_from(site_name, silent=False):
                         continue
 
                     doc_order.insert(ignore_permissions=True)
-                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
+                    resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
                     add_count += 1
                     extras = (1, 'added', 'Added')
                     results_list.append((doc_order.get('name'),
@@ -575,6 +583,36 @@ def pull_orders_from_oc(site_name, silent=False):
     return results
 
 
+def resolve_customer_group_rules2(oc_order, doc_customer, params):
+        territory_to_price_list_map = {}
+        territory_to_warehouse_map = {}
+        doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
+        rules = doc_customer_group.get('oc_customer_group_rule')
+        for rule in rules:
+            if rule.get('condition') == 'If Territory of Customer is':
+                territory_to_price_list_map[rule.get('condition_territory')] = rule.get('action_price_list')
+                territory_to_warehouse_map[rule.get('condition_territory')] = rule.get('action_warehouse')
+
+        territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+        price_list_name = territory_to_price_list_map.get(territory_name, doc_customer_group.get('default_price_list'))
+        # doc_price_list = price_lists.get_by_name(site_name, price_list_name)
+        warehouse_name = territory_to_warehouse_map.get(territory_name, '')
+        if not price_list_name:
+            frappe.throw('Please specify Default Price List for Customer Group "%s"' % cstr(doc_customer_group.get('customer_group_name')))
+
+        if territory_name != doc_customer.get('territory'):
+            doc_customer.update({'territory': territory_name})
+            doc_customer.update({'oc_is_updating': 1})
+            doc_customer.save()
+
+        params.update({
+            'territory': territory_name,
+            'selling_price_list': price_list_name,
+            # 'price_list_currency': doc_price_list.get('currency'),
+            'warehouse': warehouse_name,
+        })
+
+
 def resolve_customer_group_rules(oc_order, doc_customer, params):
         territory_to_price_list_map = {}
         territory_to_warehouse_map = {}
@@ -603,6 +641,32 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
             # 'price_list_currency': doc_price_list.get('currency'),
             'warehouse': warehouse_name,
         })
+
+
+def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company):
+        # taxes related part
+        doc_template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'), company_name=company)
+        if not doc_template:
+            frappe.throw('Cannot resolve Sales Taxes and Charges Template for Territory "%s"' % doc_customer.get('territory'))
+
+        # shipping related part
+        doc_store = oc_stores.get(site_name, oc_order.get('store_id'))
+
+        doc_order.update({
+            # 'apply_discount_on': 'Net Total',
+            # 'discount_amount': 35.0,
+            'taxes_and_charges': doc_template.get('name') or '',
+            'shipping_rule': doc_store.get('oc_shipping_rule') or ''
+        })
+
+        # doc_order.append_taxes_from_master()
+        doc_order.set_taxes()
+        doc_order.calculate_taxes_and_totals()
+
+        doc_order.apply_shipping_rule()
+        doc_order.calculate_taxes_and_totals()
+        doc_order.update({'oc_is_updating': 1})
+        doc_order.save()
 
 
 def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company):
