@@ -2,4 +2,7 @@
 *.pyc
 *.egg-info
 *.swp
+*.map
 tags
+rest_admin_api
+sftp-config.json
