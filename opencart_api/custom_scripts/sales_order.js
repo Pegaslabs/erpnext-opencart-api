@@ -24,6 +24,7 @@ cur_frm.cscript.customer = function() {
 	erpnext.utils.get_party_details(this.frm, null, null, function(){me.apply_pricing_rule()});
     
     // custom code
+    // updating Sales Order company
     frappe.model.with_doc("Customer", me.frm.doc.customer, function(r) {
 	    var doc_customer = frappe.model.get_doc("Customer", me.frm.doc.customer);
         if(doc_customer.oc_site && doc_customer.oc_customer_id) {
@@ -33,6 +34,8 @@ cur_frm.cscript.customer = function() {
             });
         }
 	});
+
+	// updating taxes and shipping rule
 }
 
 

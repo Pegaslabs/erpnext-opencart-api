@@ -203,10 +203,6 @@ def pull(site_name, silent=False):
                                 'date_end': discount.get('date_end'),
                             })
                         doc_item_price.save()
-
-        if add_count > 1:
-            break
-
     results = {
         'check_count': check_count,
         'add_count': add_count,
