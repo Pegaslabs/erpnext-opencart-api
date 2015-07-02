@@ -6,6 +6,8 @@ import frappe, json, os, traceback
 import urllib2
 
 # ==================== Decorators for ERPNext APIs ======================
+
+
 def post_only(fn):
     def create_fn():
         if frappe.local.request.method=="POST":
@@ -14,6 +16,7 @@ def post_only(fn):
             return {"status": -1, "error": "GET method is not allowed"}
     return create_fn
 
+
 def get_only(fn):
     def create_fn():
         if frappe.local.request.method=="GET":
@@ -21,6 +24,7 @@ def get_only(fn):
         else:
             return {"status": -1, "error": "POST method is not allowed"}
     return create_fn
+
 
 def authenticated_api(fn):
     def auth_fn(*args, **kw):
