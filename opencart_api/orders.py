@@ -271,9 +271,6 @@ def pull_modified_from(site_name, silent=False):
     while True:
         success, oc_orders = oc_api.get(site_name).get_orders_modified_from_to(modified_from.strftime("%Y-%m-%d"), modified_to.strftime("%Y-%m-%d"))
         for oc_order in oc_orders:
-    # if True:
-    #     if True:
-    #         oc_order = oc_api.get(site_name).get_order('1333')
             check_count += 1
             order_status_name = order_status_id_to_name_map.get(oc_order.get('order_status_id'))
             if order_status_name not in statuses_to_pull:
@@ -396,12 +393,6 @@ def pull_modified_from(site_name, silent=False):
                                          doc_order.get('oc_order_id'),
                                          doc_order.get_formatted('oc_last_sync_from'),
                                          doc_order.get('modified')) + extras)
-        #         if add_count > 10:
-        #             break
-        #     if add_count > 10:
-        #         break
-        # if add_count > 10:
-        #     break
         if modified_to >= now_date:
             break
         modified_from = add_days(modified_to, 1)
@@ -449,9 +440,6 @@ def pull_orders_from_oc(site_name, silent=False):
     db_customers = frappe.db.sql('select oc_customer_id from `tabCustomer` where oc_site = \'%s\'' % site_name, as_dict=1)
     for db_customer in db_customers:
         for oc_order in oc_api.get(site_name).get_orders_by_customer(db_customer.get('oc_customer_id')):
-    # if True:
-    #     if True:
-    #         oc_order = oc_api.get(site_name).get_order('1333')
             check_count += 1
             order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
             if order_status_name not in statuses_to_pull:
@@ -566,12 +554,6 @@ def pull_orders_from_oc(site_name, silent=False):
                                          doc_order.get('oc_order_id'),
                                          doc_order.get_formatted('oc_last_sync_from'),
                                          doc_order.get('modified')) + extras)
-        #         if add_count > 10:
-        #             break
-        #     if add_count > 10:
-        #         break
-        # if add_count > 10:
-        #     break
     results = {
         'check_count': check_count,
         'add_count': add_count,
