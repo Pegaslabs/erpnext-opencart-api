@@ -3,6 +3,7 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 		delivery_date = frappe.datetime.add_days(frappe.datetime.nowdate(), 7);
 		this.frm.set_value("delivery_date", delivery_date);
 	}
+       
 	if(doc.oc_site) {
 		frappe.call({
 			method: "opencart_api.oc_site.get_order_status_name_list",
@@ -17,6 +18,23 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 		});
 	}
 }
+
+cur_frm.cscript.customer = function() {
+    var me = this;
+	erpnext.utils.get_party_details(this.frm, null, null, function(){me.apply_pricing_rule()});
+    
+    // custom code
+    frappe.model.with_doc("Customer", me.frm.doc.customer, function(r) {
+	    var doc_customer = frappe.model.get_doc("Customer", me.frm.doc.customer);
+        if(doc_customer.oc_site && doc_customer.oc_customer_id) {
+            frappe.model.with_doc("Opencart Site", doc_customer.oc_site, function(r) {
+                var doc_oc_site = frappe.model.get_doc("Opencart Site", doc_customer.oc_site);
+                me.frm.set_value("company", doc_oc_site.company);
+            });
+        }
+	});
+}
+
 
 // cur_frm.cscript.validate = function(doc) {
 	
