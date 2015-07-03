@@ -21,9 +21,41 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 
 cur_frm.cscript.customer = function() {
     var me = this;
-	erpnext.utils.get_party_details(this.frm, null, null, function(){me.apply_pricing_rule()});
-    
+    erpnext.utils.get_party_details(this.frm, null, null, function(){me.apply_pricing_rule()});
+
     // custom code
+	// updating taxes and charges
+    frappe.call({
+		method: "opencart_api.orders.resolve_taxes_and_charges",
+		args: {
+			"customer": me.frm.doc.customer,
+		},
+		callback: function(r) {
+			if(!r.exc) {
+				if(r.message) {
+				    me.frm.set_value("taxes_and_charges", r.message);
+				    me.calculate_taxes_and_totals();
+				}
+			}
+		}
+	});
+
+	// updating shipping rule
+    frappe.call({
+		method: "opencart_api.orders.resolve_shipping_rule",
+		args: {
+			"customer": me.frm.doc.customer,
+		},
+		callback: function(r) {
+			if(!r.exc) {
+				if(r.message) {
+				    me.frm.set_value("shipping_rule", r.message);
+				    me.shipping_rule();
+				}
+			}
+		}
+	});
+
     // updating Sales Order company
     frappe.model.with_doc("Customer", me.frm.doc.customer, function(r) {
 	    var doc_customer = frappe.model.get_doc("Customer", me.frm.doc.customer);
@@ -34,8 +66,6 @@ cur_frm.cscript.customer = function() {
             });
         }
 	});
-
-	// updating taxes and shipping rule
 }
 
 

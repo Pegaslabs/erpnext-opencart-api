@@ -625,43 +625,85 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
         })
 
 
-def resolve_shipping_rule(site_name, territory, store_id, doc_store=None):
-    if doc_store is None:
-        doc_store = oc_stores.get(site_name, store_id)
+@frappe.whitelist()
+def resolve_shipping_rule(customer, db_customer=None, doc_customer=None):
+    if db_customer is not None:
+        obj_customer = db_customer
+    elif doc_customer is not None:
+        obj_customer = doc_customer
+    elif customer:
+        obj_customer = frappe.db.get('Customer', customer)
+    else:
+        return
 
+    if not obj_customer.get('oc_site'):
+        frappe.msgprint('Cannot resolve Shipping Rule: Customer does not have any Opencart Site set')
+        return
+
+    db_oc_store = frappe.db.get('Opencart Store',
+                                {'oc_site': obj_customer.get('oc_site'),
+                                 'oc_customer_group': obj_customer.get('customer_group')})
+    if not db_oc_store:
+        frappe.msgprint('Cannot resolve Shipping Rule: there is not Opencart Store with bindigs to Customer Group "%s"' % obj_customer.get('customer_group'))
+        return
+    doc_oc_store = frappe.get_doc('Opencart Store', db_oc_store.get('name'))
     # check for strong coincidence
-    for doc_oc_shipping_rule in doc_store.get('oc_shipping_rules'):
+    for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
         doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
         for doc_applicable_territory in doc_shipping_rule.get('territories'):
-            if doc_applicable_territory.territory == territory:
-                return doc_shipping_rule
+            if doc_applicable_territory.territory == obj_customer.get('territory'):
+                return doc_shipping_rule.get('name')
 
     # check for non-strong coincidence, take into account the territory hierarchy
-    for doc_oc_shipping_rule in doc_store.get('oc_shipping_rules'):
+    for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
         doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
         for doc_applicable_territory in doc_shipping_rule.get('territories'):
-            parent_territory = frappe.get_doc('Territory', territory).get('parent_territory')
+            parent_territory = frappe.get_doc('Territory', obj_customer.get('territory')).get('parent_territory')
             while parent_territory:
                 if doc_applicable_territory.territory == parent_territory:
-                    return doc_shipping_rule
+                    return doc_shipping_rule.get('name')
                 parent_territory = frappe.get_doc('Territory', parent_territory).get('parent_territory')
+    frappe.msgprint('Shipping Rule is not resolved')
+
+
+@frappe.whitelist()
+def resolve_taxes_and_charges(customer, db_customer=None, doc_customer=None):
+    if db_customer is not None:
+        obj_customer = db_customer
+    elif doc_customer is not None:
+        obj_customer = doc_customer
+    elif customer:
+        obj_customer = frappe.db.get('Customer', customer)
+    else:
+        return
+
+    if not obj_customer.get('oc_site'):
+        frappe.msgprint('Cannot resolve Taxes and Charges: Customer does not have any Opencart Site set')
+        return
+    doc_site = frappe.get_doc('Opencart Site', obj_customer.get('oc_site'))
+    doc_template = sales_taxes_and_charges_template.get_first_by_territory(obj_customer.get('territory'), company_name=doc_site.get('company'))
+    if not doc_template:
+        frappe.msgprint('Please specify Sales Taxes and Charges Template for territory "%s"' % (obj_customer.get('territory'), ))
+        return
+    return doc_template.get('name')
 
 
 def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company):
         # taxes related part
-        doc_template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'), company_name=company)
-        if not doc_template:
+        template = resolve_taxes_and_charges(doc_customer.get('name'), doc_customer=doc_customer)
+        template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'), company_name=company)
+        if not template:
             frappe.throw('Cannot resolve Sales Taxes and Charges Template for Territory "%s"' % doc_customer.get('territory'))
 
         # shipping related part
         doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
-        doc_shipping_rule = resolve_shipping_rule(site_name, doc_customer.get('territory'), oc_order.get('store_id'), doc_oc_store)
-        if not doc_shipping_rule:
+        shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer)
+        if not shipping_rule:
             frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s"' % (doc_oc_store.get('name'), doc_customer.get('territory')))
 
         doc_order.update({
-            'taxes_and_charges': doc_template.get('name') or '',
-            'shipping_rule': doc_shipping_rule.get('name') or ''
+            'taxes_and_charges': template or '',
+            'shipping_rule': shipping_rule or ''
         })
 
         doc_order.set_taxes()
