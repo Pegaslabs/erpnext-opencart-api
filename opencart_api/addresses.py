@@ -35,7 +35,7 @@ def create_or_update(site_name, oc_customer, doc_customer):
         frappe.msgprint('Warning. Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
 
-    if not oc_address.get('telephone'):
+    if not doc_customer.get('telephone'):
         frappe.msgprint('Warning. Telephone is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
 
@@ -64,7 +64,7 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'doctype': 'Address',
             'address_type': 'Billing',
             'customer': doc_customer.get('name'),
-            'phone': oc_customer.get('telephone', 'not specified'),
+            'phone': oc_customer.get('telephone', ''),
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
             'customer_name': oc_address.get('firstname', '') + ' ' + oc_address.get('lastname', ''),
