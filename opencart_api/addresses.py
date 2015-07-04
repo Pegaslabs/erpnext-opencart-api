@@ -24,12 +24,15 @@ def create_or_update(site_name, oc_customer, doc_customer):
         for addr_id, addr in oc_addresses.items():
             oc_address = addr
             break
+    # no addresses found
+    if not oc_address:
+        return
 
     oc_address_id = oc_address.get('address_id')
     doc_address = get_address(site_name, oc_address_id)
 
     if not oc_address.get('country'):
-        frappe.msgprint('Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
+        frappe.msgprint('Warning. Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
 
     countries.create_if_does_not_exist(oc_address.get('country'))
@@ -71,7 +74,13 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'oc_address_id': oc_address_id,
         }
         doc_address = frappe.get_doc(params)
-        # try:
         doc_address.insert(ignore_permissions=True)
-        # except Exception as ex:
-        #     frappe.msgprint(str(ex))
+
+    # update Customer's name to Company name if needed
+    if oc_address.get('company') and (oc_address.get('company') != doc_customer.get('customer_name') or 'Company' != doc_customer.get('customer_type')):
+        doc_customer.update({
+            'oc_is_updating': 1,
+            'customer_type': 'Company',
+            'customer_name': oc_address.get('company')
+        })
+        doc_customer.save()

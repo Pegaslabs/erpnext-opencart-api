@@ -22,13 +22,16 @@ def create_or_update(site_name, oc_customer, doc_customer):
         for addr_id, addr in oc_addresses.items():
             oc_address = addr
             break
+    # no addresses found
+    if not oc_address:
+        return
 
     # contact_id is the same as address_id
     oc_contact_id = oc_address.get('address_id')
     doc_contact = get_contact(site_name, oc_contact_id)
 
     if not oc_address.get('firstname'):
-        frappe.msgprint('First name is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
+        frappe.msgprint('Warning. First name is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
 
     if doc_contact:
