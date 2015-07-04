@@ -40,6 +40,9 @@ def oc_validate(doc, method=None):
     get_product_success, oc_product = oc_api.get(site_name).get_product(oc_product_id)
 
     data = {}
+    if doc.get('price_list_rate'):
+        data.update({'price': doc.get('price_list_rate')})
+
     if oc_product_id and get_product_success:
         # discounts
         product_discount = []
@@ -62,10 +65,10 @@ def oc_validate(doc, method=None):
         # update existed product on Opencart site
         success = oc_api.get(site_name).update_product(oc_product_id, data)
         if success:
-            frappe.msgprint('Product\'s discounts are updated successfully on Opencart site')
+            frappe.msgprint('Product\'s price and discounts are updated successfully on Opencart site')
             doc_item.update({'oc_last_sync_to': datetime.now()})
         else:
-            frappe.msgprint('Product\'s discounts are not updated on Opencart site. Error: Unknown')
+            frappe.msgprint('Product\'s price and discounts are not updated on Opencart site. Error: Unknown')
     else:
         frappe.msgprint('Product\'s discounts are updated on Opencart. Error: such product does not exist.')
 
@@ -96,7 +99,7 @@ def pull(site_name, silent=False):
                     doc_customer_group = frappe.get('Customer Group', customer_group_name)
                     customer_groups_cache[doc_customer_group.get('oc_customer_group_id')] = doc_customer_group
 
-    for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id']):
+    for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id'])[:10]:
         item_code = dict_item.get('item_code')
         for doc_store in doc_stores:
             oc_api_obj = oc_api_cache.get(doc_store.get('name'))
@@ -107,7 +110,6 @@ def pull(site_name, silent=False):
                     extras = (1, 'skipped', 'Skipped: cannot get product with product_id %s' % dict_item.get('oc_product_id'))
                     results_list.append(('', '', '', '', '') + extras)
                     continue
-
             for doc_oc_price_list in doc_store.get('oc_price_lists'):
                 check_count += 1
                 is_master_price_list = doc_oc_price_list.get('is_master')
@@ -124,7 +126,6 @@ def pull(site_name, silent=False):
                     for discount in oc_product.get('discounts'):
                         if customer_group_id == discount.get('customer_group_id') and int(discount.get('quantity', 0)) < 2:
                             price = float(discount.get('price', 0))
-
                 if doc_item_price:
                     # update existed Item Price
                     doc_item_price.update({
@@ -151,7 +152,7 @@ def pull(site_name, silent=False):
                             })
                     doc_item_price.save()
 
-                    skip_count += 1
+                    update_count += 1
                     extras = (1, 'updated', 'Updated')
                     results_list.append((doc_item_price.get('name'),
                                         doc_item_price.get('item_code'),

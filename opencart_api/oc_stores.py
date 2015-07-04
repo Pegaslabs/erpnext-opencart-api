@@ -13,7 +13,7 @@ def get(site_name, oc_store_id):
 
 
 def get_all(site_name):
-    return [frappe.get_doc('Opencart Store', db_store.get('name')) for db_store in frappe.get_all('Opencart Store')]
+    return [frappe.get_doc('Opencart Store', db_store.get('name')) for db_store in frappe.get_all('Opencart Store', filters={'oc_site': site_name})]
 
 
 @frappe.whitelist()
