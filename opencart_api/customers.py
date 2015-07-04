@@ -5,6 +5,8 @@ import uuid
 import frappe
 from frappe.utils import cstr
 
+import addresses
+import contacts
 import customer_groups
 import territories
 import oc_api
@@ -67,6 +69,47 @@ def oc_validate(doc, method=None):
         #     }
         # ]
     }
+
+
+            # 'phone': oc_customer.get('telephone', ''),
+            # 'fax': oc_customer.get('fax', ''),
+            # 'email_id': oc_customer.get('email', ''),
+            # 'customer_name': oc_address.get('firstname', '') + ' ' + oc_address.get('lastname', ''),
+            # 'pincode': oc_address.get('postcode', ''),
+            # 'country': oc_address.get('country', ''),
+            # 'state': oc_address.get('zone'),
+            # 'city': oc_address.get('city', ''),
+            # 'address_line1': oc_address.get('address_1', ''),
+            # 'address_line2': oc_address.get('address_2', ''),
+            # 'oc_site': site_name,
+            # 'oc_address_id': oc_customer.get('address_id'),
+
+
+    # # addresses
+    # addresses = []
+    # address_fields = ['name', 'oc_address_id', 'address_line1', 'address_line2', 'city', 'pincode', 'country']
+    # db_addresses = frappe.get_all('Address', fields=address_fields, filters={'oc_site': site_name, 'customer': doc.get('name')})
+    # raise Exception(str(db_addresses))
+    # for db_address in db_addresses:
+    #     db_contact = frappe.db.get('Contact', {'oc_site': site_name, 'oc_contact_id': db_address.get('oc_address_id')})
+    #     if not db_contact:
+    #         frappe.msgprint('Cannot find Contact related to Customer "%s"' % (doc.get('name')))
+    #         continue
+    #     addresses.append({
+    #         'firstname': db_contact.get('first_name'),
+    #         'lastname': db_contact.get('last_name'),
+    #         # 'company': db_address.get(''),
+    #         'address_1': db_address.get('address_line1'),
+    #         'address_2': db_address.get('address_line2'),
+    #         'city': db_address.get('city'),
+    #         # 'country_id': '1',
+    #         # 'zone_id': '1',
+    #         'postcode': db_address.get('pincode'),
+    #         'country': db_address.get('country'),
+    #         # 'default': '1'
+    #     })
+    # if addresses:
+    #     data['address'] = addresses
 
     # updating or creating customer
     oc_customer_id = doc.get('oc_customer_id')
@@ -203,6 +246,10 @@ def pull_customers_from_oc(site_name, silent=False):
     default_customer_territory = site_doc.get('default_customer_territory') or 'All Territories'
     doc_customer_groups_cache = {}
     for success, oc_customer in oc_api.get(site_name).get_customers():
+    # success, oc_customer = oc_api.get(site_name).get_customer('1332')
+    # while True:
+    #     if check_count >= 1:
+    #         break
         check_count += 1
 
         oc_customer_name = make_full_name(oc_customer.get('firstname'), oc_customer.get('lastname'))
@@ -245,6 +292,11 @@ def pull_customers_from_oc(site_name, silent=False):
             }
             doc_customer.update(params)
             doc_customer.save()
+
+            # addresses and contacts
+            addresses.create_or_update(site_name, oc_customer, doc_customer)
+            contacts.create_or_update(site_name, oc_customer, doc_customer)
+
             update_count += 1
             extras = (1, 'updated', 'Updated')
             results_list.append((doc_customer.get('name'),
@@ -286,9 +338,14 @@ def pull_customers_from_oc(site_name, silent=False):
                 'oc_email': oc_customer.get('email')
             }
             doc_customer = frappe.get_doc(params)
-            if not doc_customer.get('customer_name'):
+            if not doc_customer.get('customer_name').strip():
                 continue
             doc_customer.insert(ignore_permissions=True)
+
+            # addresses and contacts
+            addresses.create_or_update(site_name, oc_customer, doc_customer)
+            contacts.create_or_update(site_name, oc_customer, doc_customer)
+
             add_count += 1
             extras = (1, 'added', 'Added')
             results_list.append((doc_customer.get('customer_name'),

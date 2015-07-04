@@ -76,7 +76,7 @@
 "","""Customer Group-oc_last_sync_to""","Customer Group","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer Group-oc_settings2""","Customer Group","Section Break","Opencart Customer Group Rules","oc_last_sync_to","","","","oc_settings2",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer Group-oc_customer_group_rule""","Customer Group","Table","Customer Group Rules","oc_settings2","","Opencart Customer Group Rule","","oc_customer_group_rule",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Customer-oc_settings""","Customer","Section Break","Opencart Settings","sales_team","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Customer-oc_settings""","Customer","Section Break","Opencart Settings","contact_html","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_is_updating""","Customer","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Customer-oc_site""","Customer","Link","Site","oc_is_updating","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_customer_id""","Customer","Data","Opencart Customer ID","oc_site","","Opencart Customer ID","","oc_customer_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
@@ -140,3 +140,9 @@
 "","""Item Price-oc_is_updating""","Item Price","Check","Is Updating","oc_discounts","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Price List-oc_settings""","Price List","Section Break","Opencart Settings","territories","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Price List-oc_customer_group""","Price List","Link","Customer Group","oc_settings","","Customer Group","","oc_customer_group",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Address-oc_settings""","Address","Section Break","Opencart Settings","is_shipping_address","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Address-oc_site""","Address","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Address-oc_address_id""","Address","Data","Opencart Address ID","oc_site","","Opencart Address ID","","oc_address_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Contact-oc_settings""","Contact","Section Break","Opencart Settings","is_primary_contact","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Contact-oc_site""","Contact","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Contact-oc_contact_id""","Contact","Data","Opencart Contact ID","oc_site","","Opencart Contact ID","","oc_contact_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
