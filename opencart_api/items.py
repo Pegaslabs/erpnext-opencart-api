@@ -372,20 +372,20 @@ def update_item(doc_item, oc_product, save=False):
     doc_item.update(data)
 
     # discounts
-    doc_item.set('oc_discounts', [])
-    for oc_discount in oc_product.get('discounts'):
-        customer_group = customer_groups.get(doc_item.get('oc_site'), oc_discount.get('customer_group_id'))
-        if not customer_group:
-            continue
-        doc_item.append('oc_discounts', {
-            'item_name': doc_item.get('name'),
-            'customer_group': customer_group.get('name'),
-            'quantity': oc_discount.get('quantity'),
-            'priority': oc_discount.get('priority'),
-            'price': oc_discount.get('price'),
-            'date_start': oc_discount.get('date_start'),
-            'date_end': oc_discount.get('date_end'),
-        })
+    # doc_item.set('oc_discounts', [])
+    # for oc_discount in oc_product.get('discounts'):
+    #     customer_group = customer_groups.get(doc_item.get('oc_site'), oc_discount.get('customer_group_id'))
+    #     if not customer_group:
+    #         continue
+    #     doc_item.append('oc_discounts', {
+    #         'item_name': doc_item.get('name'),
+    #         'customer_group': customer_group.get('name'),
+    #         'quantity': oc_discount.get('quantity'),
+    #         'priority': oc_discount.get('priority'),
+    #         'price': oc_discount.get('price'),
+    #         'date_start': oc_discount.get('date_start'),
+    #         'date_end': oc_discount.get('date_end'),
+    #     })
     if save:
         doc_item.save()
 
