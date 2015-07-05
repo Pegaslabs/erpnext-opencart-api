@@ -5,6 +5,7 @@ from frappe.utils import get_files_path
 from frappe.utils import cstr
 
 import oc_api
+import oc_site
 import customer_groups
 import item_groups
 import item_attributes
@@ -26,11 +27,11 @@ def oc_validate(doc, method=None):
         'model': doc.get('oc_model') or doc.get('name'),  # mandatory
         'sku': doc.get('oc_sku'),  # mandatory
         'quantity': doc.get('oc_quantity') or '0',  # mandatory
-        # 'price': doc.get('oc_price') or '0',
+        'price': doc.get('oc_price'),
         'tax_class_id': doc.get('oc_tax_class_id'),  # mandatory
         'manufacturer_id': doc.get('oc_manufacturer_id'),  # mandatory
         # 'sort_order': '1',  # mandatory
-        'status': doc.get('oc_status')
+        'status': doc.get('oc_status'),
         # ,
         # 'upc': '',
         # 'ean': '',
@@ -38,7 +39,7 @@ def oc_validate(doc, method=None):
         # 'isbn': '',
         # 'mpn': '',
         # 'location': '',
-        # 'stock_status_id': '6',
+        'stock_status_id': oc_site.get_stock_status_id_by_name(site_name, doc.get('oc_stock_status'))
         # 'reward': '400',
         # 'points': '200',
         # 'image': doc.get('image'),
@@ -186,22 +187,22 @@ def oc_validate(doc, method=None):
         data['product_special'] = product_special
 
     # discounts
-    # product_discount = []
-    # for doc_oc_discount in doc.oc_discounts:
-    #     doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
-    #     customer_group_id = doc_customer_group.get('oc_customer_group_id')
-    #     if not customer_group_id:
-    #         continue
-    #     product_discount.append({
-    #         'customer_group_id': customer_group_id,
-    #         'price': doc_oc_discount.price,
-    #         'priority': doc_oc_discount.priority,
-    #         'quantity': doc_oc_discount.quantity,
-    #         'date_start': doc_oc_discount.date_start,
-    #         'date_end': doc_oc_discount.date_end,
-    #     })
-    # if product_discount:
-    #     data['product_discount'] = product_discount
+    product_discount = []
+    for doc_oc_discount in doc.oc_discounts:
+        doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
+        customer_group_id = doc_customer_group.get('oc_customer_group_id')
+        if not customer_group_id:
+            continue
+        product_discount.append({
+            'customer_group_id': customer_group_id,
+            'price': doc_oc_discount.price,
+            'priority': doc_oc_discount.priority,
+            'quantity': doc_oc_discount.quantity,
+            'date_start': doc_oc_discount.date_start,
+            'date_end': doc_oc_discount.date_end,
+        })
+    if product_discount:
+        data['product_discount'] = product_discount
 
     # updating or creating product
     oc_product_id = doc.get('oc_product_id')
@@ -270,6 +271,125 @@ def get_all_dict(site_name, fields=['name']):
     return frappe.get_all('Item', fields=fields, filters={'oc_site': site_name})
 
 
+def update_or_create_item_discount(doc_item, oc_discount, save=False):
+    disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
+    oc_discount_hash = disc_template.format(**oc_discount)
+
+    for doc_oc_discount in doc_item.get('oc_discounts'):
+        doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
+        customer_group_id = doc_customer_group.get('oc_customer_group_id')
+        if not customer_group_id:
+            frappe.throw('customer_group_id is not set in Customer Group "%s"' % doc_oc_discount.get('customer_group'))
+        doc_discount_hash = disc_template.format(**{
+            'customer_group_id': customer_group_id,
+            # 'price': doc_oc_discount.get('price'),
+            'priority': int(doc_oc_discount.get('priority', 0)),
+            'quantity': int(doc_oc_discount.get('quantity', 0)),
+            'date_start': doc_oc_discount.get('date_start') or '',
+            'date_end': doc_oc_discount.get('date_end') or '',
+        })
+        frappe.msgprint('%s = %s' % (oc_discount_hash, doc_discount_hash))
+        if oc_discount_hash == doc_discount_hash:
+            if doc_oc_discount.get('price') != oc_discount.get('price'):
+                doc_oc_discount.update({'price': oc_discount.get('price')})
+                doc_oc_discount.save()
+            break
+    else:
+        doc_item.append('oc_discounts', {
+            'item_name': doc_item.get('name'),
+            'customer_group': doc_customer_group.get('name'),
+            'quantity': oc_discount.get('quantity'),
+            'priority': oc_discount.get('priority'),
+            'price': oc_discount.get('price'),
+            'date_start': oc_discount.get('date_start'),
+            'date_end': oc_discount.get('date_end'),
+        })
+    if save:
+        doc_item.update({'oc_is_updating': 1})
+        doc_item.save()
+
+
+def update_item_discounts(doc_item, oc_discounts, save=False):
+    disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
+
+    oc_discounts_cache = {}
+    for discount in oc_discounts:
+        k = disc_template.format(**discount)
+        oc_discounts_cache[k] = discount
+
+    doc_oc_discounts_cache = {}
+    for doc_oc_discount in doc_item.get('oc_discounts'):
+        doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
+        customer_group_id = doc_customer_group.get('oc_customer_group_id')
+        if not customer_group_id:
+            frappe.throw('customer_group_id is not set in Customer Group "%s"' % doc_oc_discount.get('customer_group'))
+        k = disc_template.format(**{
+            'customer_group_id': customer_group_id,
+            # 'price': doc_oc_discount.get('price'),
+            'priority': doc_oc_discount.get('priority'),
+            'quantity': doc_oc_discount.get('quantity'),
+            'date_start': doc_oc_discount.get('date_start'),
+            'date_end': doc_oc_discount.get('date_end'),
+        })
+        doc_oc_discounts_cache[k] = doc_oc_discount
+
+    # updating discounts
+    for k, discount in oc_discounts_cache.items():
+        doc_oc_discount = doc_oc_discounts_cache.get(k)
+        if doc_oc_discount:
+            if doc_oc_discount.get('price') != discount.get('price'):
+                doc_oc_discount.update({'price': discount.get('price')})
+                doc_oc_discount.save()
+        else:
+            doc_item.append('oc_discounts', discount)
+
+    if save:
+        doc_item.update({'oc_is_updating': 1})
+        doc_item.save()
+
+
+def update_item(doc_item, oc_product, save=False):
+    data = {
+        'item_name': oc_product.get('name'),
+        'description_html': oc_product.get('description'),
+        'description': oc_product.get('meta_description'),
+        'image': oc_product.get('image'),
+        'min_order_qty': oc_product.get('minimum'),
+        'oc_is_updating': 1,
+        'oc_manufacturer_id': oc_product.get('manufacturer_id'),
+        'oc_tax_class_id': oc_product.get('tax_class_id'),
+        'oc_stock_status': oc_product.get('stock_status'),
+        'oc_model': oc_product.get('model'),
+        'oc_sku': oc_product.get('sku'),
+        'oc_quantity': oc_product.get('quantity'),
+        'oc_status': int(oc_product.get('status') or 0),
+        'oc_meta_title': oc_product.get('meta_title'),
+        'oc_meta_keyword': oc_product.get('meta_keyword'),
+        'oc_meta_description': oc_product.get('meta_description'),
+        'oc_price': oc_product.get('price'),
+        'oc_last_sync_from': datetime.now()
+    }
+    doc_item.update(data)
+
+    # discounts
+    doc_item.set('oc_discounts', [])
+    for oc_discount in oc_product.get('discounts'):
+        customer_group = customer_groups.get(doc_item.get('oc_site'), oc_discount.get('customer_group_id'))
+        if not customer_group:
+            continue
+        doc_item.append('oc_discounts', {
+            'item_name': doc_item.get('name'),
+            'customer_group': customer_group.get('name'),
+            'quantity': oc_discount.get('quantity'),
+            'priority': oc_discount.get('priority'),
+            'price': oc_discount.get('price'),
+            'date_start': oc_discount.get('date_start'),
+            'date_end': oc_discount.get('date_end'),
+        })
+    if save:
+        doc_item.save()
+
+
 @frappe.whitelist()
 def pull_products_from_oc(site_name, silent=False):
     results = {}
@@ -289,34 +409,10 @@ def pull_products_from_oc(site_name, silent=False):
         doc_item_group = item_groups.get_item_group(site_name, oc_category.id)
         for oc_product in opencart_api.get_products_by_category(oc_category.id):
             check_count += 1
-            doc_item = get_item(site_name, oc_product.id)
+            doc_item = get_item(site_name, oc_product.get('product_id'))
             if doc_item_group:
                 if doc_item:
-                    params = {
-                        'item_name': oc_product.name,
-                        'description_html': oc_product.description,
-                        'description': oc_product.meta_description,
-                        'image': oc_product.image,
-                        'min_order_qty': oc_product.minimum,
-                        'oc_is_updating': 1,
-                        'oc_manufacturer_id': oc_product.manufacturer_id,
-                        'oc_tax_class_id': oc_product.tax_class_id,
-                        'oc_stock_status': oc_product.stock_status,
-                        'oc_model': oc_product.model,
-                        'oc_sku': oc_product.sku,
-                        'oc_quantity': oc_product.quantity,
-                        'oc_status': int(oc_product.status or 0),
-                        'oc_meta_title': oc_product.meta_title,
-                        'oc_meta_keyword': oc_product.meta_keyword,
-                        'oc_meta_description': oc_product.meta_description,
-                        'oc_price': oc_product.price,
-                        'oc_last_sync_from': datetime.now()
-                    }
-                    doc_item.update(params)
-
-                    # update here discounts
-                    # doc_item.set('oc_discounts', [])
-
+                    update_item(doc_item, oc_product)
                     doc_item.save()
                     update_count += 1
                     extras = (1, 'updated', 'Updated')
@@ -330,7 +426,7 @@ def pull_products_from_oc(site_name, silent=False):
                     variants_list = []
                     missed_item_attribute = ''
                     missed_item_attribute_value = ''
-                    for option in oc_product.options_list:
+                    for option in oc_product.get('options_list'):
                         if missed_item_attribute_value or not item_attributes.get(site_name, option.id):
                             if not missed_item_attribute_value:
                                 missed_item_attribute = option.name
@@ -350,7 +446,7 @@ def pull_products_from_oc(site_name, silent=False):
                         else:
                             skip_msg = 'Skipped: missed item attribute value "%s"' % missed_item_attribute_value
                         extras = (1, 'skipped', skip_msg)
-                        results_list.append((oc_product.name, doc_item_group.get('name'), oc_product.id, '', '') + extras)
+                        results_list.append((oc_product.get('name'), doc_item_group.get('name'), oc_product.get('product_id'), '', '') + extras)
                         continue
 
                     params = {
@@ -360,26 +456,26 @@ def pull_products_from_oc(site_name, silent=False):
                         'variants': variants_list,
                         'is_group': 'No',
                         'default_warehouse': items_default_warehouse,
-                        'item_name': oc_product.name,
-                        'description_html': oc_product.description,
-                        'description': oc_product.meta_description,
+                        'item_name': oc_product.get('name'),
+                        'description_html': oc_product.get('description'),
+                        'description': oc_product.get('meta_description'),
                         'show_in_website': 1,
-                        'image': oc_product.image,
-                        'min_order_qty': oc_product.minimum,
+                        'image': oc_product.get('image'),
+                        'min_order_qty': oc_product.get('minimum'),
                         'oc_is_updating': 1,
                         'oc_site': site_name,
-                        'oc_product_id': oc_product.id,
-                        'oc_manufacturer_id': oc_product.manufacturer_id,
-                        'oc_tax_class_id': oc_product.tax_class_id,
-                        'oc_stock_status': oc_product.stock_status,
-                        'oc_model': oc_product.model,
-                        'oc_sku': oc_product.sku,
-                        'oc_quantity': oc_product.quantity,
-                        'oc_status': int(oc_product.status or 0),
-                        'oc_meta_title': oc_product.meta_title,
-                        'oc_meta_keyword': oc_product.meta_keyword,
-                        'oc_meta_description': oc_product.meta_description,
-                        'oc_price': oc_product.price,
+                        'oc_product_id': oc_product.get('product_id'),
+                        'oc_manufacturer_id': oc_product.get('manufacturer_id'),
+                        'oc_tax_class_id': oc_product.get('tax_class_id'),
+                        'oc_stock_status': oc_product.get('stock_status'),
+                        'oc_model': oc_product.get('model'),
+                        'oc_sku': oc_product.get('sku'),
+                        'oc_quantity': oc_product.get('quantity'),
+                        'oc_status': int(oc_product.get('status') or 0),
+                        'oc_meta_title': oc_product.get('meta_title'),
+                        'oc_meta_keyword': oc_product.get('meta_keyword'),
+                        'oc_meta_description': oc_product.get('meta_description'),
+                        'oc_price': oc_product.get('price'),
                         'oc_sync_from': True,
                         'oc_last_sync_from': datetime.now(),
                         'oc_sync_to': True,
@@ -388,8 +484,23 @@ def pull_products_from_oc(site_name, silent=False):
                     doc_item = frappe.get_doc(params)
                     doc_item.insert(ignore_permissions=True)
 
+                    # discounts
+                    for oc_discount in oc_product.get('discounts'):
+                        customer_group = customer_groups.get(site_name, oc_discount.get('customer_group_id'))
+                        if not customer_group:
+                            continue
+                        doc_item.append('oc_discounts', {
+                            'item_name': doc_item.get('name'),
+                            'customer_group': customer_group.get('name'),
+                            'quantity': oc_discount.get('quantity'),
+                            'priority': oc_discount.get('priority'),
+                            'price': oc_discount.get('price'),
+                            'date_start': oc_discount.get('date_start'),
+                            'date_end': oc_discount.get('date_end'),
+                        })
+
                     # cpesials
-                    for oc_special in oc_product.special:
+                    for oc_special in oc_product.get('special'):
                         customer_group = customer_groups.get(site_name, oc_special.get('customer_group_id'))
                         if not customer_group:
                             continue
@@ -413,7 +524,7 @@ def pull_products_from_oc(site_name, silent=False):
             else:
                 skip_count += 1
                 extras = (1, 'skipped', 'Skipped: missed parent category')
-                results_list.append((oc_product.name, '', oc_product.id, '', '') + extras)
+                results_list.append((oc_product.get('name'), '', oc_product.get('product_id'), '', '') + extras)
 
     results = {
         'check_count': check_count,

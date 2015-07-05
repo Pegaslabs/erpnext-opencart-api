@@ -38,7 +38,9 @@
 "","""Item-oc_last_sync_from""","Item","Datetime","Last sync","oc_sync_from","","","","oc_last_sync_from",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_sync_to""","Item","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_last_sync_to""","Item","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_special_settings""","Item","Section Break","Opencart Special Settings","oc_last_sync_to","","","","oc_special_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_discount_settings""","Item","Section Break","Opencart Discount Settings","oc_last_sync_to","","","","oc_discount_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_discounts""","Item","Table","Discounts","oc_discount_settings","","Opencart Discount","","oc_discounts",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_special_settings""","Item","Section Break","Opencart Special Settings","oc_discounts","","","","oc_special_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_specials""","Item","Table","Specials","oc_special_settings","","Opencart Special","","oc_specials",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_settings""","Item Attribute","Section Break","Opencart Settings","item_attribute_values","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_is_updating""","Item Attribute","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
@@ -135,11 +137,6 @@
 "","""Sales Order-oc_sa_zone_code""","Sales Order","Small Text","Zone Code","oc_sa_zone","","Zone Code","","oc_sa_zone_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country_id""","Sales Order","Small Text","Country ID","oc_sa_zone_code","","Country ID","","oc_sa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country""","Sales Order","Small Text","Country","oc_sa_country_id","","Country","","oc_sa_country",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Item Price-oc_discount_settings""","Item Price","Section Break","Opencart Discount Settings","item_description","","","","oc_discount_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item Price-oc_discounts""","Item Price","Table","Discounts","oc_discount_settings","","Opencart Discount","","oc_discounts",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item Price-oc_is_updating""","Item Price","Check","Is Updating","oc_discounts","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Price List-oc_settings""","Price List","Section Break","Opencart Settings","territories","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Price List-oc_customer_group""","Price List","Link","Customer Group","oc_settings","","Customer Group","","oc_customer_group",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_settings""","Address","Section Break","Opencart Settings","is_shipping_address","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_site""","Address","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_address_id""","Address","Data","Opencart Address ID","oc_site","","Opencart Address ID","","oc_address_id",0,0,1,0,"","",0,"",0,0,0,0,0,0

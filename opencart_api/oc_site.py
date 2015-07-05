@@ -6,6 +6,21 @@ import frappe
 import oc_api
 
 
+OPENCART_INIT_CACHE = {}
+
+
+def get_oc_init(site_name):
+    global OPENCART_INIT_CACHE
+    init_data = OPENCART_INIT_CACHE.get(site_name)
+    if not init_data:
+        success, data = oc_api.get(site_name).get_init()
+        if not success:
+            frappe.throw('Exception: Cannot get init data from Opencart site "%s"' % site_name)
+        OPENCART_INIT_CACHE[site_name] = data
+        init_data = data
+    return init_data
+
+
 def get(site_name):
     db_site = frappe.db.get('Opencart Site', {'name': site_name})
     if db_site:
@@ -120,3 +135,11 @@ def get_shipping_method_code_list(site_name):
 #         charts.append("Standard")
 
 #     return charts
+
+
+def get_stock_status_id_by_name(site_name, stock_status_name):
+    stock_statuses = get_oc_init(site_name).get('stock_statuses', [])
+    res = next((ss.get('stock_status_id') for ss in stock_statuses if ss.get('name') == stock_status_name), None)
+    if res is None:
+        frappe.throw('Error. Cannot get stock status id by name "%s"' % stock_status_name)
+    return res

@@ -17,9 +17,8 @@ def get(item_code, price_list):
 
 def oc_validate(doc, method=None):
     if doc.get('oc_is_updating', 1):
-        doc.update({'oc_is_updating': '0'})
+        doc.update({'oc_is_updating': 0})
         return
-
     db_item = frappe.db.get('Item', doc.get('item_code'))
     if not (db_item and db_item.get('oc_site') and db_item.get('oc_sync_to')):
         return
@@ -28,49 +27,38 @@ def oc_validate(doc, method=None):
     if not db_price_list:
         return
 
-    # check if it's a master price list
     db_oc_price_list = frappe.db.get('Opencart Price List', {'price_list': doc.get('price_list')})
-    if not(db_oc_price_list and db_oc_price_list.get('is_master')):
+    if not db_oc_price_list:
         return
 
-    # updating product with discounts
     site_name = db_item.get('oc_site')
     doc_item = frappe.get_doc('Item', db_item.get('name'))
     oc_product_id = doc_item.get('oc_product_id')
+    db_oc_store = frappe.db.get(db_oc_price_list.get('parenttype'), db_oc_price_list.get('parent'))
     get_product_success, oc_product = oc_api.get(site_name).get_product(oc_product_id)
 
-    data = {}
-    if doc.get('price_list_rate'):
-        data.update({'price': doc.get('price_list_rate')})
+    if not db_oc_store.get('oc_store_front_url'):
+        frappe.msgprint('Warning. Store front url is not set it Opencart Store "%s"' % db_oc_store.get('name'))
 
-    if oc_product_id and get_product_success:
-        # discounts
-        product_discount = []
-        for doc_oc_discount in doc.oc_discounts:
-            doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
-            customer_group_id = doc_customer_group.get('oc_customer_group_id')
-            if not customer_group_id:
-                continue
-            product_discount.append({
-                'customer_group_id': customer_group_id,
-                'price': doc_oc_discount.price,
-                'priority': doc_oc_discount.priority,
-                'quantity': doc_oc_discount.quantity,
-                'date_start': doc_oc_discount.date_start,
-                'date_end': doc_oc_discount.date_end,
-            })
-        if product_discount:
-            data['product_discount'] = product_discount
-
-        # update existed product on Opencart site
-        success = oc_api.get(site_name).update_product(oc_product_id, data)
-        if success:
-            frappe.msgprint('Product\'s price and discounts are updated successfully on Opencart site')
-            doc_item.update({'oc_last_sync_to': datetime.now()})
-        else:
-            frappe.msgprint('Product\'s price and discounts are not updated on Opencart site. Error: Unknown')
+    if db_oc_price_list.get('is_master'):
+        # updating price as product main price on Opencart site
+        doc_item.update({'oc_price': doc.get('price_list_rate')})
+        # it is going to update main price on Opencart site
+        doc_item.save()
     else:
-        frappe.msgprint('Product\'s discounts are updated on Opencart. Error: such product does not exist.')
+        # updating or creating price as discount on Opencart site
+        doc_customer_group = frappe.get_doc('Customer Group', db_oc_price_list.get('customer_group'))
+        customer_group_id = doc_customer_group.get('oc_customer_group_id')
+        items.update_or_create_item_discount(doc_item, {
+            'customer_group_id': customer_group_id,
+            'price': doc.get('price_list_rate'),
+            'priority': '0',
+            'quantity': '1',
+            'date_start': '',
+            'date_end': '',
+        })
+        # it is going to update discount price on Opencart site
+        doc_item.save()
 
 
 @frappe.whitelist()
@@ -94,12 +82,11 @@ def pull(site_name, silent=False):
 
             # fill cache of customer groups
             for doc_oc_price_list in doc_store.get('oc_price_lists'):
-                customer_group_name = doc_oc_price_list.get('oc_customer_group')
-                if customer_group_name:
-                    doc_customer_group = frappe.get('Customer Group', customer_group_name)
-                    customer_groups_cache[doc_customer_group.get('oc_customer_group_id')] = doc_customer_group
+                customer_group_name = doc_oc_price_list.get('customer_group')
+                doc_customer_group = frappe.get_doc('Customer Group', customer_group_name)
+                customer_groups_cache[doc_customer_group.get('name')] = doc_customer_group
 
-    for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id'])[:10]:
+    for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id']):
         item_code = dict_item.get('item_code')
         for doc_store in doc_stores:
             oc_api_obj = oc_api_cache.get(doc_store.get('name'))
@@ -110,48 +97,28 @@ def pull(site_name, silent=False):
                     extras = (1, 'skipped', 'Skipped: cannot get product with product_id %s' % dict_item.get('oc_product_id'))
                     results_list.append(('', '', '', '', '') + extras)
                     continue
+                doc_item = frappe.get_doc('Item', dict_item.get('name'))
+                items.update_item(doc_item, oc_product, save=True)
             for doc_oc_price_list in doc_store.get('oc_price_lists'):
                 check_count += 1
-                is_master_price_list = doc_oc_price_list.get('is_master')
                 price_list_name = doc_oc_price_list.get('price_list')
+                customer_group_name = doc_oc_price_list.get('customer_group')
                 doc_price_list = frappe.get_doc('Price List', price_list_name)
                 doc_item_price = get(item_code, price_list_name)
 
-                # resolve price for the proper price list
+                # resolve price
                 price = float(oc_product.get('price', 0))
-                customer_group_name = doc_price_list.get('oc_customer_group')
-                if customer_group_name:
-                    customer_group = frappe.get_doc('Customer Group', customer_group_name)
-                    customer_group_id = customer_group.get('oc_customer_group_id')
-                    for discount in oc_product.get('discounts'):
-                        if customer_group_id == discount.get('customer_group_id') and int(discount.get('quantity', 0)) < 2:
-                            price = float(discount.get('price', 0))
+                customer_group_id = customer_groups_cache.get(customer_group_name, {}).get('oc_customer_group_id')
+                for discount in oc_product.get('discounts'):
+                    if customer_group_id == discount.get('customer_group_id') and int(discount.get('quantity', 0)) == 1:
+                        price = float(discount.get('price', 0))
                 if doc_item_price:
                     # update existed Item Price
                     doc_item_price.update({
                         'price_list_rate': price,
                         'oc_is_updating': 1
                     })
-                    if is_master_price_list:
-                        # discounts
-                        doc_item_price.set('oc_discounts', [])
-                        for discount in oc_product.get('discounts'):
-                            customer_group = customer_groups.get(site_name, discount.get('customer_group_id'))
-                            if not customer_group:
-                                extras = (1, 'skipped', 'Skipped discounts: missed Customer Group with customer_group_id "%s"' % (discount.get('customer_group_id'),))
-                                results_list.append(('', '', '', '', '') + extras)
-                                continue
-                            doc_item_price.append('oc_discounts', {
-                                'item_name': dict_item.get('name'),
-                                'customer_group': customer_group.get('name'),
-                                'quantity': discount.get('quantity'),
-                                'priority': discount.get('priority'),
-                                'price': discount.get('price'),
-                                'date_start': discount.get('date_start'),
-                                'date_end': discount.get('date_end'),
-                            })
                     doc_item_price.save()
-
                     update_count += 1
                     extras = (1, 'updated', 'Updated')
                     results_list.append((doc_item_price.get('name'),
@@ -185,25 +152,6 @@ def pull(site_name, silent=False):
                                         doc_item_price.get('price_list'),
                                         doc_item_price.get('currency'),
                                         doc_item_price.get('price_list_rate')) + extras)
-
-                    if is_master_price_list:
-                        # discounts
-                        for discount in oc_product.get('discounts'):
-                            customer_group = customer_groups.get(site_name, discount.get('customer_group_id'))
-                            if not customer_group:
-                                extras = (1, 'skipped', 'Skipped discounts: missed Customer Group with customer_group_id "%s"' % (discount.get('customer_group_id'),))
-                                results_list.append(('', '', '', '', '') + extras)
-                                continue
-                            doc_item_price.append('oc_discounts', {
-                                'item_name': dict_item.get('name'),
-                                'customer_group': customer_group.get('name'),
-                                'quantity': discount.get('quantity'),
-                                'priority': discount.get('priority'),
-                                'price': discount.get('price'),
-                                'date_start': discount.get('date_start'),
-                                'date_end': discount.get('date_end'),
-                            })
-                        doc_item_price.save()
     results = {
         'check_count': check_count,
         'add_count': add_count,

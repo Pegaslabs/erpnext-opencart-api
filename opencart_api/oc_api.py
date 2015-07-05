@@ -2,11 +2,10 @@ from __future__ import unicode_literals
 import posixpath
 import frappe
 from models import (OpencartCategory,
-                    OpencartProduct,
                     OpencartProductOption,
+                    OpencartProductOptionExt,
                     OpencartStore,
                     OpencartCustomerGroup,
-                    # OpencartCustomer,
                     OpencartOrder)
 from utils import oc_request, oc_upload_file
 
@@ -77,8 +76,8 @@ class OpencartApi(object):
             if not success or not resp.get('data'):
                 break
             page += 1
-            for c in resp.get('data'):
-                yield OpencartProduct(self, c)
+            for c in resp.get('data', {}):
+                yield c
 
     def get_product_options(self, limit=100, page=1):
         while True:
@@ -95,12 +94,40 @@ class OpencartApi(object):
             if not success or not resp.get('data'):
                 break
             page += 1
-            for c in resp.get('data'):
-                yield OpencartProduct(self, c)
+            for c in resp.get('data', {}):
+                c['category_id'] = category_id
+                c['product_id'] = c.get('product_id') or c.get('id')
+                for i, first_description in c.get('product_description').items():
+                    if isinstance(first_description, list):
+                        for k, val in first_description[0].items():
+                            c[k] = val
+                        break
+                    else:
+                        for k, val in first_description.items():
+                            c[k] = val
+                    if i.isdigit():
+                        break
+                    else:
+                        c[i] = first_description
+                c['options_list'] = [OpencartProductOptionExt(self, o) for o in c.get('options')] if c.get('options') else []
+                yield c
 
     def get_product(self, product_id):
         success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers)
-        return (success, resp.get('data', {}))
+        product = resp.get('data', {})
+        for i, first_description in product.get('product_description').items():
+            if isinstance(first_description, list):
+                for k, val in first_description[0].items():
+                    product[k] = val
+                break
+            else:
+                for k, val in first_description.items():
+                    product[k] = val
+            if i.isdigit():
+                break
+            else:
+                product[i] = first_description
+        return (success, product)
 
     def create_product(self, data):
         success, resp = oc_request(self.url + '/products', headers=self.headers, method='POST', data=data)
@@ -227,6 +254,10 @@ class OpencartApi(object):
         else:
             success, resp = oc_request(self.url + '/countries', headers=self.headers)
         return (success, resp.get('error', ''))
+
+    def get_init(self):
+        success, resp = oc_request(self.url + '/init', headers=self.headers)
+        return (success, resp.get('data', {}) if success else {})
 
     def get_order_statuses(self):
         success, resp = oc_request(self.url + '/order_statuses', headers=self.headers)

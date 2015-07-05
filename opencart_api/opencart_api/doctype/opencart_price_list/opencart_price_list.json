@@ -16,7 +16,17 @@
    "options": "Price List", 
    "permlevel": 0, 
    "reqd": 1
-  },
+  }, 
+  {
+   "description": "", 
+   "fieldname": "customer_group", 
+   "fieldtype": "Link", 
+   "in_list_view": 1, 
+   "label": "Customer Group", 
+   "options": "Customer Group", 
+   "permlevel": 0, 
+   "reqd": 1
+  }, 
   {
    "description": "", 
    "fieldname": "is_master", 
@@ -25,7 +35,7 @@
    "label": "Is Master Price List", 
    "permlevel": 0, 
    "reqd": 0
-  }
+  } 
  ], 
  "hide_heading": 0, 
  "hide_toolbar": 0, 
