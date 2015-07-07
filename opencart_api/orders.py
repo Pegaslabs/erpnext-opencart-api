@@ -639,7 +639,7 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
 
 
 @frappe.whitelist()
-def resolve_shipping_rule(customer, db_customer=None, doc_customer=None):
+def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None):
     if db_customer is not None:
         obj_customer = db_customer
     elif doc_customer is not None:
@@ -653,13 +653,6 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None):
         frappe.msgprint('Cannot resolve Shipping Rule: Customer does not have any Opencart Site set')
         return
 
-    db_oc_store = frappe.db.get('Opencart Store',
-                                {'oc_site': obj_customer.get('oc_site'),
-                                 'oc_customer_group': obj_customer.get('customer_group')})
-    if not db_oc_store:
-        frappe.msgprint('Cannot resolve Shipping Rule: there is not Opencart Store with bindigs to Customer Group "%s"' % obj_customer.get('customer_group'))
-        return
-    doc_oc_store = frappe.get_doc('Opencart Store', db_oc_store.get('name'))
     # check for strong coincidence
     # frappe.msgprint('territory=' + str(obj_customer.get('territory') + str(doc_oc_store.get('name'))))
     for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
@@ -712,7 +705,7 @@ def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_nam
 
         # shipping related part
         doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
-        shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer)
+        shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
         if not shipping_rule:
             frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))
 
