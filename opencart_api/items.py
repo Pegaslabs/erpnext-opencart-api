@@ -3,6 +3,7 @@ from datetime import datetime
 import frappe
 from frappe.utils import get_files_path
 from frappe.utils import cstr
+from frappe.utils.dateutils import parse_date
 
 import oc_api
 import oc_site
@@ -271,9 +272,15 @@ def get_all_dict(site_name, fields=['name']):
     return frappe.get_all('Item', fields=fields, filters={'oc_site': site_name})
 
 
-def update_or_create_item_discount(doc_item, oc_discount, save=False):
+def update_or_create_item_discount(doc_item, oc_discount, save=False, is_updating=False):
     disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
-    oc_discount_hash = disc_template.format(**oc_discount)
+
+    oc_discount_copy = dict(oc_discount)
+    oc_discount_copy.update({
+        'date_start': parse_date(str(oc_discount.get('date_start'))) if oc_discount.get('date_start') else '',
+        'date_end': parse_date(str(oc_discount.get('date_end'))) if oc_discount.get('date_end') else ''
+    })
+    oc_discount_hash = disc_template.format(**oc_discount_copy)
 
     for doc_oc_discount in doc_item.get('oc_discounts'):
         doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
@@ -285,16 +292,15 @@ def update_or_create_item_discount(doc_item, oc_discount, save=False):
             # 'price': doc_oc_discount.get('price'),
             'priority': int(doc_oc_discount.get('priority', 0)),
             'quantity': int(doc_oc_discount.get('quantity', 0)),
-            'date_start': doc_oc_discount.get('date_start') or '',
-            'date_end': doc_oc_discount.get('date_end') or '',
+            'date_start': parse_date(str(doc_oc_discount.get('date_start'))) if doc_oc_discount.get('date_start') else '',
+            'date_end': parse_date(str(doc_oc_discount.get('date_end'))) if doc_oc_discount.get('date_end') else '',
         })
-        frappe.msgprint('%s = %s' % (oc_discount_hash, doc_discount_hash))
         if oc_discount_hash == doc_discount_hash:
-            if doc_oc_discount.get('price') != oc_discount.get('price'):
-                doc_oc_discount.update({'price': oc_discount.get('price')})
-                doc_oc_discount.save()
+            doc_oc_discount.update({'price': oc_discount.get('price')})
+            doc_oc_discount.save()
             break
     else:
+        doc_customer_group = customer_groups.get(doc_item.get('oc_site'), oc_discount.get('customer_group_id'))
         doc_item.append('oc_discounts', {
             'item_name': doc_item.get('name'),
             'customer_group': doc_customer_group.get('name'),
@@ -304,51 +310,23 @@ def update_or_create_item_discount(doc_item, oc_discount, save=False):
             'date_start': oc_discount.get('date_start'),
             'date_end': oc_discount.get('date_end'),
         })
+
     if save:
-        doc_item.update({'oc_is_updating': 1})
+        if is_updating:
+            doc_item.update({'oc_is_updating': 1})
         doc_item.save()
 
 
-def update_item_discounts(doc_item, oc_discounts, save=False):
-    disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
-
-    oc_discounts_cache = {}
-    for discount in oc_discounts:
-        k = disc_template.format(**discount)
-        oc_discounts_cache[k] = discount
-
-    doc_oc_discounts_cache = {}
-    for doc_oc_discount in doc_item.get('oc_discounts'):
-        doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
-        customer_group_id = doc_customer_group.get('oc_customer_group_id')
-        if not customer_group_id:
-            frappe.throw('customer_group_id is not set in Customer Group "%s"' % doc_oc_discount.get('customer_group'))
-        k = disc_template.format(**{
-            'customer_group_id': customer_group_id,
-            # 'price': doc_oc_discount.get('price'),
-            'priority': doc_oc_discount.get('priority'),
-            'quantity': doc_oc_discount.get('quantity'),
-            'date_start': doc_oc_discount.get('date_start'),
-            'date_end': doc_oc_discount.get('date_end'),
-        })
-        doc_oc_discounts_cache[k] = doc_oc_discount
-
-    # updating discounts
-    for k, discount in oc_discounts_cache.items():
-        doc_oc_discount = doc_oc_discounts_cache.get(k)
-        if doc_oc_discount:
-            if doc_oc_discount.get('price') != discount.get('price'):
-                doc_oc_discount.update({'price': discount.get('price')})
-                doc_oc_discount.save()
-        else:
-            doc_item.append('oc_discounts', discount)
-
+def update_or_create_item_discounts(doc_item, oc_discounts, save=False, is_updating=False):
+    for oc_discount in oc_discounts:
+        update_or_create_item_discount(doc_item, oc_discount, save=save, is_updating=is_updating)
     if save:
-        doc_item.update({'oc_is_updating': 1})
+        if is_updating:
+            doc_item.update({'oc_is_updating': 1})
         doc_item.save()
 
 
-def update_item(doc_item, oc_product, save=False):
+def update_item(doc_item, oc_product, save=False, is_updating=False):
     data = {
         'item_name': oc_product.get('name'),
         'description_html': oc_product.get('description'),
@@ -372,21 +350,11 @@ def update_item(doc_item, oc_product, save=False):
     doc_item.update(data)
 
     # discounts
-    # doc_item.set('oc_discounts', [])
-    # for oc_discount in oc_product.get('discounts'):
-    #     customer_group = customer_groups.get(doc_item.get('oc_site'), oc_discount.get('customer_group_id'))
-    #     if not customer_group:
-    #         continue
-    #     doc_item.append('oc_discounts', {
-    #         'item_name': doc_item.get('name'),
-    #         'customer_group': customer_group.get('name'),
-    #         'quantity': oc_discount.get('quantity'),
-    #         'priority': oc_discount.get('priority'),
-    #         'price': oc_discount.get('price'),
-    #         'date_start': oc_discount.get('date_start'),
-    #         'date_end': oc_discount.get('date_end'),
-    #     })
+    update_or_create_item_discounts(doc_item, oc_product.get('discounts'), save=False, is_updating=False)
+
     if save:
+        if is_updating:
+            doc_item.update({'oc_is_updating': 1})
         doc_item.save()
 
 
@@ -412,8 +380,7 @@ def pull_products_from_oc(site_name, silent=False):
             doc_item = get_item(site_name, oc_product.get('product_id'))
             if doc_item_group:
                 if doc_item:
-                    update_item(doc_item, oc_product)
-                    doc_item.save()
+                    update_item(doc_item, oc_product, save=True, is_updating=True)
                     update_count += 1
                     extras = (1, 'updated', 'Updated')
                     results_list.append((doc_item.get('name'),

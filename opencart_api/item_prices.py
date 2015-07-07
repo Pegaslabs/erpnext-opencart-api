@@ -87,6 +87,7 @@ def pull(site_name, silent=False):
                 customer_groups_cache[doc_customer_group.get('name')] = doc_customer_group
 
     for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id']):
+    # for dict_item in [it for it in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id']) if it.get('item_code') == 'ITEM-00075']:
         item_code = dict_item.get('item_code')
         for doc_store in doc_stores:
             oc_api_obj = oc_api_cache.get(doc_store.get('name'))
@@ -98,7 +99,9 @@ def pull(site_name, silent=False):
                     results_list.append(('', '', '', '', '') + extras)
                     continue
                 doc_item = frappe.get_doc('Item', dict_item.get('name'))
-                items.update_item(doc_item, oc_product, save=True)
+                # TODO
+                # updating item for each store
+                items.update_item(doc_item, oc_product, save=True, is_updating=True)
             for doc_oc_price_list in doc_store.get('oc_price_lists'):
                 check_count += 1
                 price_list_name = doc_oc_price_list.get('price_list')
