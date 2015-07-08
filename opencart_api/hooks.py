@@ -53,7 +53,8 @@ doc_events = {
 
 
 doctype_js = {
-    "Sales Order": ["custom_scripts/sales_order.js"]
+    "Sales Order": ["custom_scripts/sales_order.js"],
+    "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"]
 }
 
 # Note on Fixtures (Nathan Do):
