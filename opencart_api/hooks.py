@@ -67,9 +67,9 @@ scheduler_events = {
     # "all": [
     #     "opencart_api.tasks.daily"
     # ],
-    # "daily": [
-    #   "opencart_api.tasks.daily"
-    # ]
+    "hourly": [
+        "opencart_api.tasks.hourly"
+    ]
 }
 
 # Includes in <head>
