@@ -54,7 +54,7 @@ def main(argv):
     input_erpnext_file = ''
     output_erpnext_file = ''
     try:
-        opts, args = getopt.getopt(argv, '', ['input=', 'input_erpnext=', 'output_erpnext='])
+        opts, args = getopt.getopt(argv, '-h', ['input=', 'input_erpnext=', 'output_erpnext='])
     except getopt.GetoptError:
         print('test.py -i <inputfile> -o <outputfile>')
         sys.exit(2)
