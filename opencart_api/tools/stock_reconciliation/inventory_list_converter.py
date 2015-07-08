@@ -6,8 +6,10 @@ import csv
 
 def process(input_file, input_erpnext_file, output_erpnext_file):
     item_code_to_quantity = {}
-    skipped_count = 0
-    skipped_rows = []
+    skipped_count_input = 0
+    skipped_rows_input = []
+    skipped_count_item = 0
+    skipped_rows_item = []
     with open(input_file, 'rb') as in_file:
         all_rows = csv.reader(in_file, delimiter=',')
         for row in all_rows:
@@ -15,13 +17,13 @@ def process(input_file, input_erpnext_file, output_erpnext_file):
             try:
                 quantity = float(row[3].strip().replace(',', ''))
             except:
-                skipped_count += 1
-                skipped_rows.append(','.join(row))
+                skipped_count_input += 1
+                skipped_rows_input.append(','.join(row))
                 continue
             # Description,Item No.,Unit,Quantity,Minimum,On Purchase Order,On Sales Order,To Order
             item_code_to_quantity[item_code.lower()] = quantity
             print('%s  %s' % (item_code, quantity))
-    print('\n\nSkipped rows count: %d\nSkipped rows \n%s' % (skipped_count, '\n'.join(skipped_rows)))
+    print('\n\nSkipped rows count in input file: %d\nSkipped rows \n%s' % (skipped_count_input, '\n'.join(skipped_rows_input)))
 
     if os.path.exists(output_erpnext_file):
         print('"%s" file already exists. Move or rename this file and try again.' % output_erpnext_file)
@@ -39,9 +41,12 @@ def process(input_file, input_erpnext_file, output_erpnext_file):
                         row[4] = quantity
                         writer.writerow(row)
                     else:
+                        skipped_count_item += 1
+                        skipped_rows_item.append(','.join(row))
                         continue
                 else:
                     writer.writerow(row)
+    print('\n\nSkipped item count in output file: %d\nSkipped rows \n%s' % (skipped_count_item, '\n'.join(skipped_rows_item)))
 
 
 def main(argv):
