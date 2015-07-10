@@ -69,6 +69,14 @@ def test_connection(site_name):
     return results
 
 
+@frappe.whitelist()
+def clear_file_data(site_name):
+    all_file_data = frappe.get_all('File Data', filters={'attached_to_doctype': 'Opencart Site',
+                                                         'attached_to_name': site_name})
+    for file_data in all_file_data:
+        frappe.get_doc('File Data', file_data.get('name')).delete()
+
+
 def get_order_status_id(site, order_status_name):
     site_doc = site
     if isinstance(site, basestring):

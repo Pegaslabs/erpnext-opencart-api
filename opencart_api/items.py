@@ -1,15 +1,16 @@
 from datetime import datetime
 
 import frappe
+from frappe import _
 from frappe.utils import get_files_path
 from frappe.utils import cstr
 from frappe.utils.dateutils import parse_date
+from frappe.utils.csvutils import read_csv_content_from_attached_file
 
 import oc_api
 import oc_site
 import customer_groups
 import item_groups
-import item_attributes
 from decorators import sync_to_opencart
 from utils import sync_info
 
@@ -268,6 +269,12 @@ def get_item(site_name, oc_product_id):
         return frappe.get_doc('Item', db_item.get('name'))
 
 
+def get_item_by_code(site_name, item_code):
+    db_item = frappe.db.get('Item', {'oc_model': item_code})
+    if db_item:
+        return frappe.get_doc('Item', db_item.get('name'))
+
+
 def get_all_dict(site_name, fields=['name']):
     return frappe.get_all('Item', fields=fields, filters={'oc_site': site_name})
 
@@ -326,7 +333,7 @@ def update_or_create_item_discounts(doc_item, oc_discounts, save=False, is_updat
         doc_item.save()
 
 
-def update_item(doc_item, oc_product, save=False, is_updating=False):
+def update_item(doc_item, oc_product, item_group=None, save=False, is_updating=False):
     data = {
         'item_name': oc_product.get('name'),
         'description_html': oc_product.get('description'),
@@ -337,7 +344,7 @@ def update_item(doc_item, oc_product, save=False, is_updating=False):
         'oc_manufacturer_id': oc_product.get('manufacturer_id'),
         'oc_tax_class_id': oc_product.get('tax_class_id'),
         'oc_stock_status': oc_product.get('stock_status'),
-        'oc_model': oc_product.get('model'),
+        # 'oc_model': oc_product.get('model'),
         'oc_sku': oc_product.get('sku'),
         'oc_quantity': oc_product.get('quantity'),
         'oc_status': int(oc_product.get('status') or 0),
@@ -347,6 +354,12 @@ def update_item(doc_item, oc_product, save=False, is_updating=False):
         'oc_price': oc_product.get('price'),
         'oc_last_sync_from': datetime.now()
     }
+
+    if not doc_item.get('oc_product_id'):
+        doc_item.update({'oc_product_id': oc_product.get('product_id')})
+
+    if item_group:
+        doc_item.update({'item_group': item_group})
     doc_item.update(data)
 
     # discounts
@@ -356,6 +369,113 @@ def update_item(doc_item, oc_product, save=False, is_updating=False):
         if is_updating:
             doc_item.update({'oc_is_updating': 1})
         doc_item.save()
+
+
+@frappe.whitelist()
+def pull_from_inventory_spreadsheet(site_name, silent=False):
+    results = {}
+    results_list = []
+    check_count = 0
+    update_count = 0
+    add_count = 0
+    skip_count = 0
+    success = True
+
+    try:
+        rows = read_csv_content_from_attached_file(frappe.get_doc("Opencart Site", site_name))
+    except:
+        frappe.throw(_("Please select a valid csv file with data"))
+
+    # detect item_code, quantity, description
+    is_header_detected = False
+    item_code_idx = 0
+    quantity_idx = 0
+    description_idx = 0
+    for row in rows:
+        if not is_header_detected:
+            try:
+                robust_row = ['' if field is None else field.lower().strip() for field in row]
+                item_code_idx = map(lambda a: a.startswith('item no') or a.startswith('item code'), robust_row).index(True)
+                quantity_idx = map(lambda a: a.startswith('quantity'), robust_row).index(True)
+                description_idx = map(lambda a: a.startswith('description'), robust_row).index(True)
+            except ValueError:
+                continue
+            else:
+                is_header_detected = True
+                continue
+
+        item_code = row[item_code_idx]
+        quantity = row[quantity_idx]
+        description = row[description_idx]
+        if item_code is None or quantity is None or description is None:
+            continue
+
+        check_count += 1
+        site_doc = frappe.get_doc('Opencart Site', site_name)
+        items_default_warehouse = site_doc.get('items_default_warehouse')
+        root_item_group = site_doc.get('root_item_group')
+        if not items_default_warehouse:
+            sync_info([], 'Please specify a Default Warehouse and proceed.', stop=True, silent=silent)
+
+        doc_item = get_item_by_code(site_name, item_code)
+        if doc_item:
+            # update_item(doc_item, oc_product, save=True, is_updating=True)
+            update_count += 1
+            extras = (1, 'updated', 'Updated')
+            results_list.append((doc_item.get('name'),
+                                 doc_item.get('item_group'),
+                                 doc_item.get('oc_product_id'),
+                                 doc_item.get_formatted('oc_last_sync_from'),
+                                 doc_item.get('modified')) + extras)
+        else:
+            # creating new Item
+            params = {
+                'doctype': 'Item',
+                'item_group': root_item_group,
+                'is_group': 'No',
+                'default_warehouse': items_default_warehouse,
+                'item_name': description,
+                'description_html': '',
+                'description': '',
+                'show_in_website': 0,
+                'oc_is_updating': 1,
+                'oc_site': site_name,
+                'oc_product_id': '',
+                'oc_manufacturer_id': '',
+                'oc_tax_class_id': '',
+                'oc_stock_status': '',
+                'oc_model': item_code,
+                'oc_sku': item_code,
+                'oc_quantity': quantity,
+                'oc_status': 0,
+                'oc_meta_title': '',
+                'oc_meta_keyword': '',
+                'oc_meta_description': '',
+                'oc_price': '',
+                'oc_sync_from': False,
+                'oc_last_sync_from': datetime.now(),
+                'oc_sync_to': False,
+                'oc_last_sync_to': datetime.now(),
+            }
+            doc_item = frappe.get_doc(params)
+            doc_item.insert(ignore_permissions=True)
+            add_count += 1
+            extras = (1, 'added', 'Added')
+            results_list.append((doc_item.get('name'),
+                                root_item_group,
+                                doc_item.get('oc_product_id'),
+                                doc_item.get_formatted('oc_last_sync_from'),
+                                doc_item.get('modified')) + extras)
+
+    results = {
+        'check_count': check_count,
+        'add_count': add_count,
+        'update_count': update_count,
+        'skip_count': skip_count,
+        'results': results_list,
+        'success': success,
+    }
+    return results
 
 
 @frappe.whitelist()
@@ -373,14 +493,24 @@ def pull_products_from_oc(site_name, silent=False):
     items_default_warehouse = site_doc.get('items_default_warehouse')
     if not items_default_warehouse:
         sync_info([], 'Please specify a Default Warehouse and proceed.', stop=True, silent=silent)
+
+    dict_all_items = get_all_dict(site_name, fields=['name', 'oc_model'])
+    oc_model_to_name_map = {}
+    for dict_item in dict_all_items:
+        oc_model_to_name_map[dict_item.get('oc_model').lower().strip()] = dict_item.get('name')
+
     for oc_category in opencart_api.get_all_categories():
         doc_item_group = item_groups.get_item_group(site_name, oc_category.id)
         for oc_product in opencart_api.get_products_by_category(oc_category.id):
             check_count += 1
-            doc_item = get_item(site_name, oc_product.get('product_id'))
+            # doc_item = get_item(site_name, oc_product.get('product_id'))
+            oc_model = oc_product.get('model')
+            item_name = oc_model_to_name_map.get(oc_model.lower().strip())
             if doc_item_group:
-                if doc_item:
-                    update_item(doc_item, oc_product, save=True, is_updating=True)
+                # if doc_item:
+                if oc_model and item_name:
+                    doc_item = frappe.get_doc('Item', item_name)
+                    update_item(doc_item, oc_product, item_group=doc_item_group.get('name'), save=True, is_updating=True)
                     update_count += 1
                     extras = (1, 'updated', 'Updated')
                     results_list.append((doc_item.get('name'),
@@ -389,38 +519,14 @@ def pull_products_from_oc(site_name, silent=False):
                                          doc_item.get_formatted('oc_last_sync_from'),
                                          doc_item.get('modified')) + extras)
                 else:
-                    # creating new Item
-                    variants_list = []
-                    missed_item_attribute = ''
-                    missed_item_attribute_value = ''
-                    for option in oc_product.get('options_list'):
-                        if missed_item_attribute_value or not item_attributes.get(site_name, option.id):
-                            if not missed_item_attribute_value:
-                                missed_item_attribute = option.name
-                            break
-                        for option_value in option.option_values_list:
-                            if not item_attributes.get_value(site_name, option_value.id):
-                                missed_item_attribute_value = option_value.name
-                                break
-                            variants_list.append({
-                                'item_attribute': option.name,
-                                'item_attribute_value': option_value.name
-                            })
-                    if missed_item_attribute or missed_item_attribute_value:
-                        skip_count += 1
-                        if missed_item_attribute:
-                            skip_msg = 'Skipped: missed item attribute "%s"' % missed_item_attribute
-                        else:
-                            skip_msg = 'Skipped: missed item attribute value "%s"' % missed_item_attribute_value
-                        extras = (1, 'skipped', skip_msg)
-                        results_list.append((oc_product.get('name'), doc_item_group.get('name'), oc_product.get('product_id'), '', '') + extras)
-                        continue
+                    skip_count += 1
+                    extras = (1, 'skipped', 'Skipped: cannot found item with Item No. "%s"' % oc_model)
+                    results_list.append((oc_product.get('name'), '', oc_product.get('product_id'), '', '') + extras)
+                    continue
 
                     params = {
                         'doctype': 'Item',
                         'item_group': doc_item_group.get('name'),
-                        'has_variants': bool(variants_list),
-                        'variants': variants_list,
                         'is_group': 'No',
                         'default_warehouse': items_default_warehouse,
                         'item_name': oc_product.get('name'),
@@ -435,7 +541,7 @@ def pull_products_from_oc(site_name, silent=False):
                         'oc_manufacturer_id': oc_product.get('manufacturer_id'),
                         'oc_tax_class_id': oc_product.get('tax_class_id'),
                         'oc_stock_status': oc_product.get('stock_status'),
-                        'oc_model': oc_product.get('model'),
+                        # 'oc_model': oc_product.get('model'),
                         'oc_sku': oc_product.get('sku'),
                         'oc_quantity': oc_product.get('quantity'),
                         'oc_status': int(oc_product.get('status') or 0),

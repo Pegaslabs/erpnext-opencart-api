@@ -321,6 +321,16 @@ cur_frm.cscript.refresh = function(doc, dt, dn) {
     $msg.append('<p>'+ ' - specified Shipping Rule for each Opencart Store' +'</p>');
     $msg.append('<p>'+ ' - assigned Customer Group for each Opencart Store' +'</p>');
     $(cur_frm.fields_dict['order_notice'].wrapper).html($msg.html());
+
+    frappe.call({
+        type: "GET",
+        args: {
+            cmd: "opencart_api.oc_site.clear_file_data",
+            site_name: doc.name
+        },
+        callback: function(data) {
+        }
+    });
 }
 
 cur_frm.cscript.root_item_group = function(doc, dt, dn) {
@@ -427,6 +437,34 @@ cur_frm.cscript.pull_items_from_oc_site = function(doc, dt, dn) {
             }
         }
     });
+}
+
+cur_frm.cscript.pull_items_from_inventory_spreadsheet = function(doc, dt, dn) {
+    frappe.call({
+        freeze: true,
+        type: "GET",
+        args: {
+            cmd: "opencart_api.items.pull_from_inventory_spreadsheet",
+            site_name: doc.name
+        },
+        callback: function(data) {
+            if (data && data.message) {
+                print_sync_log_item(data.message, true);
+
+                // clean unused file data
+                frappe.call({
+                    type: "GET",
+                    args: {
+                        cmd: "opencart_api.oc_site.clear_file_data",
+                        site_name: doc.name
+                    },
+                    callback: function(data) {
+                    }
+                });
+            }
+        }
+    });
+
 }
 
 cur_frm.cscript.pull_customer_groups_from_oc_site = function(doc, dt, dn) {

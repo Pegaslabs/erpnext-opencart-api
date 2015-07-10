@@ -350,6 +350,21 @@
    "precision": ""
   }, 
   {
+   "description": "", 
+   "fieldname": "inventory_file", 
+   "fieldtype": "Attach", 
+   "label": "Inventory Spreadsheet File", 
+   "permlevel": 0
+  }, 
+  {
+   "description": "Press this button to sync manually Products from custom inventory spreadsheet.", 
+   "fieldname": "pull_items_from_inventory_spreadsheet", 
+   "fieldtype": "Button", 
+   "label": "Pull Items from inventory spreadsheet",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
    "description": "Item Sync Log", 
    "fieldname": "item_sync_log", 
    "fieldtype": "HTML", 
