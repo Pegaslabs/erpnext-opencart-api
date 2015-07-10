@@ -279,7 +279,7 @@ def get_all_dict(site_name, fields=['name']):
     return frappe.get_all('Item', fields=fields, filters={'oc_site': site_name})
 
 
-def update_or_create_item_discount(doc_item, oc_discount, save=False, is_updating=False):
+def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False, is_updating=False):
     disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
 
     oc_discount_copy = dict(oc_discount)
@@ -308,6 +308,8 @@ def update_or_create_item_discount(doc_item, oc_discount, save=False, is_updatin
             break
     else:
         doc_customer_group = customer_groups.get(doc_item.get('oc_site'), oc_discount.get('customer_group_id'))
+        if not doc_customer_group:
+            frappe.throw('Cannot not found Customer Group with customer_group_id "%s" for Item "%s"' % (customer_group_id, doc_item.get('name')))
         doc_item.append('oc_discounts', {
             'item_name': doc_item.get('name'),
             'customer_group': doc_customer_group.get('name'),
@@ -324,9 +326,9 @@ def update_or_create_item_discount(doc_item, oc_discount, save=False, is_updatin
         doc_item.save()
 
 
-def update_or_create_item_discounts(doc_item, oc_discounts, save=False, is_updating=False):
+def update_or_create_item_discounts(site_name, doc_item, oc_discounts, save=False, is_updating=False):
     for oc_discount in oc_discounts:
-        update_or_create_item_discount(doc_item, oc_discount, save=save, is_updating=is_updating)
+        update_or_create_item_discount(site_name, doc_item, oc_discount, save=save, is_updating=is_updating)
     if save:
         if is_updating:
             doc_item.update({'oc_is_updating': 1})
@@ -370,7 +372,7 @@ def update_item(doc_item, oc_product, item_group=None, save=False, is_updating=F
     doc_item.update(data)
 
     # discounts
-    update_or_create_item_discounts(doc_item, oc_product.get('discounts'), save=False, is_updating=False)
+    update_or_create_item_discounts(doc_item.get('oc_site'), doc_item, oc_product.get('discounts'), save=False, is_updating=False)
 
     if save:
         if is_updating:
@@ -511,6 +513,11 @@ def pull_products_from_oc(site_name, silent=False):
             doc_item = get_item_by_item_code(item_code)
             if doc_item_group:
                 if doc_item:
+                    if site_name != doc_item.get('oc_site'):
+                        skip_count += 1
+                        extras = (1, 'skipped', 'Skipped: Item with Item No. "%s" is initiated with other Opencart site "%s"' % (item_code, doc_item.get('oc_site')))
+                        results_list.append((oc_product.get('name'), '', oc_product.get('product_id'), '', '') + extras)
+                        continue
                     update_item(doc_item, oc_product, item_group=doc_item_group.get('name'), save=True, is_updating=True)
                     update_count += 1
                     extras = (1, 'updated', 'Updated')

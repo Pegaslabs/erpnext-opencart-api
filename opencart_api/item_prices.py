@@ -49,7 +49,7 @@ def oc_validate(doc, method=None):
         # updating or creating price as discount on Opencart site
         doc_customer_group = frappe.get_doc('Customer Group', db_oc_price_list.get('customer_group'))
         customer_group_id = doc_customer_group.get('oc_customer_group_id')
-        items.update_or_create_item_discount(doc_item, {
+        items.update_or_create_item_discount(site_name, doc_item, {
             'customer_group_id': customer_group_id,
             'price': doc.get('price_list_rate'),
             'priority': '0',
