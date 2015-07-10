@@ -342,14 +342,6 @@
    "set_only_once": 0
   }, 
   {
-   "description": "Press this button to sync manually Products from Opencart site.", 
-   "fieldname": "pull_items_from_oc_site", 
-   "fieldtype": "Button", 
-   "label": "Pull Items from OC site",
-   "permlevel": 0, 
-   "precision": ""
-  }, 
-  {
    "description": "", 
    "fieldname": "inventory_file", 
    "fieldtype": "Attach", 
@@ -361,6 +353,14 @@
    "fieldname": "pull_items_from_inventory_spreadsheet", 
    "fieldtype": "Button", 
    "label": "Pull Items from inventory spreadsheet",
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Press this button to sync manually Products from Opencart site.", 
+   "fieldname": "pull_items_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Items from OC site",
    "permlevel": 0, 
    "precision": ""
   }, 
