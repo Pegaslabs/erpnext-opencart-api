@@ -269,8 +269,8 @@ def get_item(site_name, oc_product_id):
         return frappe.get_doc('Item', db_item.get('name'))
 
 
-def get_item_by_code(site_name, item_code):
-    db_item = frappe.db.get('Item', {'oc_model': item_code})
+def get_item_by_item_code(item_code):
+    db_item = frappe.db.get('Item', {'item_code': item_code.upper()})
     if db_item:
         return frappe.get_doc('Item', db_item.get('name'))
 
@@ -409,6 +409,7 @@ def pull_from_inventory_spreadsheet(site_name, silent=False):
         description = row[description_idx]
         if item_code is None or quantity is None or description is None:
             continue
+        item_code = item_code.strip().upper()
 
         check_count += 1
         site_doc = frappe.get_doc('Opencart Site', site_name)
@@ -417,7 +418,7 @@ def pull_from_inventory_spreadsheet(site_name, silent=False):
         if not items_default_warehouse:
             sync_info([], 'Please specify a Default Warehouse and proceed.', stop=True, silent=silent)
 
-        doc_item = get_item_by_code(site_name, item_code)
+        doc_item = get_item_by_item_code(item_code)
         if doc_item:
             # update_item(doc_item, oc_product, save=True, is_updating=True)
             update_count += 1
