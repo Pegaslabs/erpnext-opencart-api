@@ -20,21 +20,21 @@ app_include_js = "/assets/js/opencart_site.js"
 
 doc_events = {
     "Opencart Site": {
-        "validate": "opencart_api.oc_site.oc_validate"
+        # "validate": "opencart_api.oc_site.oc_validate"
     },
     "Item": {
-        "validate": "opencart_api.items.oc_validate",
-        "on_trash": "opencart_api.items.oc_delete"
+        # "validate": "opencart_api.items.oc_validate",
+        # "on_trash": "opencart_api.items.oc_delete"
     },
     "Item Price": {
-        "validate": "opencart_api.item_prices.oc_validate",
+        # "validate": "opencart_api.item_prices.oc_validate",
     },
     "Customer": {
-        "validate": "opencart_api.customers.oc_validate",
-        "on_trash": "opencart_api.customers.oc_delete"
+        # "validate": "opencart_api.customers.oc_validate",
+        # "on_trash": "opencart_api.customers.oc_delete"
     },
     "Sales Order": {
-        "validate": "opencart_api.orders.oc_validate",
+        # "validate": "opencart_api.orders.oc_validate",
         # "on_trash": "opencart_api.orders.oc_delete"
     },
     "Purchase Receipt": {
