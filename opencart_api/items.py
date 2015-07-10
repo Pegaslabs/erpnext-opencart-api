@@ -431,8 +431,8 @@ def pull_from_inventory_spreadsheet(site_name, silent=False):
             # creating new Item
             params = {
                 'doctype': 'Item',
-                'naming_series': 'ITEM-',
                 'item_group': root_item_group,
+                'item_code': item_code,
                 'is_group': 'No',
                 'default_warehouse': items_default_warehouse,
                 'item_name': description,
