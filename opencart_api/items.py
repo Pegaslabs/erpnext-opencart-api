@@ -515,7 +515,7 @@ def pull_products_from_oc(site_name, silent=False):
                 if doc_item:
                     if site_name != doc_item.get('oc_site'):
                         skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: Item with Item No. "%s" is initiated with other Opencart site "%s"' % (item_code, doc_item.get('oc_site')))
+                        extras = (1, 'skipped', 'Skipped: Item with Item No. "%s" is associated with other Opencart site "%s"' % (item_code, doc_item.get('oc_site')))
                         results_list.append((oc_product.get('name'), '', oc_product.get('product_id'), '', '') + extras)
                         continue
                     update_item(doc_item, oc_product, item_group=doc_item_group.get('name'), save=True, is_updating=True)

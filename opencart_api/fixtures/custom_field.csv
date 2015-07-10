@@ -144,6 +144,5 @@
 "","""Contact-oc_site""","Contact","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Contact-oc_contact_id""","Contact","Data","Opencart Contact ID","oc_site","","Opencart Contact ID","","oc_contact_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Stock Reconciliation Item-oc_item_name""","Stock Reconciliation Item","Data","Item Name","item_code","","Item Name","","oc_item_name",0,0,0,0,"","",0,"",0,0,0,0,1,0
-"","""Stock Reconciliation Item-oc_model""","Stock Reconciliation Item","Data","Model","oc_item_name","","Model","","oc_model",0,0,0,0,"","",0,"",0,0,0,0,1,0
 "","""Stock Reconciliation-inventory_file""","Stock Reconciliation","Attach","Inventory Spreadsheet File","get_items","","Inventory Spreadsheet File","","inventory_file",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Stock Reconciliation-get_items_from_file""","Stock Reconciliation","Button","Get Items from Inventory File","inventory_file","","Get Items from Inventory File","","get_items_from_file",0,0,0,0,"","",0,"",0,0,0,0,0,0

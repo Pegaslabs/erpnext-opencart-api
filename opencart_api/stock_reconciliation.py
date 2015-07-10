@@ -13,7 +13,7 @@ def clear_file_data(site_name):
 
 @frappe.whitelist()
 def get_items(warehouse, posting_date, posting_time):
-    items = frappe.get_list("Item", fields=["name", "item_name", "oc_model"], filters={
+    items = frappe.get_list("Item", fields=["name", "item_name"], filters={
         "is_stock_item": "Yes",
         "has_serial_no": "No",
         "has_batch_no": "No"
@@ -37,12 +37,6 @@ def get_items_from_file(doc_name, warehouse, posting_date, posting_time):
         rows = read_csv_content_from_attached_file(frappe.get_doc("Stock Reconciliation", doc_name))
     except:
         frappe.throw(_("Please select a valid csv file with data"))
-
-    dict_all_items = frappe.get_all('Item', fields=['name', 'oc_model'])
-    oc_model_to_name_map = {}
-    for dict_item in dict_all_items:
-        oc_model_to_name_map[dict_item.get('oc_model').lower().strip()] = dict_item.get('name')
-
 
     # detect item_code, quantity, description
     is_header_detected = False
@@ -70,10 +64,9 @@ def get_items_from_file(doc_name, warehouse, posting_date, posting_time):
         description = row[description_idx]
         if item_code is None or quantity is None or description is None:
             continue
-        item_name = oc_model_to_name_map.get(item_code.lower().strip())
-        if not item_code:
-            continue
-        list_item = frappe.get_list('Item', fields=['name', 'item_name', 'oc_model'], filters={'is_stock_item': 'Yes', 'name': item_name})
+
+        item_code = item_code.upper().strip()
+        list_item = frappe.get_list('Item', fields=['name', 'item_name'], filters={'is_stock_item': 'Yes', 'name': item_code})
         if not list_item:
             continue
         item = list_item[0]
