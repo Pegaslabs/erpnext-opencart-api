@@ -98,8 +98,8 @@ def pull(site_name, silent=False):
                     continue
                 customer_groups_cache[db_customer_group.get('name')] = db_customer_group
 
-    # for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id']):
-    for dict_item in [it for it in frappe.get_all('Item', fields=['name', 'item_code']) if it.get('name') == 'TESTAH']:
+    for dict_item in items.get_all_dict(site_name, fields=['name', 'item_code', 'oc_product_id']):
+    # for dict_item in [it for it in frappe.get_all('Item', fields=['name', 'item_code']) if it.get('name') == 'TESTAH']:
         item_code = dict_item.get('item_code')
         doc_oc_product = items.get_opencart_product(site_name, dict_item.get('name'))
         oc_product_id = doc_oc_product.get('oc_product_id')
