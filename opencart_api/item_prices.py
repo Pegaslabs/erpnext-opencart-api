@@ -102,6 +102,9 @@ def pull(site_name, silent=False):
     # for dict_item in [it for it in frappe.get_all('Item', fields=['name', 'item_code']) if it.get('name') == 'TESTAH']:
         item_code = dict_item.get('item_code')
         doc_oc_product = items.get_opencart_product(site_name, dict_item.get('name'))
+        if not doc_oc_product:
+            skip_count += 1
+            continue
         oc_product_id = doc_oc_product.get('oc_product_id')
         doc_item = frappe.get_doc('Item', dict_item.get('name'))
         for doc_store in doc_stores:
