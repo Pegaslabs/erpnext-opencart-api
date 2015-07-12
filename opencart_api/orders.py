@@ -305,7 +305,16 @@ def pull_modified_from(site_name, silent=False):
                 })
                 doc_order.update(params)
                 doc_order.save()
-                resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
+                try:
+                    resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
+                except Exception as ex:
+                    update_count += 1
+                    extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % str(ex))
+                    results_list.append((doc_order.get('name'),
+                                         doc_order.get('oc_order_id'),
+                                         doc_order.get_formatted('oc_last_sync_from'),
+                                         doc_order.get('modified')) + extras)
+                    continue
                 update_count += 1
                 extras = (1, 'updated', 'Updated')
                 results_list.append((doc_order.get('name'),
@@ -350,15 +359,13 @@ def pull_modified_from(site_name, silent=False):
 
                 items_count = 0
                 for product in oc_order.get('products'):
-                    doc_item = items.get_item(site_name, product.get('product_id'))
+                    # doc_item = items.get_item(site_name, product.get('product_id'))
+                    product_id = product.get('product_id')
+                    product_model = product.get('model', '').upper()
+                    doc_item = items.get_item_by_item_code(product_model)
                     if not doc_item:
                         skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" cannot be found' % (product.get('name'), product.get('product_id')))
-                        results_list.append(('', oc_order.get('order_id'), '', '') + extras)
-                        break
-                    if doc_item.get('has_variants'):
-                        skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" is a tempalte' % (product.get('name'), product.get('product_id')))
+                        extras = (1, 'skipped', 'Skipped: Item "%s" cannot be found for Opencart product with  product id "%s"' % (product_model, product_id))
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         break
 
@@ -386,7 +393,16 @@ def pull_modified_from(site_name, silent=False):
                         continue
 
                     doc_order.insert(ignore_permissions=True)
-                    resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
+                    try:
+                        resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
+                    except Exception as ex:
+                        add_count += 1
+                        extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(ex))
+                        results_list.append((doc_order.get('name'),
+                                             doc_order.get('oc_order_id'),
+                                             doc_order.get_formatted('oc_last_sync_from'),
+                                             doc_order.get('modified')) + extras)
+                        continue
                     add_count += 1
                     extras = (1, 'added', 'Added')
                     results_list.append((doc_order.get('name'),
@@ -701,7 +717,7 @@ def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_nam
         # taxes related part
         template = resolve_taxes_and_charges(doc_customer.get('name'), doc_customer=doc_customer)
         if not template:
-            frappe.throw('Cannot resolve Sales Taxes and Charges Template for Territory "%s"' % doc_customer.get('territory'))
+            frappe.throw('Cannot resolve Sales Taxes and Charges Template for "%s" Territory, order id "%s"' % (doc_customer.get('territory'), oc_order.get('order_id')))
 
         # shipping related part
         doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))

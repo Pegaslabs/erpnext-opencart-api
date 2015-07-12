@@ -115,6 +115,14 @@ class OpencartApi(object):
     def get_product(self, product_id):
         success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers)
         product = resp.get('data', {})
+        product['product_id'] = product.get('product_id') or product.get('id')
+
+        # resolving category_id
+        if isinstance(product.get('category'), dict):
+            for category_id, first_category in product.get('category').items():
+                product['category_id'] = category_id
+                break
+
         for i, first_description in product.get('product_description').items():
             if isinstance(first_description, list):
                 for k, val in first_description[0].items():

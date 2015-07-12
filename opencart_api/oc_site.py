@@ -151,3 +151,11 @@ def get_stock_status_id_by_name(site_name, stock_status_name):
     if res is None:
         frappe.throw('Error. Cannot get stock status id by name "%s"' % stock_status_name)
     return res
+
+
+def get_order_status_id_by_name(site_name, order_status_name):
+    order_statuses = get_oc_init(site_name).get('order_statuses', [])
+    res = next((ss.get('stock_status_id') for ss in order_statuses if ss.get('name') == order_status_name), None)
+    if res is None:
+        frappe.throw('Error. Cannot get order status id by name "%s"' % order_status_name)
+    return res

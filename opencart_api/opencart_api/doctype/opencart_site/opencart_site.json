@@ -515,6 +515,7 @@
    "description": "Press this button to sync manually Orders from Opencart site.", 
    "fieldname": "pull_orders_from_oc_site", 
    "fieldtype": "Button", 
+   "hidden": 1, 
    "label": "Pull all Orders",
    "permlevel": 0, 
    "precision": ""
