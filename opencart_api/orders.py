@@ -669,6 +669,13 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
         frappe.msgprint('Cannot resolve Shipping Rule: Customer does not have any Opencart Site set')
         return
 
+    # resolve doc_oc_store
+    if doc_oc_store is None:
+        doc_oc_store = oc_stores.get(obj_customer.get('oc_site'), obj_customer.get('oc_store_id'))
+        if not doc_oc_store:
+            frappe.msgprint('Cannot resolve Shipping Rule: Customer does not belong to any of Opencart stores')
+            return
+
     # check for strong coincidence
     # frappe.msgprint('territory=' + str(obj_customer.get('territory') + str(doc_oc_store.get('name'))))
     for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
