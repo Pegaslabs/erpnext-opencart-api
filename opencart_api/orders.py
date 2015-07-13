@@ -289,7 +289,10 @@ def pull_modified_from(site_name, silent=False):
                 doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
 
             if doc_order:
-                # update existed Sales Order
+                # update existed Sales Order with status "Draft"
+                if doc_order.get('status') != 'Draft':
+                    skip_count += 1
+                    continue
                 params = {}
                 resolve_customer_group_rules2(oc_order, doc_customer, params)
 
@@ -299,6 +302,7 @@ def pull_modified_from(site_name, silent=False):
                     'base_net_total': oc_order.get('total'),
                     'total': oc_order.get('total'),
                     'company': company,
+                    'transaction_date': getdate(oc_order.get('date_added', '')),
                     'oc_is_updating': 1,
                     'oc_status': order_status_name,
                     'oc_last_sync_from': datetime.now(),
@@ -340,6 +344,7 @@ def pull_modified_from(site_name, silent=False):
                     'total': oc_order.get('total'),
                     'company': company,
                     'customer': doc_customer.name,
+                    'transaction_date': getdate(oc_order.get('date_added', '')),
                     'delivery_date': add_days(nowdate(), 7),
                     'oc_is_updating': 1,
                     'oc_site': site_name,
@@ -414,7 +419,7 @@ def pull_modified_from(site_name, silent=False):
         modified_from = add_days(modified_to, 1)
         modified_to = add_days(modified_to, default_days_interval)
         if modified_to > now_date:
-            modified_to = now_date
+            modified_to = add_days(now_date, 1)
     results = {
         'check_count': check_count,
         'add_count': add_count,
