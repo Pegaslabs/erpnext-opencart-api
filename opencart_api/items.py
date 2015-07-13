@@ -558,6 +558,14 @@ def pull_products_from_oc(site_name, silent=False):
             check_count += 1
             item_code = oc_product.get('model', '').upper()
             doc_item = get_item_by_item_code(item_code)
+
+            # skip product if it is disabled on Opencart site
+            if not int(oc_product.get('status') or 0):
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: item with Item No. "%s" is disabled on Opencart site' % item_code)
+                results_list.append((oc_product.get('name'), '', oc_product.get('product_id'), '', '') + extras)
+                continue
+
             if doc_item_group:
                 if doc_item:
                     try:
