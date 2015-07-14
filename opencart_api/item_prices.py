@@ -71,7 +71,7 @@ def oc_validate(doc, method=None):
 
 
 @frappe.whitelist()
-def pull(site_name, silent=False):
+def pull(site_name, item_code=None, silent=False):
     '''Sync Item Prices from Opencart site'''
     results = {}
     results_list = []
@@ -98,9 +98,17 @@ def pull(site_name, silent=False):
                     continue
                 customer_groups_cache[db_customer_group.get('name')] = db_customer_group
 
-    for dict_item in frappe.get_all('Item', fields=['name', 'item_code']):
+    all_dict_items = []
+    if item_code:
+        all_dict_items = frappe.get_all('Item', fields=['name', 'item_code'], filters={'item_code': item_code.upper()})
+    else:
+        all_dict_items = frappe.get_all('Item', fields=['name', 'item_code'])
+    items_count_left_to_process = len(all_dict_items)
+    for dict_item in all_dict_items:
     # for dict_item in [it for it in frappe.get_all('Item', fields=['name', 'item_code']) if it.get('name') == 'TESTAH']:
         item_code = dict_item.get('item_code')
+        items_count_left_to_process -= 1
+        print('processing %s, left to procecss %d' % (item_code or '', items_count_left_to_process))
         doc_oc_product = items.get_opencart_product(site_name, dict_item.get('name'))
         if not doc_oc_product:
             skip_count += 1
