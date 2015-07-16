@@ -12,13 +12,32 @@ import customers
 import oc_stores
 import items
 import territories
-import price_lists
 import sales_taxes_and_charges_template
+
+
+OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
+OC_ORDER_STATUS_PROCESSING = 'Processing'
+OC_ORDER_STATUS_SHIPPED = 'Shipped'
+OC_ORDER_STATUS_COMPLETE = 'Complete'
+OC_ORDER_STATUS_CANCELED = 'Canceled'
 
 
 @sync_to_opencart
 def oc_validate(doc, method=None):
     site_name = doc.get('oc_site')
+
+    # update Opencart status
+    if doc.get('status') is None or doc.get('status') == 'Draft':
+        if not doc.get('oc_status'):
+            doc.update({'oc_status': OC_ORDER_STATUS_AWAITING_FULFILLMENT})
+    elif doc.get('status') == 'Submitted':
+        if doc.get('oc_status') == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
+            doc.update({'oc_status': OC_ORDER_STATUS_PROCESSING})
+    elif doc.get('status') == 'Stopped':
+        pass
+    elif doc.get('status') == 'Cancelled':
+        pass
+        # doc.update({'oc_status': OC_ORDER_STATUS_CANCELED})
 
     # validating customer
     customer_name = doc.get('customer')
@@ -148,22 +167,20 @@ def oc_validate(doc, method=None):
     # products
     products = []
     for doc_sales_order_item in doc.items:
-        db_item = frappe.db.get('Item', {'oc_site': site_name,
-                                         'item_code': doc_sales_order_item.get('item_code'),
-                                         'item_name': doc_sales_order_item.get('item_name')})
-        if not db_item:
+        doc_oc_product = items.get_opencart_product(site_name, doc_sales_order_item.get('item_code'))
+        if not doc_oc_product:
             frappe.throw('Could not found "%s %s" Item related to "%s" Opencart Site' % (doc_sales_order_item.get('item_code'),
                                                                                          doc_sales_order_item.get('item_name'),
                                                                                          site_name))
-
+        doc_item = frappe.get_doc('Item', doc_sales_order_item.get('item_code'))
         products.append({
-            'product_id': db_item.get('oc_product_id'),
+            'product_id': doc_oc_product.get('oc_product_id'),
             'quantity': doc_sales_order_item.get('qty'),
             'price': doc_sales_order_item.get('rate'),
             'total': doc_sales_order_item.get('amount'),
-            'name': db_item.get('item_name'),
-            'model': db_item.get('oc_model'),
-            'sku': db_item.get('oc_sku')
+            'name': doc_item.get('item_name'),
+            'model': doc_oc_product.get('oc_model'),
+            'sku': doc_oc_product.get('oc_sku')
             # 'tax_class_id': '10',
             # 'reward': '0',
             # 'subtract': '0',
@@ -193,10 +210,12 @@ def oc_validate(doc, method=None):
         data = {'status': order_status_id}
         success, resp = oc_api.get(site_name).update_order(oc_order_id, data)
         if success:
-            frappe.msgprint('Order is updated successfully on Opencart site')
+            if method != 'on_submit':
+                frappe.msgprint('Order is updated successfully on Opencart site')
             doc.update({'oc_last_sync_to': datetime.now()})
         else:
-            frappe.msgprint('Order is not updated on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
+            if method != 'on_submit':
+                frappe.msgprint('Order is not updated on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
     else:
         # disabled for now creating new Sales Orders from ERPNext
         return
@@ -212,10 +231,13 @@ def oc_validate(doc, method=None):
             # update existed order on Opencart site
             data = {'status': order_status_id}
             success, resp = oc_api.get(site_name).update_order(oc_order_id, data)
-
             frappe.msgprint('Order is created successfully on Opencart site')
         else:
             frappe.msgprint('Order is not created on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
+
+
+def oc_on_submit(doc, method=None):
+    oc_validate(doc, method)
 
 
 @sync_to_opencart

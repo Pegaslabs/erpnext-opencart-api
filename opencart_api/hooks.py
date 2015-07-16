@@ -35,6 +35,7 @@ doc_events = {
     },
     "Sales Order": {
         "validate": "opencart_api.orders.oc_validate",
+        "on_submit": "opencart_api.orders.oc_on_submit",
         # "on_trash": "opencart_api.orders.oc_delete"
     },
     "Purchase Receipt": {

@@ -88,7 +88,7 @@
 "","""Sales Order-oc_is_updating""","Sales Order","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_site""","Sales Order","Link","Opencart Site","oc_is_updating","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_order_id""","Sales Order","Data","Opencart Order ID","oc_site","","Opencart Order ID","","oc_order_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_status""","Sales Order","Select","Order Status","oc_order_id","","","","oc_status",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_status""","Sales Order","Data","Order Status","oc_order_id","","","","oc_status",0,0,1,0,"","Awaiting Fulfillment",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_comment""","Sales Order","Long Text","Comment","oc_status","","Comment","","oc_comment",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_settings_cb""","Sales Order","Column Break","","oc_comment","","","","oc_settings_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sync_from""","Sales Order","Check","Sync from Opencart","oc_settings_cb","","","","oc_sync_from",0,0,0,0,"","1",0,"",0,0,0,0,0,0
