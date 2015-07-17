@@ -35,7 +35,7 @@ frappe.ui.form.on("Stock Reconciliation", "get_items_from_file", function(frm) {
 				},
 				callback: function(r) {
 					var items = [];
-					frm.clear_table("items");
+					//frm.clear_table("items");
 					for(var i=0; i< r.message.length; i++) {
 						var d = frm.add_child("items");
 						$.extend(d, r.message[i]);
