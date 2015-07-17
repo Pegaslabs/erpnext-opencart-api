@@ -42,6 +42,7 @@ def get_items_from_file(doc_name, warehouse, posting_date, posting_time):
     is_header_detected = False
     item_code_idx = 0
     quantity_idx = 0
+    cost_idx = 0
     description_idx = 0
     for row in rows:
         if not is_header_detected:
@@ -49,6 +50,7 @@ def get_items_from_file(doc_name, warehouse, posting_date, posting_time):
                 robust_row = ['' if field is None else field.lower().strip() for field in row]
                 item_code_idx = map(lambda a: a.startswith('item no') or a.startswith('item code'), robust_row).index(True)
                 quantity_idx = map(lambda a: a.startswith('quantity'), robust_row).index(True)
+                cost_idx = map(lambda a: a.startswith('cost'), robust_row).index(True)
                 description_idx = map(lambda a: a.startswith('description'), robust_row).index(True)
             except ValueError:
                 continue
@@ -57,12 +59,20 @@ def get_items_from_file(doc_name, warehouse, posting_date, posting_time):
                 continue
 
         item_code = row[item_code_idx]
+        # quantity
         quantity = row[quantity_idx]
         if isinstance(quantity, basestring):
             quantity = quantity.strip().replace(',', '')
             quantity = float(quantity) if quantity else None
+
+        # cost
+        cost = row[cost_idx]
+        if isinstance(cost, basestring):
+            cost = cost.strip().replace(',', '')
+            cost = float(cost) if cost else None
+
         description = row[description_idx]
-        if item_code is None or quantity is None or description is None:
+        if item_code is None or quantity is None or description is None or cost is None:
             continue
 
         item_code = item_code.upper().strip()
@@ -74,9 +84,9 @@ def get_items_from_file(doc_name, warehouse, posting_date, posting_time):
         item.oc_item_name = item.item_name
         item.warehouse = warehouse
         item.qty = quantity
-        # item.valuation_rate =
+        item.valuation_rate = cost
         item.current_qty = quantity
-        # item.current_valuation_rate = item.valuation_rate
+        item.current_valuation_rate = cost
         del item["name"]
         res_items.append(item)
 
