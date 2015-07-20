@@ -43,7 +43,7 @@ doc_events = {
         # "before_update_after_submit": "opencart_api.orders.before_update_after_submit",
         # "on_update": "opencart_api.orders.on_update",
         "on_submit": "opencart_api.orders.on_submit",
-        "on_cancel": "opencart_api.orders.on_cancel",
+        # "on_cancel": "opencart_api.orders.on_cancel",
         # "on_update_after_submit": "opencart_api.orders.on_update_after_submit",
         # "on_trash": "opencart_api.orders.on_trash"
     },

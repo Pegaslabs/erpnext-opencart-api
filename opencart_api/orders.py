@@ -358,7 +358,7 @@ def on_order_added(doc_order):
 
 
 @frappe.whitelist()
-def pull_modified_from(site_name, silent=False):
+def pull_added_from(site_name, silent=False):
     '''Sync orders from Opencart site'''
     results = {}
     results_list = []
@@ -392,7 +392,7 @@ def pull_modified_from(site_name, silent=False):
     if modified_to > now_date:
         modified_to = add_days(now_date, 1)
     while True:
-        success, oc_orders = oc_api.get(site_name).get_orders_modified_from_to(modified_from.strftime("%Y-%m-%d"), modified_to.strftime("%Y-%m-%d"))
+        success, oc_orders = oc_api.get(site_name).get_orders_addeed_from_to(modified_from.strftime("%Y-%m-%d"), modified_to.strftime("%Y-%m-%d"))
         for oc_order in oc_orders:
             check_count += 1
             order_status_name = order_status_id_to_name_map.get(oc_order.get('order_status_id'))

@@ -520,7 +520,7 @@ cur_frm.cscript.pull_orders_modified_from = function(doc, dt, dn) {
         freeze: true,
         type: "GET",
         args: {
-            cmd: "opencart_api.orders.pull_modified_from",
+            cmd: "opencart_api.orders.pull_added_from",
             site_name: doc.name
         },
         callback: function(data) {

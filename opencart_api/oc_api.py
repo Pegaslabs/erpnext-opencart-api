@@ -249,6 +249,10 @@ class OpencartApi(object):
         success, resp = oc_request(self.url + '/orders/details/modified_from/%s/modified_to/%s' % (modified_from, modified_to), headers=self.headers)
         return (success, resp.get('data', []) if success else [])
 
+    def get_orders_addeed_from_to(self, added_from, added_to):
+        success, resp = oc_request(self.url + '/orders/details/added_from/%s/added_to/%s' % (added_from, added_to), headers=self.headers)
+        return (success, resp.get('data', []) if success else [])
+
     def get_orders(self):
         success, resp = oc_request(self.url + '/orders', headers=self.headers)
         if not success:
