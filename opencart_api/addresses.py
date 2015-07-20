@@ -96,14 +96,14 @@ def create_or_update(site_name, oc_customer, doc_customer):
         doc_customer.save()
 
 
-def create_or_update_from_guest_order(site_name, doc_customer, oc_order):
+def create_or_update_from_order(site_name, doc_customer, oc_order):
     # creating address from order payment
-    if not oc_order.get('payment_country'):
+    if not oc_order.get('shipping_country'):
         frappe.msgprint('Warning. Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
-    countries.create_if_does_not_exist(oc_order.get('payment_country'))
-    firstname = oc_order.get('payment_firstname', '')
-    lastname = oc_order.get('payment_lastname', '')
+    countries.create_if_does_not_exist(oc_order.get('shipping_country'))
+    firstname = oc_order.get('shipping_firstname', '')
+    lastname = oc_order.get('shipping_lastname', '')
     customer_name = firstname + ' ' + lastname
 
     doc_address = get_address_by_customer(doc_customer.get('name'), customer_name)
@@ -114,12 +114,12 @@ def create_or_update_from_guest_order(site_name, doc_customer, oc_order):
             'fax': oc_order.get('fax', ''),
             'email_id': oc_order.get('email', ''),
             'customer_name': customer_name,
-            'pincode': oc_order.get('payment_postcode', ''),
-            'country': oc_order.get('payment_country', ''),
-            'state': oc_order.get('payment_zone'),
-            'city': oc_order.get('payment_city', ''),
-            'address_line1': oc_order.get('payment_address_1', ''),
-            'address_line2': oc_order.get('payment_address_2', '')
+            'pincode': oc_order.get('shipping_postcode', ''),
+            'country': oc_order.get('shipping_country', ''),
+            'state': oc_order.get('shipping_zone'),
+            'city': oc_order.get('shipping_city', ''),
+            'address_line1': oc_order.get('shipping_address_1', ''),
+            'address_line2': oc_order.get('shipping_address_2', '')
         }
         doc_address.update(params)
         doc_address.save()
@@ -133,12 +133,12 @@ def create_or_update_from_guest_order(site_name, doc_customer, oc_order):
             'fax': oc_order.get('fax', ''),
             'email_id': oc_order.get('email', ''),
             'customer_name': customer_name,
-            'pincode': oc_order.get('payment_postcode', ''),
-            'country': oc_order.get('payment_country', ''),
-            'state': oc_order.get('payment_zone'),
-            'city': oc_order.get('payment_city', ''),
-            'address_line1': oc_order.get('payment_address_1', ''),
-            'address_line2': oc_order.get('payment_address_2', ''),
+            'pincode': oc_order.get('shipping_postcode', ''),
+            'country': oc_order.get('shipping_country', ''),
+            'state': oc_order.get('shipping_zone'),
+            'city': oc_order.get('shipping_city', ''),
+            'address_line1': oc_order.get('shipping_address_1', ''),
+            'address_line2': oc_order.get('shipping_address_2', ''),
             'oc_site': site_name,
         }
         doc_address = frappe.get_doc(params)

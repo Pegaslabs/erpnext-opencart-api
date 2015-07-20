@@ -39,7 +39,7 @@ def create_or_update(site_name, oc_customer, doc_customer):
         doc_contact.insert(ignore_permissions=True)
 
 
-def create_or_update_from_guest_order(site_name, doc_customer, oc_order):
+def create_or_update_from_order(site_name, doc_customer, oc_order):
     doc_contact = get_contact(doc_customer.get('name'), oc_order.get('firstname', ''), oc_order.get('lastname', ''))
     if doc_contact:
         # update existed Contact

@@ -215,8 +215,8 @@ def update_guest_from_order(doc_customer, oc_order):
             doc_customer.save()
 
             # addresses and contacts
-            addresses.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
-            contacts.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
+            addresses.create_or_update_from_order(site_name, doc_customer, oc_order)
+            contacts.create_or_update_from_order(site_name, doc_customer, oc_order)
 
             return doc_customer
         else:
@@ -262,8 +262,8 @@ def create_guest_from_order(site_name, oc_order):
             doc_customer.insert(ignore_permissions=True)
 
             # addresses and contacts
-            addresses.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
-            contacts.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
+            addresses.create_or_update_from_order(site_name, doc_customer, oc_order)
+            contacts.create_or_update_from_order(site_name, doc_customer, oc_order)
 
             return doc_customer
         else:

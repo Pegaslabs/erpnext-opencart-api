@@ -8,6 +8,7 @@ from frappe.exceptions import ValidationError
 
 from utils import sync_info
 from decorators import sync_to_opencart
+import addresses
 import oc_api
 import oc_site
 import customers
@@ -413,6 +414,9 @@ def pull_added_from(site_name, silent=False):
                     doc_customer = customers.create_guest_from_order(site_name, oc_order)
             else:
                 doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
+
+                # update customer address from order
+                addresses.create_or_update_from_order(site_name, doc_customer, oc_order)
 
             if doc_order:
                 # update existed Sales Order with status "Draft"
