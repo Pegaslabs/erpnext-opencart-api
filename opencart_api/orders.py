@@ -28,7 +28,7 @@ OC_ORDER_STATUS_CANCELED = 'Canceled'
 OC_CURRENCY_REGEX = re.compile("([A-Z]{3})")
 OC_TOTAL_REGEX = re.compile("([\d,.]+)")
 
-TOTALS_PRECISION = 0.001
+TOTALS_PRECISION = 0.02
 
 
 def get_currency_from_total_str(total_str):
@@ -70,10 +70,8 @@ def on_submit(doc, method=None):
 
         if not are_totals_equal(doc.get('total'), oc_sub_total):
             frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('total')), str(oc_sub_total)))
-        if not are_totals_equal(doc.get('total_taxes_and_charges'), oc_shipping_total + oc_tax_total):
-            frappe.throw('%s: Order\'s Total Taxes and Charges ($%s) does not equal to sum of Shipping Total ($%s) and Tax Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('total_taxes_and_charges')), str(oc_shipping_total), str(oc_tax_total)))
         if not are_totals_equal(doc.get('grand_total'), oc_total):
-            frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('grand_total')), str(oc_total)))
+            frappe.throw('%s: Order\'s Grand Total ($%s) does not equal to Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('grand_total')), str(oc_total)))
 
     # frappe.db.set(doc, 'oc_status', OC_ORDER_STATUS_PROCESSING)
     # sync_order_to_opencart(doc)
@@ -414,9 +412,8 @@ def pull_added_from(site_name, silent=False):
                     doc_customer = customers.create_guest_from_order(site_name, oc_order)
             else:
                 doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
-
-                # update customer address from order
-                addresses.create_or_update_from_order(site_name, doc_customer, oc_order)
+                if not doc_customer:
+                    doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
 
             if doc_order:
                 # update existed Sales Order with status "Draft"

@@ -272,6 +272,64 @@ def create_guest_from_order(site_name, oc_order):
         frappe.throw('Opencart Store with store_id "%s" does not exist' % oc_order.get('store_id'))
 
 
+def create_from_oc(site_name, customer_id, oc_order=None):
+    if oc_order:
+        customer_id = oc_order.get('customer_id')
+
+    success, oc_customer = oc_api.get(site_name).get_customer(customer_id)
+
+    if not success:
+        frappe.throw('Cannot get Customer from Opencart site. Error: %s' % oc_customer.get('error') or 'Unknown')
+
+    customer_group_id = oc_customer.get('customer_group_id', '')
+    doc_customer_group = customer_groups.get(site_name, customer_group_id)
+
+    if not doc_customer_group:
+        frappe.throw('Could not found Customer Group with customer_group_id "%s"' % customer_group_id)
+
+    default_price_list = doc_customer_group.get('default_price_list')
+    territory_name = territories.DEFAULT
+    if oc_order:
+        territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+    # create new Customer
+    params = {
+        'doctype': 'Customer',
+        'customer_type': 'Individual',
+        'territory': territory_name,
+        'customer_name': make_full_name(oc_order.get('firstname'), oc_order.get('lastname')),
+        'customer_group': doc_customer_group.get('name'),
+        'naming_series': 'CUST-',
+        'default_price_list': default_price_list,
+        'oc_guest': 0,
+        'oc_is_updating': 1,
+        'oc_site': site_name,
+        'oc_customer_id': customer_id,
+        'oc_store_id': oc_customer.get('store_id') or '',
+        'oc_status': 1,
+        'oc_sync_from': True,
+        'oc_last_sync_from': datetime.now(),
+        'oc_sync_to': True,
+        'oc_last_sync_to': datetime.now(),
+        'oc_firstname': oc_order.get('firstname'),
+        'oc_lastname': oc_order.get('lastname'),
+        'oc_telephone': oc_order.get('telephone'),
+        'oc_fax': oc_order.get('fax'),
+        'oc_email': oc_order.get('email')
+    }
+    doc_customer = frappe.get_doc(params)
+    doc_customer.insert(ignore_permissions=True)
+
+    # addresses and contacts
+    addresses.create_or_update(site_name, oc_customer, doc_customer)
+    contacts.create_or_update(site_name, oc_customer, doc_customer)
+    if oc_order:
+        # addresses and contacts
+        addresses.create_or_update_from_order(site_name, doc_customer, oc_order)
+        contacts.create_or_update_from_order(site_name, doc_customer, oc_order)
+
+    return doc_customer
+
+
 @frappe.whitelist()
 def pull_customers_from_oc(site_name, silent=False):
     '''Sync customers from Opencart site'''

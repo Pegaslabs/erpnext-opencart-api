@@ -34,9 +34,6 @@ def create_or_update(site_name, oc_customer, doc_customer):
     if not oc_address:
         return
 
-    oc_address_id = oc_address.get('address_id')
-    doc_address = get_address(site_name, oc_address_id)
-
     if not oc_address.get('country'):
         frappe.msgprint('Warning. Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
@@ -45,9 +42,11 @@ def create_or_update(site_name, oc_customer, doc_customer):
     firstname = oc_address.get('firstname') or oc_customer.get('firstname') or ''
     lastname = oc_address.get('lastname') or oc_customer.get('lastname') or ''
     customer_name = firstname + ' ' + lastname
-
+    oc_address_id = oc_address.get('address_id')
+    # doc_address = get_address(site_name, oc_address_id)
+    doc_address = get_address_by_customer(doc_customer.get('name'), customer_name)
     if doc_address:
-        # update existed Address
+        # update existed Address (Billing)
         params = {
             'address_type': 'Billing',
             'customer': doc_customer.get('name'),
@@ -60,7 +59,8 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'state': oc_address.get('zone'),
             'city': oc_address.get('city', 'not specified'),
             'address_line1': oc_address.get('address_1', ''),
-            'address_line2': oc_address.get('address_2', '')
+            'address_line2': oc_address.get('address_2', ''),
+            'oc_address_id': oc_address_id
         }
         doc_address.update(params)
         doc_address.save()
@@ -81,7 +81,7 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'address_line1': oc_address.get('address_1', ''),
             'address_line2': oc_address.get('address_2', ''),
             'oc_site': site_name,
-            'oc_address_id': oc_address_id,
+            'oc_address_id': oc_address_id
         }
         doc_address = frappe.get_doc(params)
         doc_address.insert(ignore_permissions=True)
@@ -110,6 +110,7 @@ def create_or_update_from_order(site_name, doc_customer, oc_order):
     if doc_address:
         # update existed Address
         params = {
+            'address_type': 'Shipping',
             'phone': oc_order.get('telephone', ''),
             'fax': oc_order.get('fax', ''),
             'email_id': oc_order.get('email', ''),
@@ -124,10 +125,10 @@ def create_or_update_from_order(site_name, doc_customer, oc_order):
         doc_address.update(params)
         doc_address.save()
     else:
-        # create new Address
+        # create new Address (Shipping)
         params = {
             'doctype': 'Address',
-            'address_type': 'Billing',
+            'address_type': 'Shipping',
             'customer': doc_customer.get('name'),
             'phone': oc_order.get('telephone', ''),
             'fax': oc_order.get('fax', ''),
