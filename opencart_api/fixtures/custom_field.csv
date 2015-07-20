@@ -90,13 +90,19 @@
 "","""Sales Order-oc_order_id""","Sales Order","Data","Opencart Order ID","oc_site","","Opencart Order ID","","oc_order_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_status""","Sales Order","Data","Order Status","oc_order_id","","","","oc_status",0,0,1,0,"","Awaiting Fulfillment",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_comment""","Sales Order","Long Text","Comment","oc_status","","Comment","","oc_comment",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_settings_cb""","Sales Order","Column Break","","oc_comment","","","","oc_settings_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sub_total""","Sales Order","Data","Sub Total","oc_comment","","","","oc_sub_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_shipping_total""","Sales Order","Data","Shipping","oc_sub_total","","","","oc_shipping_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_tax_rate_name""","Sales Order","Data","Tax Type","oc_shipping_total","","","","oc_tax_rate_name",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_tax_total""","Sales Order","Data","Tax","oc_tax_rate_name","","","","oc_tax_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_total""","Sales Order","Data","Total","oc_tax_total","","","","oc_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_settings_cb""","Sales Order","Column Break","","oc_total","","","","oc_settings_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sync_from""","Sales Order","Check","Sync from Opencart","oc_settings_cb","","","","oc_sync_from",0,0,0,0,"","1",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_last_sync_from""","Sales Order","Datetime","Last sync","oc_sync_from","","","","oc_last_sync_from",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sync_to""","Sales Order","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_last_sync_to""","Sales Order","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_payment_settings""","Sales Order","Section Break","Opencart Payment Settings","oc_last_sync_to","","","","oc_payment_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_pm_title""","Sales Order","Small Text","Payment Method Title","oc_payment_settings","","","","oc_pm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_check_totals""","Sales Order","Check","Check totals on submit","oc_last_sync_to","","","","oc_check_totals",0,0,0,0,"","1",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_payment_settings""","Sales Order","Section Break","Opencart Payment Settings","oc_check_totals","","","","oc_payment_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_pm_title""","Sales Order","Small Text","Payment Method","oc_payment_settings","","","","oc_pm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pm_code""","Sales Order","Small Text","Payment Method Code","oc_pm_title","","","","oc_pm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_firstname""","Sales Order","Data","First Name","oc_pm_code","","First Name","","oc_pa_firstname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_lastname""","Sales Order","Data","Last Name","oc_pa_firstname","","Last Name","","oc_pa_lastname",0,0,1,0,"","",0,"",0,0,0,0,0,0
@@ -113,7 +119,7 @@
 "","""Sales Order-oc_pa_country_id""","Sales Order","Small Text","Country ID","oc_pa_zone_code","","Country ID","","oc_pa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_pa_country""","Sales Order","Small Text","Country","oc_pa_country_id","","Country","","oc_pa_country",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_shipping_settings""","Sales Order","Section Break","Opencart Shipping Settings","oc_pa_country","","","","oc_shipping_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_sm_title""","Sales Order","Small Text","Shipping Method Title","oc_shipping_settings","","","","oc_sm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_sm_title""","Sales Order","Small Text","Shipping Method","oc_shipping_settings","","","","oc_sm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sm_code""","Sales Order","Small Text","Shipping Method Code","oc_sm_title","","","","oc_sm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_firstname""","Sales Order","Data","First Name","oc_sm_code","","First Name","","oc_sa_firstname",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_lastname""","Sales Order","Data","Last Name","oc_sa_firstname","","Last Name","","oc_sa_lastname",0,0,1,0,"","",0,"",0,0,0,0,0,0

@@ -268,7 +268,7 @@ print_sync_log_orders = function(message, update) {
     $panel.append($header);
 
     var $info;
-    if (message.add_count || message.update_count || message.skip_count) {
+    if (message.check_count) {
         $info = $('<p></p>').html('Checked ' + message.check_count +' orders, Added ' + message.add_count +' orders, Updated ' + message.update_count + ' orders, Skipped ' + message.skip_count + ' orders');
     }
     else {

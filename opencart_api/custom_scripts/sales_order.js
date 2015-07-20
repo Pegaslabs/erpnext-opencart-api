@@ -68,7 +68,6 @@ cur_frm.cscript.customer = function() {
 	});
 }
 
-
 // cur_frm.cscript.validate = function(doc) {
 	
 // }

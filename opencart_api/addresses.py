@@ -12,6 +12,12 @@ def get_address(site_name, oc_address_id):
         return frappe.get_doc('Address', db_address.get('name'))
 
 
+def get_address_by_customer(customer, customer_name):
+    db_address = frappe.db.get('Address', {'customer': customer, 'customer_name': customer_name})
+    if db_address:
+        return frappe.get_doc('Address', db_address.get('name'))
+
+
 def create_or_update(site_name, oc_customer, doc_customer):
     oc_addresses = oc_customer.get('addresses', {})
     oc_address = {}
@@ -35,11 +41,11 @@ def create_or_update(site_name, oc_customer, doc_customer):
         frappe.msgprint('Warning. Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
         return
 
-    if not oc_customer.get('telephone'):
-        frappe.msgprint('Warning. Telephone is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
-        return
-
     countries.create_if_does_not_exist(oc_address.get('country'))
+    firstname = oc_address.get('firstname') or oc_customer.get('firstname') or ''
+    lastname = oc_address.get('lastname') or oc_customer.get('lastname') or ''
+    customer_name = firstname + ' ' + lastname
+
     if doc_address:
         # update existed Address
         params = {
@@ -48,12 +54,12 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'phone': oc_customer.get('telephone', ''),
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
-            'customer_name': oc_address.get('firstname', '') + ' ' + oc_address.get('lastname', ''),
+            'customer_name': customer_name,
             'pincode': oc_address.get('postcode', ''),
             'country': oc_address.get('country', ''),
             'state': oc_address.get('zone'),
             'city': oc_address.get('city', 'not specified'),
-            'address_line1': oc_address.get('address_1', 'not specified'),
+            'address_line1': oc_address.get('address_1', ''),
             'address_line2': oc_address.get('address_2', '')
         }
         doc_address.update(params)
@@ -67,12 +73,12 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'phone': oc_customer.get('telephone', ''),
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
-            'customer_name': oc_address.get('firstname', '') + ' ' + oc_address.get('lastname', ''),
+            'customer_name': customer_name,
             'pincode': oc_address.get('postcode', ''),
             'country': oc_address.get('country', ''),
             'state': oc_address.get('zone'),
             'city': oc_address.get('city', 'not specified'),
-            'address_line1': oc_address.get('address_1', 'not specified'),
+            'address_line1': oc_address.get('address_1', ''),
             'address_line2': oc_address.get('address_2', ''),
             'oc_site': site_name,
             'oc_address_id': oc_address_id,
@@ -88,3 +94,52 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'customer_name': oc_address.get('company')
         })
         doc_customer.save()
+
+
+def create_or_update_from_guest_order(site_name, doc_customer, oc_order):
+    # creating address from order payment
+    if not oc_order.get('payment_country'):
+        frappe.msgprint('Warning. Country is missed in Address of Customer %s %s' % (doc_customer.get('name'), doc_customer.get('customer_name')))
+        return
+    countries.create_if_does_not_exist(oc_order.get('payment_country'))
+    firstname = oc_order.get('payment_firstname', '')
+    lastname = oc_order.get('payment_lastname', '')
+    customer_name = firstname + ' ' + lastname
+
+    doc_address = get_address_by_customer(doc_customer.get('name'), customer_name)
+    if doc_address:
+        # update existed Address
+        params = {
+            'phone': oc_order.get('telephone', ''),
+            'fax': oc_order.get('fax', ''),
+            'email_id': oc_order.get('email', ''),
+            'customer_name': customer_name,
+            'pincode': oc_order.get('payment_postcode', ''),
+            'country': oc_order.get('payment_country', ''),
+            'state': oc_order.get('payment_zone'),
+            'city': oc_order.get('payment_city', ''),
+            'address_line1': oc_order.get('payment_address_1', ''),
+            'address_line2': oc_order.get('payment_address_2', '')
+        }
+        doc_address.update(params)
+        doc_address.save()
+    else:
+        # create new Address
+        params = {
+            'doctype': 'Address',
+            'address_type': 'Billing',
+            'customer': doc_customer.get('name'),
+            'phone': oc_order.get('telephone', ''),
+            'fax': oc_order.get('fax', ''),
+            'email_id': oc_order.get('email', ''),
+            'customer_name': customer_name,
+            'pincode': oc_order.get('payment_postcode', ''),
+            'country': oc_order.get('payment_country', ''),
+            'state': oc_order.get('payment_zone'),
+            'city': oc_order.get('payment_city', ''),
+            'address_line1': oc_order.get('payment_address_1', ''),
+            'address_line2': oc_order.get('payment_address_2', ''),
+            'oc_site': site_name,
+        }
+        doc_address = frappe.get_doc(params)
+        doc_address.insert(ignore_permissions=True)

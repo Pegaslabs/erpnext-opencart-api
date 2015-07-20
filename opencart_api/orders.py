@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 from datetime import datetime
+import re
 
 import frappe
 from frappe.utils import add_days, nowdate, getdate, cstr
+from frappe.exceptions import ValidationError
 
 from utils import sync_info
 from decorators import sync_to_opencart
@@ -22,25 +24,104 @@ OC_ORDER_STATUS_COMPLETE = 'Complete'
 OC_ORDER_STATUS_CANCELED = 'Canceled'
 
 
+OC_CURRENCY_REGEX = re.compile("([A-Z]{3})")
+OC_TOTAL_REGEX = re.compile("([\d,.]+)")
+
+TOTALS_PRECISION = 0.001
+
+
+def get_currency_from_total_str(total_str):
+    '''Getting currency from the strings like "$ 123.456$ CAD"'''
+    currency_code = ''
+    s = OC_CURRENCY_REGEX.search(total_str)
+    if s:
+        currency_code = s.group(1)
+    return currency_code
+
+
+def get_rate_from_total_str(total_str):
+    '''Getting rate from the strings like "$ 123.456$ CAD"'''
+    price = 0.0
+    s = OC_TOTAL_REGEX.search(total_str)
+    if s:
+        price = float(s.group(1).replace(',', ''))
+    return price
+
+
+def are_totals_equal(total1, total2):
+    if abs(total1 - total2) < TOTALS_PRECISION:
+        return True
+    return False
+
+
 @sync_to_opencart
-def oc_validate(doc, method=None):
+def before_save(doc, method=None):
+    sync_order_to_opencart(doc)
+
+
+@sync_to_opencart
+def on_submit(doc, method=None):
+    if doc.get('oc_check_totals'):
+        oc_sub_total = get_rate_from_total_str(doc.get('oc_sub_total') or '')
+        oc_shipping_total = get_rate_from_total_str(doc.get('oc_shipping_total') or '')
+        oc_tax_total = get_rate_from_total_str(doc.get('oc_tax_total') or '')
+        oc_total = get_rate_from_total_str(doc.get('oc_total') or '')
+
+        if not are_totals_equal(doc.get('total'), oc_sub_total):
+            frappe.throw('Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (str(doc.get('total')), str(oc_sub_total)))
+        if not are_totals_equal(doc.get('total_taxes_and_charges'), oc_shipping_total + oc_tax_total):
+            frappe.throw('Order\'s Total Taxes and Charges ($%s) does not equal to sum of Shipping Total ($%s) and Tax Total ($%s) from Opencart site' % (str(doc.get('total_taxes_and_charges')), str(oc_shipping_total), str(oc_tax_total)))
+        if not are_totals_equal(doc.get('grand_total'), oc_total):
+            frappe.throw('Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (str(doc.get('grand_total')), str(oc_total)))
+
+    # frappe.db.set(doc, 'oc_status', OC_ORDER_STATUS_PROCESSING)
+    # sync_order_to_opencart(doc)
+
+    # # update Opencart status
+    # if doc_order.get('status') is None or doc_order.get('status') == 'Draft':
+    # elif doc_order.get('status') == 'Submitted':
+    # elif doc_order.get('status') == 'Stopped':
+    # elif doc_order.get('status') == 'Cancelled':
+
+
+@sync_to_opencart
+def on_cancel(doc, method=None):
+    frappe.db.set(doc, 'oc_status', OC_ORDER_STATUS_CANCELED)
+    sync_order_status_to_opencart(doc)
+
+
+@sync_to_opencart
+def on_trash(doc, method=None):
     site_name = doc.get('oc_site')
+    oc_order_id = doc.get('oc_order_id')
+    success, resp = oc_api.get(site_name).delete_order(oc_order_id)
+    if success:
+        frappe.msgprint('Order was deleted successfully on Opencart site')
+    else:
+        frappe.msgprint('Order is not deleted on Opencart site. Error: %s' % resp.get('error', 'Unknown'))
 
-    # update Opencart status
-    if doc.get('status') is None or doc.get('status') == 'Draft':
-        if not doc.get('oc_status'):
-            doc.update({'oc_status': OC_ORDER_STATUS_AWAITING_FULFILLMENT})
-    elif doc.get('status') == 'Submitted':
-        if doc.get('oc_status') == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
-            doc.update({'oc_status': OC_ORDER_STATUS_PROCESSING})
-    elif doc.get('status') == 'Stopped':
-        pass
-    elif doc.get('status') == 'Cancelled':
-        pass
-        # doc.update({'oc_status': OC_ORDER_STATUS_CANCELED})
 
+def sync_order_status_to_opencart(doc_order):
+    site_name = doc_order.get('oc_site')
+    oc_order_id = doc_order.get('oc_order_id')
+    get_order_success, oc_order = oc_api.get(site_name).get_order_json(oc_order_id)
+
+    order_status_id = oc_site.get_order_status_id(site_name, doc_order.get('oc_status'))
+    if oc_order_id and get_order_success and oc_order_id == oc_order.get('order_id'):
+        # update existed order on Opencart site
+        data = {'status': order_status_id}
+        success, resp = oc_api.get(site_name).update_order(oc_order_id, data)
+        if success:
+            frappe.msgprint('Order status "%s" is updated successfully on Opencart site' % doc_order.get('oc_status'))
+            doc_order.update({'oc_last_sync_to': datetime.now()})
+        else:
+            frappe.msgprint('Order status "%s" is not updated on Opencart site.\nError: %s' % (doc_order.get('oc_status'), resp.get('error', 'Unknown')))
+
+
+def sync_order_to_opencart(doc_order):
+    site_name = doc_order.get('oc_site')
     # validating customer
-    customer_name = doc.get('customer')
+    customer_name = doc_order.get('customer')
     doc_customer = frappe.get_doc('Customer', customer_name)
     oc_customer_id = doc_customer.get('oc_customer_id')
     if not oc_customer_id:
@@ -59,7 +140,7 @@ def oc_validate(doc, method=None):
         frappe.throw('Could not get Customer Group "%s" from Opencart Site. Error: Unknown' % cstr(doc_customer_group.get('name')))
 
 ####################
-    # oc_order_id = doc.get('oc_order_id')
+    # oc_order_id = doc_order.get('oc_order_id')
     # get_order_success, oc_order = oc_api.get(site_name).get_order_json(oc_order_id)
 
     # valid_order_group_names = [order_group.get('name') for order_group in order_groups.get_all_by_oc_site(site_name) if order_group.get('oc_order_group_id')]
@@ -166,7 +247,7 @@ def oc_validate(doc, method=None):
 
     # products
     products = []
-    for doc_sales_order_item in doc.items:
+    for doc_sales_order_item in doc_order.items:
         doc_oc_product = items.get_opencart_product(site_name, doc_sales_order_item.get('item_code'))
         if not doc_oc_product:
             frappe.throw('Could not found "%s %s" Item related to "%s" Opencart Site' % (doc_sales_order_item.get('item_code'),
@@ -200,22 +281,20 @@ def oc_validate(doc, method=None):
     if products:
         data['products'] = products
 
-    oc_order_id = doc.get('oc_order_id')
+    oc_order_id = doc_order.get('oc_order_id')
     get_order_success, oc_order = oc_api.get(site_name).get_order_json(oc_order_id)
 
     # updating or creating order
-    order_status_id = oc_site.get_order_status_id(site_name, doc.get('oc_status'))
+    order_status_id = oc_site.get_order_status_id(site_name, doc_order.get('oc_status'))
     if oc_order_id and get_order_success and oc_order_id == oc_order.get('order_id'):
         # update existed order on Opencart site
         data = {'status': order_status_id}
         success, resp = oc_api.get(site_name).update_order(oc_order_id, data)
         if success:
-            if method != 'on_submit':
-                frappe.msgprint('Order is updated successfully on Opencart site')
-            doc.update({'oc_last_sync_to': datetime.now()})
+            frappe.msgprint('Order is updated successfully on Opencart site')
+            doc_order.update({'oc_last_sync_to': datetime.now()})
         else:
-            if method != 'on_submit':
-                frappe.msgprint('Order is not updated on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
+            frappe.msgprint('Order is not updated on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
     else:
         # disabled for now creating new Sales Orders from ERPNext
         return
@@ -223,7 +302,7 @@ def oc_validate(doc, method=None):
         success, resp = oc_api.get(site_name).create_order(data)
         if success:
             oc_order_id = resp.get('data', {}).get('id', '')
-            doc.update({
+            doc_order.update({
                 'oc_order_id': oc_order_id,
                 'oc_last_sync_to': datetime.now()
             })
@@ -236,25 +315,45 @@ def oc_validate(doc, method=None):
             frappe.msgprint('Order is not created on Opencart site.\nError: %s' % resp.get('error', 'Unknown'))
 
 
-def oc_on_submit(doc, method=None):
-    oc_validate(doc, method)
-
-
-@sync_to_opencart
-def oc_delete(doc, method=None):
-    site_name = doc.get('oc_site')
-    oc_order_id = doc.get('oc_order_id')
-    success, resp = oc_api.get(site_name).delete_order(oc_order_id)
-    if success:
-        frappe.msgprint('Order was deleted successfully on Opencart site')
-    else:
-        frappe.msgprint('Order is not deleted on Opencart site. Error: %s' % resp.get('error', 'Unknown'))
-
-
 def get_order(site_name, oc_order_id):
     db_order = frappe.db.get('Sales Order', {'oc_site': site_name, 'oc_order_id': oc_order_id})
     if db_order:
         return frappe.get_doc('Sales Order', db_order.get('name'))
+
+
+def update_totals(doc_order, oc_order, tax_rate_names=[]):
+    sub_total = ''
+    shipping_total = ''
+    tax_rate_name = ''
+    tax_total = ''
+    total = ''
+    for t in oc_order.get('totals', []):
+        if t.get('title') == 'Sub-Total':
+            sub_total = t.get('text')
+        elif t.get('title') == 'Shipping':
+            shipping_total = t.get('text')
+        elif t.get('title') == 'Total':
+            total = t.get('text')
+        elif t.get('title') in tax_rate_names or t.get('title') == 'VAT':
+            tax_rate_name = t.get('title')
+            tax_total = t.get('text')
+        else:
+            frappe.msgprint('Unknown total entity "%s" for order %s' % (t.get('title'), oc_order.get('order_id')))
+
+    doc_order.update({
+        'oc_sub_total': sub_total,
+        'oc_shipping_total': shipping_total,
+        'oc_tax_rate_name': tax_rate_name,
+        'oc_tax_total': tax_total,
+        'oc_total': total
+    })
+
+
+def on_order_added(doc_order):
+    try:
+        doc_order.submit()
+    except ValidationError as ex:
+        frappe.msgprint('Order %s was not submitted: %s' % (doc_order.get('name'), str(ex)))
 
 
 @frappe.whitelist()
@@ -270,6 +369,7 @@ def pull_modified_from(site_name, silent=False):
 
     site_doc = frappe.get_doc('Opencart Site', site_name)
     company = site_doc.get('company')
+    tax_rate_names = oc_site.get_tax_rate_names(site_name)
 
     get_order_statuses_success, order_statuses = oc_api.get(site_name, use_pure_rest_api=True).get_order_statuses()
     statuses_to_pull = [doc_status.get('status') for doc_status in site_doc.order_statuses_to_pull]
@@ -289,7 +389,7 @@ def pull_modified_from(site_name, silent=False):
     modified_from = site_doc.get('orders_modified_from')
     modified_to = add_days(modified_from, default_days_interval)
     if modified_to > now_date:
-        modified_to = now_date
+        modified_to = add_days(now_date, 1)
     while True:
         success, oc_orders = oc_api.get(site_name).get_orders_modified_from_to(modified_from.strftime("%Y-%m-%d"), modified_to.strftime("%Y-%m-%d"))
         for oc_order in oc_orders:
@@ -304,7 +404,10 @@ def pull_modified_from(site_name, silent=False):
             if oc_order.get('customer_id') == '0':
                 # trying to get guest customer
                 doc_customer = customers.get_guest_customer(site_name, oc_order.get('email'), oc_order.get('firstname'), oc_order.get('lastname'))
-                if not doc_customer:
+                if doc_customer:
+                    # update guest customer
+                    customers.update_guest_from_order(doc_customer, oc_order)
+                else:
                     # create new guest customer
                     doc_customer = customers.create_guest_from_order(site_name, oc_order)
             else:
@@ -317,7 +420,6 @@ def pull_modified_from(site_name, silent=False):
                     continue
                 params = {}
                 resolve_customer_group_rules2(oc_order, doc_customer, params)
-
                 params.update({
                     'currency': oc_order.get('currency_code'),
                     # 'conversion_rate': float(oc_order.currency_value),
@@ -327,9 +429,23 @@ def pull_modified_from(site_name, silent=False):
                     'transaction_date': getdate(oc_order.get('date_added', '')),
                     'oc_is_updating': 1,
                     'oc_status': order_status_name,
+                    # payment method
+                    'oc_pm_title': oc_order.get('payment_method'),
+                    'oc_pm_code': oc_order.get('payment_code'),
+                    'oc_pa_firstname': oc_order.get('payment_firstname'),
+                    'oc_pa_lastname': oc_order.get('payment_lastname'),
+                    'oc_pa_company': oc_order.get('payment_company'),
+                    # shipping method
+                    'oc_sm_title': oc_order.get('shipping_method'),
+                    'oc_sm_code': oc_order.get('shipping_code'),
+                    'oc_sa_firstname': oc_order.get('shipping_firstname'),
+                    'oc_sa_lastname': oc_order.get('shipping_lastname'),
+                    'oc_sa_company': oc_order.get('shipping_company'),
+                    #
                     'oc_last_sync_from': datetime.now(),
                 })
                 doc_order.update(params)
+                update_totals(doc_order, oc_order, tax_rate_names)
                 doc_order.save()
                 try:
                     resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
@@ -372,6 +488,19 @@ def pull_modified_from(site_name, silent=False):
                     'oc_site': site_name,
                     'oc_order_id': oc_order.get('order_id'),
                     'oc_status': order_status_name,
+                    # payment method
+                    'oc_pm_title': oc_order.get('payment_method'),
+                    'oc_pm_code': oc_order.get('payment_code'),
+                    'oc_pa_firstname': oc_order.get('payment_firstname'),
+                    'oc_pa_lastname': oc_order.get('payment_lastname'),
+                    'oc_pa_company': oc_order.get('payment_company'),
+                    # shipping method
+                    'oc_sm_title': oc_order.get('shipping_method'),
+                    'oc_sm_code': oc_order.get('shipping_code'),
+                    'oc_sa_firstname': oc_order.get('shipping_firstname'),
+                    'oc_sa_lastname': oc_order.get('shipping_lastname'),
+                    'oc_sa_company': oc_order.get('shipping_company'),
+                    #
                     'oc_sync_from': True,
                     'oc_last_sync_from': datetime.now(),
                     'oc_sync_to': True,
@@ -418,7 +547,7 @@ def pull_modified_from(site_name, silent=False):
                         extras = (1, 'skipped', 'Skipped: no products')
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
-
+                    update_totals(doc_order, oc_order, tax_rate_names)
                     doc_order.insert(ignore_permissions=True)
                     try:
                         resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
@@ -436,7 +565,12 @@ def pull_modified_from(site_name, silent=False):
                                          doc_order.get('oc_order_id'),
                                          doc_order.get_formatted('oc_last_sync_from'),
                                          doc_order.get('modified')) + extras)
-        if modified_to >= now_date:
+
+                    # business logic on adding new order from Opencart site
+                    doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
+                    on_order_added(doc_order)
+
+        if modified_to > now_date:
             break
         modified_from = add_days(modified_to, 1)
         modified_to = add_days(modified_to, default_days_interval)
@@ -764,11 +898,38 @@ def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_nam
             'shipping_rule': shipping_rule or ''
         })
 
+        tax_item = None
+        shipping_item = None
+        taxes_len = len(doc_order.taxes)
+
         doc_order.set_taxes()
         doc_order.calculate_taxes_and_totals()
+        if len(doc_order.get('taxes')) > taxes_len:
+            tax_item = doc_order.get('taxes')[-1]
 
+        taxes_len = len(doc_order.taxes)
         doc_order.apply_shipping_rule()
-        doc_order.calculate_taxes_and_totals()
+        if len(doc_order.get('taxes')) > taxes_len:
+            shipping_item = doc_order.get('taxes')[-1]
+
+        if tax_item and shipping_item:
+            old_tax_item_idx = tax_item.get('idx')
+            old_shipping_item_idx = shipping_item.get('idx')
+            tax_item.update({
+                'idx': old_shipping_item_idx,
+            })
+            shipping_item.update({
+                'idx': old_tax_item_idx
+            })
+            tax_item.update({
+                'charge_type': 'On Previous Row Total',
+                'row_id': shipping_item.get('idx')
+            })
+            doc_order.update({'oc_is_updating': 1})
+            doc_order.save()
+            doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
+            doc_order.calculate_taxes_and_totals()
+
         doc_order.update({'oc_is_updating': 1})
         doc_order.save()
 

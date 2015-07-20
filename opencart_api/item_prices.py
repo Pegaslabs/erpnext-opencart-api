@@ -88,7 +88,7 @@ def pull(site_name, item_code=None, silent=False):
     for doc_store in doc_stores:
         if doc_store.get('oc_store_front_url') and doc_store.get('oc_price_lists'):
             oc_api_cache[doc_store.get('name')] = oc_api.get(site_name, doc_store.get('oc_store_front_url'))
-
+            print('store name=' + doc_store.get('oc_store_front_url'))
             # fill cache of customer groups
             for doc_oc_price_list in doc_store.get('oc_price_lists'):
                 customer_group_name = doc_oc_price_list.get('customer_group')
@@ -108,7 +108,7 @@ def pull(site_name, item_code=None, silent=False):
     # for dict_item in [it for it in frappe.get_all('Item', fields=['name', 'item_code']) if it.get('name') == 'TESTAH']:
         item_code = dict_item.get('item_code')
         items_count_left_to_process -= 1
-        print('processing %s, left to procecss %d' % (item_code or '', items_count_left_to_process))
+        print('processing %s, left to process %d' % (item_code or '', items_count_left_to_process))
         doc_oc_product = items.get_opencart_product(site_name, dict_item.get('name'))
         if not doc_oc_product:
             skip_count += 1

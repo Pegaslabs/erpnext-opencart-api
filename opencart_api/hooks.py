@@ -34,9 +34,18 @@ doc_events = {
         # "on_trash": "opencart_api.customers.oc_delete"
     },
     "Sales Order": {
-        "validate": "opencart_api.orders.oc_validate",
-        "on_submit": "opencart_api.orders.oc_on_submit",
-        # "on_trash": "opencart_api.orders.oc_delete"
+        ###"before_save": "opencart_api.orders.before_save",
+        # "before_insert": "opencart_api.orders.before_insert",
+        # "after_insert": "opencart_api.orders.after_insert",
+        # "validate": "opencart_api.orders.validate",
+        # "before_submit": "opencart_api.orders.before_submit",
+        # "before_cancel": "opencart_api.orders.before_cancel",
+        # "before_update_after_submit": "opencart_api.orders.before_update_after_submit",
+        # "on_update": "opencart_api.orders.on_update",
+        ###"on_submit": "opencart_api.orders.on_submit",
+        ###"on_cancel": "opencart_api.orders.on_cancel",
+        # "on_update_after_submit": "opencart_api.orders.on_update_after_submit",
+        # "on_trash": "opencart_api.orders.on_trash"
     },
     "Purchase Receipt": {
         # "on_submit": "opencart_api.events.oc_pr_submitted",

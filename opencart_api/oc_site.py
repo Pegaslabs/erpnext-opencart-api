@@ -159,3 +159,11 @@ def get_order_status_id_by_name(site_name, order_status_name):
     if res is None:
         frappe.throw('Error. Cannot get order status id by name "%s"' % order_status_name)
     return res
+
+
+def get_tax_rates(site_name):
+    return get_oc_init(site_name).get('tax_rates', [])
+
+
+def get_tax_rate_names(site_name):
+    return [tax_rate.get('name') for tax_rate in get_tax_rates(site_name)]

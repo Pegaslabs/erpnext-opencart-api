@@ -189,6 +189,42 @@ def make_full_name(first_name, last_name):
     return first_name + ' ' + last_name
 
 
+def update_guest_from_order(doc_customer, oc_order):
+    site_name = doc_customer.get('oc_site')
+    doc_store = oc_stores.get(site_name, oc_order.get('store_id'))
+    if doc_store:
+        customer_group_name = doc_store.get('oc_customer_group')
+        if customer_group_name:
+            doc_customer_group = frappe.get_doc('Customer Group', customer_group_name)
+            territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+            # create new Customer
+            doc_customer.update({
+                'territory': territory_name,
+                'customer_name': make_full_name(oc_order.get('firstname'), oc_order.get('lastname')),
+                'customer_group': doc_customer_group.get('name'),
+                'oc_is_updating': 1,
+                'oc_customer_id': oc_order.get('customer_id'),
+                'oc_store_id': oc_order.get('store_id') or '',
+                'oc_last_sync_from': datetime.now(),
+                'oc_firstname': oc_order.get('firstname'),
+                'oc_lastname': oc_order.get('lastname'),
+                'oc_telephone': oc_order.get('telephone'),
+                'oc_fax': oc_order.get('fax'),
+                'oc_email': oc_order.get('email')
+            })
+            doc_customer.save()
+
+            # addresses and contacts
+            addresses.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
+            contacts.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
+
+            return doc_customer
+        else:
+            frappe.throw('Customer Group is not set in Opencart Store "%s"' % doc_store.get('name'))
+    else:
+        frappe.throw('Opencart Store with store_id "%s" does not exist' % oc_order.get('store_id'))
+
+
 def create_guest_from_order(site_name, oc_order):
     doc_store = oc_stores.get(site_name, oc_order.get('store_id'))
     if doc_store:
@@ -224,6 +260,11 @@ def create_guest_from_order(site_name, oc_order):
             }
             doc_customer = frappe.get_doc(params)
             doc_customer.insert(ignore_permissions=True)
+
+            # addresses and contacts
+            addresses.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
+            contacts.create_or_update_from_guest_order(site_name, doc_customer, oc_order)
+
             return doc_customer
         else:
             frappe.throw('Customer Group is not set in Opencart Store "%s"' % doc_store.get('name'))
