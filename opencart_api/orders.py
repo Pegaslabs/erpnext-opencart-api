@@ -68,11 +68,11 @@ def on_submit(doc, method=None):
         oc_total = get_rate_from_total_str(doc.get('oc_total') or '')
 
         if not are_totals_equal(doc.get('total'), oc_sub_total):
-            frappe.throw('Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (str(doc.get('total')), str(oc_sub_total)))
+            frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('total')), str(oc_sub_total)))
         if not are_totals_equal(doc.get('total_taxes_and_charges'), oc_shipping_total + oc_tax_total):
-            frappe.throw('Order\'s Total Taxes and Charges ($%s) does not equal to sum of Shipping Total ($%s) and Tax Total ($%s) from Opencart site' % (str(doc.get('total_taxes_and_charges')), str(oc_shipping_total), str(oc_tax_total)))
+            frappe.throw('%s: Order\'s Total Taxes and Charges ($%s) does not equal to sum of Shipping Total ($%s) and Tax Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('total_taxes_and_charges')), str(oc_shipping_total), str(oc_tax_total)))
         if not are_totals_equal(doc.get('grand_total'), oc_total):
-            frappe.throw('Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (str(doc.get('grand_total')), str(oc_total)))
+            frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('grand_total')), str(oc_total)))
 
     # frappe.db.set(doc, 'oc_status', OC_ORDER_STATUS_PROCESSING)
     # sync_order_to_opencart(doc)
@@ -351,9 +351,10 @@ def update_totals(doc_order, oc_order, tax_rate_names=[]):
 
 def on_order_added(doc_order):
     try:
+        on_submit(doc_order)
         doc_order.submit()
-    except ValidationError as ex:
-        frappe.msgprint('Order %s was not submitted: %s' % (doc_order.get('name'), str(ex)))
+    except ValidationError:
+        pass
 
 
 @frappe.whitelist()
