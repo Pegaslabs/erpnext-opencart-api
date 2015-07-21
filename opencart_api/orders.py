@@ -125,6 +125,11 @@ def sync_order_to_opencart(doc_order):
     oc_customer_id = doc_customer.get('oc_customer_id')
     if not oc_customer_id:
         frappe.throw('To sync Order to Opencart Site, Customer "%s" should be existed on Opencart Site' % cstr(customer_name))
+
+    if oc_customer_id == '0':
+        # we do not sync orders of guest customers to Opencart site
+        return
+
     get_customer_success, oc_customer = oc_api.get(site_name).get_customer(oc_customer_id)
     if not get_customer_success:
         frappe.throw('Could not get Customer "%s" from Opencart Site. Error: Unknown' % cstr(customer_name))
