@@ -77,9 +77,6 @@ cur_frm.cscript.customer = function() {
 
     // cur_frm.set_df_property("oc_status", "options", "123\n345\n678");
 
-
-
-
 	// if(doc.abbr && !doc.__islocal) {
 	// 	cur_frm.set_df_property("abbr", "read_only", 1);
 	// }
