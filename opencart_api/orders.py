@@ -834,33 +834,45 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
     else:
         return
 
-    # resolve doc_oc_store
-    if doc_oc_store is None:
-        doc_oc_store = oc_stores.get(obj_customer.get('oc_site'), obj_customer.get('oc_store_id'))
-        if not doc_oc_store:
-            frappe.msgprint('Cannot resolve Shipping Rule: Customer does not belong to any of Opencart stores')
-            return
+    oc_site = obj_customer.get('oc_site')
+    customer_group = obj_customer.get('customer_group')
+    if oc_site:
+        # resolve shipping rule for customr from Opencart site
+        # resolve doc_oc_store
+        if doc_oc_store is None:
+            doc_oc_store = oc_stores.get(oc_site, obj_customer.get('oc_store_id'))
+            if not doc_oc_store:
+                frappe.msgprint('Cannot resolve Shipping Rule: Customer does not belong to any of Opencart stores')
+                return
 
-    # check for strong coincidence
-    # frappe.msgprint('territory=' + str(obj_customer.get('territory') + str(doc_oc_store.get('name'))))
-    for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
-        doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
-        # frappe.msgprint('doc_shipping_rule=' + str(doc_shipping_rule.get('name')))
-        for doc_applicable_territory in doc_shipping_rule.get('territories'):
-            # frappe.msgprint('doc_applicable_territory.territory=' + str(doc_applicable_territory.territory))
-            if doc_applicable_territory.territory == obj_customer.get('territory'):
-                return doc_shipping_rule.get('name')
-
-    # check for non-strong coincidence, take into account the territory hierarchy
-    for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
-        doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
-        for doc_applicable_territory in doc_shipping_rule.get('territories'):
-            parent_territory = frappe.get_doc('Territory', obj_customer.get('territory')).get('parent_territory')
-            while parent_territory:
-                if doc_applicable_territory.territory == parent_territory:
+        # check for strong coincidence
+        # frappe.msgprint('territory=' + str(obj_customer.get('territory') + str(doc_oc_store.get('name'))))
+        for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
+            doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
+            # frappe.msgprint('doc_shipping_rule=' + str(doc_shipping_rule.get('name')))
+            for doc_applicable_territory in doc_shipping_rule.get('territories'):
+                # frappe.msgprint('doc_applicable_territory.territory=' + str(doc_applicable_territory.territory))
+                if doc_applicable_territory.territory == obj_customer.get('territory'):
                     return doc_shipping_rule.get('name')
-                parent_territory = frappe.get_doc('Territory', parent_territory).get('parent_territory')
-    frappe.msgprint('Shipping Rule is not resolved')
+
+        # check for non-strong coincidence, take into account the territory hierarchy
+        for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
+            doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
+            for doc_applicable_territory in doc_shipping_rule.get('territories'):
+                parent_territory = frappe.get_doc('Territory', obj_customer.get('territory')).get('parent_territory')
+                while parent_territory:
+                    if doc_applicable_territory.territory == parent_territory:
+                        return doc_shipping_rule.get('name')
+                    parent_territory = frappe.get_doc('Territory', parent_territory).get('parent_territory')
+
+    else:
+        # resolve shipping rule for ERPNext customer
+        shipping_rules = frappe.get_all('Shipping Rule', filters={'customer_group': customer_group})
+        if len(shipping_rules) > 1:
+            frappe.msgprint('Found %d Shipping Rules with Customer Group set to "%s". Choosed first in the list Shipping Rule.' % (len(shipping_rules), customer_group))
+            return shipping_rules[0].get('name')
+        elif len(shipping_rules) == 1:
+            return shipping_rules[0].get('name')
 
 
 @frappe.whitelist()
