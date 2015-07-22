@@ -64,8 +64,8 @@ def before_save(doc, method=None):
 def on_submit(doc, method=None):
     if doc.get('oc_check_totals'):
         oc_sub_total = get_rate_from_total_str(doc.get('oc_sub_total') or '')
-        oc_shipping_total = get_rate_from_total_str(doc.get('oc_shipping_total') or '')
-        oc_tax_total = get_rate_from_total_str(doc.get('oc_tax_total') or '')
+        # oc_shipping_total = get_rate_from_total_str(doc.get('oc_shipping_total') or '')
+        # oc_tax_total = get_rate_from_total_str(doc.get('oc_tax_total') or '')
         oc_total = get_rate_from_total_str(doc.get('oc_total') or '')
 
         if not are_totals_equal(doc.get('total'), oc_sub_total):
@@ -426,7 +426,7 @@ def pull_added_from(site_name, silent=False):
                     skip_count += 1
                     continue
                 params = {}
-                resolve_customer_group_rules2(oc_order, doc_customer, params)
+                resolve_customer_group_rules(oc_order, doc_customer, params)
                 params.update({
                     'currency': oc_order.get('currency_code'),
                     # 'conversion_rate': float(oc_order.currency_value),
@@ -455,7 +455,7 @@ def pull_added_from(site_name, silent=False):
                 update_totals(doc_order, oc_order, tax_rate_names)
                 doc_order.save()
                 try:
-                    resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
+                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                 except Exception as ex:
                     update_count += 1
                     extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % str(ex))
@@ -479,7 +479,7 @@ def pull_added_from(site_name, silent=False):
                     continue
 
                 params = {}
-                resolve_customer_group_rules2(oc_order, doc_customer, params)
+                resolve_customer_group_rules(oc_order, doc_customer, params)
 
                 # creating new Sales Order
                 params.update({
@@ -537,14 +537,13 @@ def pull_added_from(site_name, silent=False):
                         'item_code': doc_item.get('item_code'),
                         # 'base_price_list_rate': price_list_rate,
                         # 'price_list_rate': price_list_rate,
-                        'warehouse': site_doc.get('items_default_warehouse'),
+                        'warehouse': doc_order.get('warehouse') or site_doc.get('items_default_warehouse'),
                         'qty': product.get('quantity'),
                         'base_rate': product.get('price'),
                         'base_amount': product.get('total'),
                         'rate': product.get('price'),
                         'amount': product.get('total'),
                         'currency': product.get('currency_code'),
-                        # 'discount_percentage': 10.0,
                         'description': product.get('name')
                     })
                     items_count += 1
@@ -557,7 +556,7 @@ def pull_added_from(site_name, silent=False):
                     update_totals(doc_order, oc_order, tax_rate_names)
                     doc_order.insert(ignore_permissions=True)
                     try:
-                        resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company)
+                        resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                     except Exception as ex:
                         add_count += 1
                         extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(ex))
@@ -579,7 +578,7 @@ def pull_added_from(site_name, silent=False):
 
         if modified_to > now_date:
             break
-        modified_from = add_days(modified_to, 1)
+        modified_from = modified_to
         modified_to = add_days(modified_to, default_days_interval)
         if modified_to > now_date:
             modified_to = add_days(now_date, 1)
@@ -594,6 +593,7 @@ def pull_added_from(site_name, silent=False):
     return results
 
 
+# TO REMOVE THIS METHOD
 @frappe.whitelist()
 def pull_orders_from_oc(site_name, silent=False):
     '''Sync orders from Opencart site'''
@@ -749,7 +749,7 @@ def pull_orders_from_oc(site_name, silent=False):
     return results
 
 
-def resolve_customer_group_rules2(oc_order, doc_customer, params):
+def resolve_customer_group_rules(oc_order, doc_customer, params):
         territory_to_price_list_map = {}
         territory_to_warehouse_map = {}
         doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
@@ -792,34 +792,35 @@ def resolve_customer_group_rules2(oc_order, doc_customer, params):
         })
 
 
-def resolve_customer_group_rules(oc_order, doc_customer, params):
-        territory_to_price_list_map = {}
-        territory_to_warehouse_map = {}
-        doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
-        rules = doc_customer_group.get('oc_customer_group_rule')
-        for rule in rules:
-            if rule.get('condition') == 'If Territory of Customer is':
-                territory_to_price_list_map[rule.get('condition_territory')] = rule.get('action_price_list')
-                territory_to_warehouse_map[rule.get('condition_territory')] = rule.get('action_warehouse')
+@frappe.whitelist()
+def resolve_customer_warehouse(customer, doc_customer=None):
+    if doc_customer is None:
+        doc_customer = frappe.get_doc('Customer', customer)
+    # territory_to_price_list_map = {}
+    territory_to_warehouse_map = {}
+    doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
+    rules = doc_customer_group.get('oc_customer_group_rule')
+    for rule in rules:
+        if rule.get('condition') == 'If Territory of Customer is':
+            parent_territory = rule.get('condition_territory')
+            # territory_to_price_list_map[parent_territory] = rule.get('action_price_list')
+            territory_to_warehouse_map[parent_territory] = rule.get('action_warehouse')
 
-        territory_name = territories.get_by_iso_code3(oc_order.shipping_iso_code_3, oc_order.shipping_zone_code)
-        price_list_name = territory_to_price_list_map.get(territory_name, doc_customer_group.get('default_price_list'))
-        # doc_price_list = price_lists.get_by_name(site_name, price_list_name)
-        warehouse_name = territory_to_warehouse_map.get(territory_name, '')
-        if not price_list_name:
-            frappe.throw('Please specify Default Price List for Customer Group "%s"' % cstr(doc_customer_group.get('customer_group_name')))
+            # child territories of level 1
+            child_territories_1 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': parent_territory})
+            for territory_1 in child_territories_1:
+                # territory_to_price_list_map[territory_1.get('name')] = rule.get('action_price_list')
+                territory_to_warehouse_map[territory_1.get('name')] = rule.get('action_warehouse')
 
-        if territory_name != doc_customer.get('territory'):
-            doc_customer.update({'territory': territory_name})
-            doc_customer.update({'oc_is_updating': 1})
-            doc_customer.save()
+                # child territories of level 2
+                child_territories_2 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': territory_1})
+                for territory_2 in child_territories_2:
+                    # territory_to_price_list_map[territory_2.get('name')] = rule.get('action_price_list')
+                    territory_to_warehouse_map[territory_2.get('name')] = rule.get('action_warehouse')
 
-        params.update({
-            'territory': territory_name,
-            'selling_price_list': price_list_name,
-            # 'price_list_currency': doc_price_list.get('currency'),
-            'warehouse': warehouse_name,
-        })
+    territory_name = doc_customer.get('territory')
+    warehouse_name = territory_to_warehouse_map.get(territory_name, '')
+    return warehouse_name
 
 
 @frappe.whitelist()
@@ -831,10 +832,6 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
     elif customer:
         obj_customer = frappe.db.get('Customer', customer)
     else:
-        return
-
-    if not obj_customer.get('oc_site'):
-        frappe.msgprint('Cannot resolve Shipping Rule: Customer does not have any Opencart Site set')
         return
 
     # resolve doc_oc_store
@@ -867,7 +864,7 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
 
 
 @frappe.whitelist()
-def resolve_taxes_and_charges(customer, db_customer=None, doc_customer=None):
+def resolve_taxes_and_charges(customer, company, db_customer=None, doc_customer=None):
     if db_customer is not None:
         obj_customer = db_customer
     elif doc_customer is not None:
@@ -877,20 +874,16 @@ def resolve_taxes_and_charges(customer, db_customer=None, doc_customer=None):
     else:
         return
 
-    if not obj_customer.get('oc_site'):
-        frappe.msgprint('Cannot resolve Taxes and Charges: Customer does not have any Opencart Site set')
-        return
-    doc_site = frappe.get_doc('Opencart Site', obj_customer.get('oc_site'))
-    doc_template = sales_taxes_and_charges_template.get_first_by_territory(obj_customer.get('territory'), company_name=doc_site.get('company'))
+    doc_template = sales_taxes_and_charges_template.get_first_by_territory(obj_customer.get('territory'), company_name=company)
     if not doc_template:
         frappe.msgprint('Please specify Sales Taxes and Charges Template for territory "%s"' % (obj_customer.get('territory'), ))
         return
     return doc_template.get('name')
 
 
-def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_name, company):
+def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company):
         # taxes related part
-        template = resolve_taxes_and_charges(doc_customer.get('name'), doc_customer=doc_customer)
+        template = resolve_taxes_and_charges(doc_customer.get('name'), company, doc_customer=doc_customer)
         if not template:
             frappe.throw('Cannot resolve Sales Taxes and Charges Template for "%s" Territory, order id "%s"' % (doc_customer.get('territory'), oc_order.get('order_id')))
 
@@ -937,29 +930,5 @@ def resolve_shipping_rule_and_taxes2(oc_order, doc_order, doc_customer, site_nam
             doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
             doc_order.calculate_taxes_and_totals()
 
-        doc_order.update({'oc_is_updating': 1})
-        doc_order.save()
-
-
-def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company):
-        # taxes related part
-        doc_template = sales_taxes_and_charges_template.get_first_by_territory(doc_customer.get('territory'), company_name=company)
-
-        # shipping related part
-        doc_store = oc_stores.get(site_name, oc_order.store_id)
-
-        doc_order.update({
-            # 'apply_discount_on': 'Net Total',
-            # 'discount_amount': 35.0,
-            'taxes_and_charges': doc_template.get('name') or '',
-            'shipping_rule': doc_store.get('oc_shipping_rule') or ''
-        })
-
-        # doc_order.append_taxes_from_master()
-        doc_order.set_taxes()
-        doc_order.calculate_taxes_and_totals()
-
-        doc_order.apply_shipping_rule()
-        doc_order.calculate_taxes_and_totals()
         doc_order.update({'oc_is_updating': 1})
         doc_order.save()
