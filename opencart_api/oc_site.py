@@ -8,6 +8,8 @@ import oc_api
 
 OPENCART_INIT_CACHE = {}
 
+OPENCART_MANUFACTURERS_CACHE = {}
+
 
 def get_oc_init(site_name):
     global OPENCART_INIT_CACHE
@@ -167,3 +169,29 @@ def get_tax_rates(site_name):
 
 def get_tax_rate_names(site_name):
     return [tax_rate.get('name') for tax_rate in get_tax_rates(site_name)]
+
+
+def get_manufacturers(site_name):
+    global OPENCART_MANUFACTURERS_CACHE
+    manufacturers = OPENCART_MANUFACTURERS_CACHE.get(site_name)
+    if manufacturers is None:
+        manufacturers = list(oc_api.get(site_name).get_all_manufacturers())
+        OPENCART_MANUFACTURERS_CACHE[site_name] = manufacturers
+    return manufacturers
+
+
+def get_manufacturer(site_name, manufacturer_id):
+    manufacturers = get_manufacturers(site_name)
+    for m in manufacturers:
+        if m.get('manufacturer_id') == manufacturer_id:
+            return m
+    else:
+        frappe.throw('Error. Cannot get manufacturer by manufacturer id "%s" for Opencart Site "%s"' % (manufacturer_id, site_name))
+
+
+def get_manufacturer_name(site_name, manufacturer_id):
+    manufacturers = get_manufacturers(site_name)
+    res = next((m.get('name') for m in manufacturers if m.get('manufacturer_id') == manufacturer_id), None)
+    if res is None:
+        frappe.throw('Error. Cannot get manufacturer name by manufacturer id "%s" for Opencart Site "%s"' % (manufacturer_id, site_name))
+    return res

@@ -9,6 +9,7 @@ from frappe.utils.csvutils import read_csv_content_from_attached_file
 
 import oc_api
 import oc_site
+import brands
 import customer_groups
 import item_groups
 from decorators import sync_item_to_opencart
@@ -407,12 +408,25 @@ def update_item(site_name, doc_item, oc_product, item_group=None):
     update_or_create_item_discounts(site_name, doc_item, oc_product.get('discounts'), save=True, is_updating=True)
 
     doc_item = frappe.get_doc('Item', doc_item.get('name'))
+
+    # updating item brand
+    manufacturer_id = oc_product.get('manufacturer_id')
+    if manufacturer_id:
+        oc_manufacturer = oc_site.get_manufacturer(site_name, oc_product.get('manufacturer_id'))
+        doc_brand = brands.create_or_update(site_name, oc_manufacturer)
+        doc_item.update({
+            'brand': doc_brand.get('name')
+        })
+    else:
+        frappe.msgprint('Manufacturer is not specified for product "%s" in Opencart site "%s"' % (doc_item.get('name'), site_name))
+
     doc_item.update({
         'oc_is_updating': 1,
         # update Item general info
         'item_name': oc_product.get('name'),
         'description': oc_product.get('description') or oc_product.get('name'),
         'image': oc_product.get('image'),
+        'brand': doc_brand.get('name'),
         #
         'oc_sync_from': 1,
         'oc_last_sync_from': datetime.now(),
