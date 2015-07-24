@@ -9,12 +9,15 @@
  "document_type": "Master", 
  "fields": [
   {
-   "fieldname": "condition", 
+   "fieldname": "rule_condition", 
    "fieldtype": "Select", 
+   "oldfieldname": "condition", 
+   "oldfieldtype": "Select", 
    "in_list_view": 1, 
    "label": "Condition", 
    "options": "If Territory of Customer is", 
    "permlevel": 0, 
+   "report_hide": 0, 
    "precision": "", 
    "reqd": 1
   }, 

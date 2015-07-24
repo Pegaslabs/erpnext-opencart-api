@@ -29,6 +29,7 @@ cur_frm.cscript.customer = function() {
 		method: "opencart_api.orders.resolve_taxes_and_charges",
 		args: {
 			"customer": me.frm.doc.customer,
+			"company": me.frm.doc.company
 		},
 		callback: function(r) {
 			if(!r.exc) {
@@ -56,6 +57,21 @@ cur_frm.cscript.customer = function() {
 		}
 	});
 
+	// updating sales order's default warehouse
+    frappe.call({
+		method: "opencart_api.orders.resolve_customer_warehouse",
+		args: {
+			"customer": me.frm.doc.customer,
+		},
+		callback: function(r) {
+			if(!r.exc) {
+				if(r.message) {
+				    me.frm.set_value("warehouse", r.message);
+				}
+			}
+		}
+	});
+
     // updating Sales Order company
     frappe.model.with_doc("Customer", me.frm.doc.customer, function(r) {
 	    var doc_customer = frappe.model.get_doc("Customer", me.frm.doc.customer);
@@ -66,6 +82,56 @@ cur_frm.cscript.customer = function() {
             });
         }
 	});
+}
+
+cur_frm.cscript.item_code = function(doc, cdt, cdn) {
+	var me = this;
+	var item = frappe.get_doc(cdt, cdn);
+
+	if(item.item_code || item.barcode || item.serial_no) {
+		if(!this.validate_company_and_party()) {
+			cur_frm.fields_dict["items"].grid.grid_rows[item.idx - 1].remove();
+		} else {
+			return this.frm.call({
+				method: "erpnext.stock.get_item_details.get_item_details",
+				child: item,
+				args: {
+					args: {
+						item_code: item.item_code,
+						barcode: item.barcode,
+						serial_no: item.serial_no,
+						warehouse: me.frm.doc.warehouse || item.warehouse,
+						parenttype: me.frm.doc.doctype,
+						parent: me.frm.doc.name,
+						customer: me.frm.doc.customer,
+						supplier: me.frm.doc.supplier,
+						currency: me.frm.doc.currency,
+						conversion_rate: me.frm.doc.conversion_rate,
+						price_list: me.frm.doc.selling_price_list ||
+							 me.frm.doc.buying_price_list,
+						price_list_currency: me.frm.doc.price_list_currency,
+						plc_conversion_rate: me.frm.doc.plc_conversion_rate,
+						company: me.frm.doc.company,
+						order_type: me.frm.doc.order_type,
+						is_pos: cint(me.frm.doc.is_pos),
+						is_subcontracted: me.frm.doc.is_subcontracted,
+						transaction_date: me.frm.doc.transaction_date || me.frm.doc.posting_date,
+						ignore_pricing_rule: me.frm.doc.ignore_pricing_rule,
+						doctype: item.doctype,
+						name: item.name,
+						project_name: item.project_name || me.frm.doc.project_name,
+						qty: item.qty
+					}
+				},
+
+				callback: function(r) {
+					if(!r.exc) {
+						me.frm.script_manager.trigger("price_list_rate", cdt, cdn);
+					}
+				}
+			});
+		}
+	}
 }
 
 // cur_frm.cscript.validate = function(doc) {

@@ -282,3 +282,12 @@ class OpencartApi(object):
     def get_payment_methods(self):
         success, resp = oc_request(self.url + '/paymentmethods', headers=self.headers)
         return (success, resp.get('data', []) if success else [])
+
+    def get_all_manufacturers(self, limit=100, page=1):
+        while True:
+            success, resp = oc_request(self.url + '/manufacturers/limit/%s/page/%s' % (str(limit), str(page)), headers=self.headers)
+            if not success or not resp.get('data'):
+                break
+            page += 1
+            for c in resp.get('data', []):
+                yield c

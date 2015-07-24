@@ -126,7 +126,7 @@ def pull(site_name, item_code=None, silent=False):
                     continue
             # TODO
             # updating item for each store
-            # items.update_item(site_name, doc_item, oc_product, save=True, is_updating=True)
+            # items.update_item(site_name, doc_item, oc_product)
             for doc_oc_price_list in doc_store.get('oc_price_lists'):
                 check_count += 1
                 price_list_name = doc_oc_price_list.get('price_list')
