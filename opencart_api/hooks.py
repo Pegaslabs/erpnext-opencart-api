@@ -47,6 +47,10 @@ doc_events = {
         # "on_update_after_submit": "opencart_api.orders.on_update_after_submit",
         # "on_trash": "opencart_api.orders.on_trash"
     },
+    "Sales Invoice": {
+        "before_submit": "opencart_api.sales_invoice.on_submit",
+        "on_submit": "opencart_api.sales_invoice.on_submit",
+    },
     "Purchase Receipt": {
         # "on_submit": "opencart_api.events.oc_pr_submitted",
         # "on_cancel": "opencart_api.events.oc_pr_canceled"

@@ -35,7 +35,8 @@ def update_item(doc_item, doc_item_price):
 
     if db_oc_price_list.get('is_master'):
         # updating price as product main price on Opencart site
-        doc_oc_product.update({'oc_price': float(doc_item_price.get('price_list_rate'))})
+        items.update_oc_product_price(doc_oc_product, float(doc_item_price.get('price_list_rate')), doc_item_price.get('currency'))
+        # doc_oc_product.update({'price': float(doc_item_price.get('price_list_rate'))})
         # it is going to update main price on Opencart site
         doc_oc_product.save()
     else:
@@ -51,7 +52,23 @@ def update_item(doc_item, doc_item_price):
             'quantity': '1',
             'date_start': '',
             'date_end': '',
+            'prices': [{
+                'code': doc_item_price.get('currency'),
+                'price': doc_item_price.get('price_list_rate')
+            }]
         }, save=True, is_updating=True)
+        frappe.msgprint(str({
+            'customer_group_id': customer_group_id,
+            'price': doc_item_price.get('price_list_rate'),
+            'priority': '0',
+            'quantity': '1',
+            'date_start': '',
+            'date_end': '',
+            'prices': [{
+                'code': doc_item_price.get('currency'),
+                'price': doc_item_price.get('price_list_rate')
+            }]
+        }))
 
 
 def oc_validate(doc, method=None):
@@ -135,11 +152,13 @@ def pull(site_name, item_code=None, silent=False):
                 doc_item_price = get(item_code, price_list_name)
 
                 # resolve price
-                price = float(oc_product.get('price', 0))
+                price = items.get_oc_product_price(oc_product, doc_price_list.get('currency'))
+                # price = float(oc_product.get('price', 0))
                 customer_group_id = customer_groups_cache.get(customer_group_name, {}).get('oc_customer_group_id')
                 for discount in oc_product.get('discounts'):
                     if customer_group_id == discount.get('customer_group_id') and int(discount.get('quantity', 0)) == 1:
-                        price = float(discount.get('price', 0))
+                        # price = float(discount.get('price', 0))
+                        price = items.get_oc_discount_price(discount, doc_price_list.get('currency'))
                 if doc_item_price:
                     # update existed Item Price
                     doc_item_price.update({
@@ -155,13 +174,6 @@ def pull(site_name, item_code=None, silent=False):
                                         doc_item_price.get('currency'),
                                         doc_item_price.get('price_list_rate')) + extras)
                 else:
-                    # validating
-                    if doc_price_list.get('currency') != oc_product.get('currency_code'):
-                        skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: currency inconsistency: "%s" and "%s"' % (doc_price_list.get('currency'), oc_product.get('currency_code')))
-                        results_list.append(('', '', '', '', '') + extras)
-                        continue
-
                     # create new Item Price
                     params = {
                         'doctype': 'Item Price',

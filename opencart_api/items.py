@@ -16,6 +16,47 @@ from decorators import sync_item_to_opencart
 from utils import sync_info
 
 
+CURRENCY_TO_PRICE_FIELD_MAP = {
+    'GBP': 'price_gbp',
+    'EUR': 'price_eur',
+    'USD': 'price_usd',
+    'CAD': 'price_cad'
+}
+
+
+def get_price_field_name(currency):
+    return CURRENCY_TO_PRICE_FIELD_MAP.get(currency, 'price')
+
+
+def get_oc_product_price(oc_product, currency):
+    if oc_product.get('prices'):
+        for product_price in oc_product.get('prices'):
+            if product_price.get('code') == currency:
+                return float(product_price.get('price', 0))
+        else:
+            frappe.throw('Could not get price from discount for currency %s' % currency)
+    else:
+        return float(oc_product.get('price', 0))
+
+
+def update_oc_product_price(doc_oc_product, price, currency):
+    if doc_oc_product.get('multi_currency_price'):
+        doc_oc_product.update({get_price_field_name(currency): price})
+    else:
+        doc_oc_product.update({'price': price})
+
+
+def get_oc_discount_price(oc_discount, currency):
+    if oc_discount.get('prices'):
+        for discount_price in oc_discount.get('prices'):
+            if discount_price.get('code') == currency:
+                return float(discount_price.get('price', 0))
+        else:
+            frappe.throw('Could not get price from discount for currency %s' % currency)
+    else:
+        return float(oc_discount.get('price', 0))
+
+
 def push_item_to_oc(doc_item, site_name=None):
     for doc_oc_product in doc_item.get('oc_products'):
         if not doc_oc_product.get('oc_sync_to'):
@@ -27,7 +68,7 @@ def push_item_to_oc(doc_item, site_name=None):
             'model': doc_oc_product.get('oc_model') or doc_item.get('name'),  # mandatory
             'sku': doc_oc_product.get('oc_sku') or doc_oc_product.get('oc_model'),  # mandatory
             'quantity': doc_oc_product.get('oc_quantity') or '0',  # mandatory
-            'price': doc_oc_product.get('oc_price'),
+            'price': doc_oc_product.get('price'),
             'tax_class_id': doc_oc_product.get('oc_tax_class_id'),  # mandatory
             'manufacturer_id': doc_oc_product.get('oc_manufacturer_id'),  # mandatory
             # 'sort_order': '1',  # mandatory
@@ -169,6 +210,18 @@ def push_item_to_oc(doc_item, site_name=None):
             # ]
         }
 
+        # update multi currency prices
+        if doc_oc_product.get('multi_currency_price'):
+            prices = []
+            for currency_code, price_field_name in CURRENCY_TO_PRICE_FIELD_MAP.items():
+                prices.append({
+                    'price': str(doc_oc_product.get(price_field_name)) if doc_oc_product.get(price_field_name) is not None else '',
+                    'code': currency_code,
+                })
+            data.update({
+                'prices': prices
+            })
+
         # specials
         product_special = []
         for doc_oc_special in doc_item.oc_specials:
@@ -200,14 +253,27 @@ def push_item_to_oc(doc_item, site_name=None):
                 continue
             if cur_site_name != doc_customer_group.get('oc_site'):
                 frappe.throw('Customer Group "%s" does not exist in Opencart site "%s"' % (doc_customer_group.get('name'), cur_site_name))
-            product_discount.append({
+            product_discount_json = {
                 'customer_group_id': customer_group_id,
                 'price': doc_oc_discount.price,
                 'priority': doc_oc_discount.priority,
                 'quantity': doc_oc_discount.quantity,
                 'date_start': doc_oc_discount.date_start,
                 'date_end': doc_oc_discount.date_end,
-            })
+            }
+            # update multi currency prices for discount
+            if doc_oc_discount.get('multi_currency_price'):
+                prices = []
+                for currency_code, price_field_name in CURRENCY_TO_PRICE_FIELD_MAP.items():
+                    prices.append({
+                        'price': str(doc_oc_discount.get(price_field_name)) if doc_oc_discount.get(price_field_name) is not None else '',
+                        'code': currency_code,
+                    })
+                product_discount_json.update({
+                    'prices': prices
+                })
+            product_discount.append(product_discount_json)
+
         data['product_discount'] = product_discount
 
         # updating or creating product
@@ -293,6 +359,17 @@ def get_opencart_product(site_name, item_name):
         return frappe.get_doc('Opencart Product', {'oc_site': site_name, 'parent': item_name})
 
 
+def update_discount_price(doc_oc_discount, currency, price):
+    doc_oc_discount.update({get_price_field_name(currency): price})
+
+
+def update_discount_prices(doc_oc_discount, oc_discount):
+    if oc_discount.get('prices'):
+        doc_oc_discount.update({'multi_currency_price': 1})
+    for prouct_price in oc_discount.get('prices'):
+        update_discount_price(doc_oc_discount, prouct_price.get('code'), float(prouct_price.get('price', 0)))
+
+
 def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False, is_updating=False):
     disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
 
@@ -322,13 +399,15 @@ def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False,
         })
         if oc_discount_hash == doc_discount_hash:
             doc_oc_discount.update({'price': oc_discount.get('price')})
+            update_discount_prices(doc_oc_discount, oc_discount)
             doc_oc_discount.save()
             break
     else:
         doc_customer_group = customer_groups.get(site_name, oc_discount.get('customer_group_id'))
         if not doc_customer_group:
             frappe.throw('Cannot not found Customer Group with customer_group_id "%s" for Item "%s"' % (customer_group_id, doc_item.get('name')))
-        doc_item.append('oc_discounts', {
+        doc_oc_discount = frappe.get_doc({
+            'doctype': 'Opencart Discount',
             'oc_site': site_name,
             'item_name': doc_item.get('name'),
             'customer_group': doc_customer_group.get('name'),
@@ -338,6 +417,8 @@ def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False,
             'date_start': oc_discount.get('date_start'),
             'date_end': oc_discount.get('date_end'),
         })
+        update_discount_prices(doc_oc_discount, oc_discount)
+        doc_item.append('oc_discounts', doc_oc_discount)
         if is_updating:
             doc_item.update({'oc_is_updating': 1})
         if save:
@@ -347,6 +428,17 @@ def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False,
 def update_or_create_item_discounts(site_name, doc_item, oc_discounts, save=False, is_updating=False):
     for oc_discount in oc_discounts:
         update_or_create_item_discount(site_name, doc_item, oc_discount, save=save, is_updating=is_updating)
+
+
+def update_opencart_product_price(doc_oc_product, currency, price):
+    doc_oc_product.update({get_price_field_name(currency): price})
+
+
+def update_opencart_product_prices(doc_oc_product, oc_product):
+    if oc_product.get('prices'):
+        doc_oc_product.update({'multi_currency_price': 1})
+    for prouct_price in oc_product.get('prices'):
+        update_opencart_product_price(doc_oc_product, prouct_price.get('code'), float(prouct_price.get('price', 0)))
 
 
 def update_or_create_opencart_product(site_name, doc_item, oc_product, save=False, is_updating=False):
@@ -361,15 +453,17 @@ def update_or_create_opencart_product(site_name, doc_item, oc_product, save=Fals
             'oc_model': oc_product.get('model'),
             'oc_sku': oc_product.get('sku'),
             'oc_quantity': oc_product.get('quantity'),
-            'oc_price': oc_product.get('price'),
+            'price': oc_product.get('price'),
             'oc_meta_title': oc_product.get('meta_title'),
             'oc_meta_keyword': oc_product.get('meta_keyword'),
             'oc_meta_description': oc_product.get('meta_description'),
             'oc_status': int(oc_product.get('status') or 0),
         })
+        update_opencart_product_prices(doc_oc_product, oc_product)
         doc_oc_product.save()
     else:
-        doc_item.append('oc_products', {
+        doc_oc_product = frappe.get_doc({
+            'doctype': 'Opencart Product',
             'oc_site': site_name,
             'oc_product_id': oc_product.get('product_id'),
             'oc_category_id': oc_product.get('category_id'),
@@ -379,7 +473,7 @@ def update_or_create_opencart_product(site_name, doc_item, oc_product, save=Fals
             'oc_model': oc_product.get('model'),
             'oc_sku': oc_product.get('sku') or '',  # not a mandatory field
             'oc_quantity': oc_product.get('quantity'),
-            'oc_price': oc_product.get('price'),
+            'price': oc_product.get('price'),
             'oc_meta_title': oc_product.get('meta_title'),
             'oc_meta_keyword': oc_product.get('meta_keyword'),
             'oc_meta_description': oc_product.get('meta_description'),
@@ -387,7 +481,8 @@ def update_or_create_opencart_product(site_name, doc_item, oc_product, save=Fals
             'oc_sync_from': 1,
             'oc_sync_to': 1,
         })
-
+        update_opencart_product_prices(doc_oc_product, oc_product)
+        doc_item.append('oc_products', doc_oc_product)
         if is_updating:
             doc_item.update({'oc_is_updating': 1})
         if save:
@@ -517,7 +612,7 @@ def pull_from_inventory_spreadsheet(site_name, silent=False):
                 'oc_meta_title': '',
                 'oc_meta_keyword': '',
                 'oc_meta_description': '',
-                'oc_price': '',
+                'price': '',
                 'oc_sync_from': False,
                 'oc_last_sync_from': datetime.now(),
                 'oc_sync_to': False,
@@ -598,7 +693,7 @@ def pull_product_from_oc(site_name, item_name, doc_item=None, silent=False):
             'oc_meta_title': oc_product.get('meta_title'),
             'oc_meta_keyword': oc_product.get('meta_keyword'),
             'oc_meta_description': oc_product.get('meta_description'),
-            'oc_price': oc_product.get('price'),
+            'price': oc_product.get('price'),
             'oc_sync_from': True,
             'oc_last_sync_from': datetime.now(),
             'oc_sync_to': True,
@@ -727,7 +822,7 @@ def pull_products_from_oc(site_name, silent=False):
                         'oc_meta_title': oc_product.get('meta_title'),
                         'oc_meta_keyword': oc_product.get('meta_keyword'),
                         'oc_meta_description': oc_product.get('meta_description'),
-                        'oc_price': oc_product.get('price'),
+                        'price': oc_product.get('price'),
                         'oc_sync_from': True,
                         'oc_last_sync_from': datetime.now(),
                         'oc_sync_to': True,

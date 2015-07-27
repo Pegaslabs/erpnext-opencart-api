@@ -278,6 +278,26 @@ ISO_CODE3_TO_TERRITORY_MAP = {
     "GBR": {"name": "United Kingdom"}
 }
 
+COUNTRY_TO_TERRITORY_MAP = {
+    "Canada": {"name": "Canada", "zones": {
+        "AB": {"name": "Alberta"},
+        "BC": {"name": "British Columbia"},
+        "MB": {"name": "Manitoba"},
+        "NB": {"name": "New Brunswick"},
+        "NL": {"name": "Newfoundland and Labrador"},
+        "NT": {"name": "Northwest Territories"},
+        "NS": {"name": "Nova Scotia"},
+        "NU": {"name": "Nunavut"},
+        "ON": {"name": "Ontario"},
+        "PE": {"name": "Prince Edward Island"},
+        "QC": {"name": "Quebec"},
+        "SK": {"name": "Saskatchewan"},
+        "YT": {"name": "Yukon Territory"}
+    }},
+    "United States": {"name": "United States"},
+    "United Kingdom": {"name": "United Kingdom"}
+}
+
 
 def get_by_iso_code3(iso_code_3, zone_code=None, default=DEFAULT):
     if zone_code:
@@ -285,3 +305,11 @@ def get_by_iso_code3(iso_code_3, zone_code=None, default=DEFAULT):
         return ISO_CODE3_TO_TERRITORY_MAP.get(iso_code_3, {}).get("zones", {}).get(zone_code, {}).get("name", new_default)
     else:
         return ISO_CODE3_TO_TERRITORY_MAP.get(iso_code_3, {}).get("name", default)
+
+
+def get_by_country(country, zone_code=None, default=DEFAULT):
+    if zone_code:
+        new_default = ISO_CODE3_TO_TERRITORY_MAP.get(country, {}).get("name", default)
+        return ISO_CODE3_TO_TERRITORY_MAP.get(country, {}).get("zones", {}).get(zone_code, {}).get("name", new_default)
+    else:
+        return ISO_CODE3_TO_TERRITORY_MAP.get(country, {}).get("name", default)

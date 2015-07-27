@@ -16,6 +16,7 @@ import oc_stores
 import items
 import territories
 import sales_taxes_and_charges_template
+from sales_order import make_sales_invoice
 
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
@@ -359,6 +360,12 @@ def on_order_added(doc_order):
         doc_order.submit()
     except ValidationError:
         pass
+    else:
+        sales_invoice = make_sales_invoice(doc_order.get('name'))
+        # sales_invoice.set("update_stock", 1)
+        # sales_invoice.get("items")[0].qty = 3
+        sales_invoice.insert()
+        # sales_invoice.submit()
 
 
 @frappe.whitelist()
@@ -442,12 +449,16 @@ def pull_added_from(site_name, silent=False):
                     'oc_pa_firstname': oc_order.get('payment_firstname'),
                     'oc_pa_lastname': oc_order.get('payment_lastname'),
                     'oc_pa_company': oc_order.get('payment_company'),
+                    'oc_pa_country_id': oc_order.get('payment_country_id'),
+                    'oc_pa_country': oc_order.get('payment_country'),
                     # shipping method
                     'oc_sm_title': oc_order.get('shipping_method'),
                     'oc_sm_code': oc_order.get('shipping_code'),
                     'oc_sa_firstname': oc_order.get('shipping_firstname'),
                     'oc_sa_lastname': oc_order.get('shipping_lastname'),
                     'oc_sa_company': oc_order.get('shipping_company'),
+                    'oc_sa_country_id': oc_order.get('shipping_country_id'),
+                    'oc_sa_country': oc_order.get('shipping_country'),
                     #
                     'oc_last_sync_from': datetime.now(),
                 })
@@ -501,12 +512,16 @@ def pull_added_from(site_name, silent=False):
                     'oc_pa_firstname': oc_order.get('payment_firstname'),
                     'oc_pa_lastname': oc_order.get('payment_lastname'),
                     'oc_pa_company': oc_order.get('payment_company'),
+                    'oc_pa_country_id': oc_order.get('payment_country_id'),
+                    'oc_pa_country': oc_order.get('payment_country'),
                     # shipping method
                     'oc_sm_title': oc_order.get('shipping_method'),
                     'oc_sm_code': oc_order.get('shipping_code'),
                     'oc_sa_firstname': oc_order.get('shipping_firstname'),
                     'oc_sa_lastname': oc_order.get('shipping_lastname'),
                     'oc_sa_company': oc_order.get('shipping_company'),
+                    'oc_sa_country_id': oc_order.get('shipping_country_id'),
+                    'oc_sa_country': oc_order.get('shipping_country'),
                     #
                     'oc_sync_from': True,
                     'oc_last_sync_from': datetime.now(),
@@ -906,6 +921,7 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
             frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))
 
         doc_order.update({
+            'oc_is_shipping_included_in_total': 1,
             'taxes_and_charges': template or '',
             'shipping_rule': shipping_rule or ''
         })
@@ -931,7 +947,8 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
                 'idx': old_shipping_item_idx,
             })
             shipping_item.update({
-                'idx': old_tax_item_idx
+                'idx': old_tax_item_idx,
+                'oc_is_shipping_entry': 1
             })
             tax_item.update({
                 'charge_type': 'On Previous Row Total',

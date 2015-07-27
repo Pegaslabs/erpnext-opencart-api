@@ -134,6 +134,7 @@
 "","""Sales Order-oc_sa_zone_code""","Sales Order","Small Text","Zone Code","oc_sa_zone","","Zone Code","","oc_sa_zone_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country_id""","Sales Order","Small Text","Country ID","oc_sa_zone_code","","Country ID","","oc_sa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country""","Sales Order","Small Text","Country","oc_sa_country_id","","Country","","oc_sa_country",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_is_shipping_included_in_total""","Sales Order","Check","Include Shipping in Total","taxes_and_charges","","","","oc_is_shipping_included_in_total",0,0,0,0,"","1",0,"",0,0,0,0,0,0
 "","""Address-oc_settings""","Address","Section Break","Opencart Settings","is_shipping_address","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_site""","Address","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_address_id""","Address","Data","Opencart Address ID","oc_site","","Opencart Address ID","","oc_address_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
@@ -143,3 +144,8 @@
 "","""Stock Reconciliation Item-oc_item_name""","Stock Reconciliation Item","Data","Item Name","item_code","","Item Name","","oc_item_name",0,0,0,0,"","",0,"",0,0,0,0,1,0
 "","""Stock Reconciliation-inventory_file""","Stock Reconciliation","Attach","Inventory Spreadsheet File","get_items","","Inventory Spreadsheet File","","inventory_file",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Stock Reconciliation-get_items_from_file""","Stock Reconciliation","Button","Get Items from Inventory File","inventory_file","","Get Items from Inventory File","","get_items_from_file",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Taxes and Charges-oc_is_shipping_entry""","Sales Taxes and Charges","Check","Is Shipping Tax Entry","included_in_print_rate","","","","oc_is_shipping_entry",0,0,0,0,"","0",0,"",0,0,0,0,0,0
+"","""Mode of Payment-oc_settings""","Mode of Payment","Section Break","Opencart Settings","accounts","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Mode of Payment-oc_payment_method_code""","Mode of Payment","Data","Payment Method Code","oc_settings","","Opencart Site","","oc_payment_method_code",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Mode of Payment-oc_territory""","Mode of Payment","Link","Payment Country","oc_payment_method_code","","Territory","","oc_territory",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item Price-oc_is_updating""","Item Price","Check","Is Updating","currency","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
