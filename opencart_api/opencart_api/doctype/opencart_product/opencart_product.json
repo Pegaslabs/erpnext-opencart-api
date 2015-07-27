@@ -92,10 +92,60 @@
   }, 
   {
    "description": "", 
-   "fieldname": "oc_price", 
+   "fieldname": "multi_currency_price", 
+   "fieldtype": "Check", 
+   "in_list_view": 0, 
+   "label": "Is Multi Currency Price", 
+   "permlevel": 0, 
+   "reqd": 0
+  }, 
+  {
+   "description": "", 
+   "fieldname": "price", 
    "fieldtype": "Float", 
    "in_list_view": 0, 
    "label": "Price", 
+   "depends_on": "eval: doc.multi_currency_price!=1", 
+   "permlevel": 0, 
+   "reqd": 0
+  }, 
+  {
+   "description": "", 
+   "fieldname": "price_gbp", 
+   "fieldtype": "Float", 
+   "in_list_view": 0, 
+   "label": "GBP Price", 
+   "depends_on": "eval: doc.multi_currency_price==1", 
+   "permlevel": 0, 
+   "reqd": 0
+  }, 
+  {
+   "description": "", 
+   "fieldname": "price_eur", 
+   "fieldtype": "Float", 
+   "in_list_view": 0, 
+   "label": "EUR Price", 
+   "depends_on": "eval: doc.multi_currency_price==1", 
+   "permlevel": 0, 
+   "reqd": 0
+  }, 
+  {
+   "description": "", 
+   "fieldname": "price_usd", 
+   "fieldtype": "Float", 
+   "in_list_view": 0, 
+   "label": "USD Price", 
+   "depends_on": "eval: doc.multi_currency_price==1", 
+   "permlevel": 0, 
+   "reqd": 0
+  }, 
+  {
+   "description": "", 
+   "fieldname": "price_cad", 
+   "fieldtype": "Float", 
+   "in_list_view": 0, 
+   "label": "CAD Price", 
+   "depends_on": "eval: doc.multi_currency_price==1", 
    "permlevel": 0, 
    "reqd": 0
   }, 

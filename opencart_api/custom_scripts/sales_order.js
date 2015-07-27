@@ -192,6 +192,15 @@ cur_frm.cscript.item_code = function(doc, cdt, cdn) {
 	}
 }
 
+
+cur_frm.cscript.make_sales_invoice = function() {
+	frappe.model.open_mapped_doc({
+		method: "opencart_api.sales_order.make_sales_invoice",
+		frm: cur_frm
+	})
+}
+
+
 // cur_frm.cscript.validate = function(doc) {
 	
 // }
