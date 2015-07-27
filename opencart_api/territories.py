@@ -309,7 +309,7 @@ def get_by_iso_code3(iso_code_3, zone_code=None, default=DEFAULT):
 
 def get_by_country(country, zone_code=None, default=DEFAULT):
     if zone_code:
-        new_default = ISO_CODE3_TO_TERRITORY_MAP.get(country, {}).get("name", default)
-        return ISO_CODE3_TO_TERRITORY_MAP.get(country, {}).get("zones", {}).get(zone_code, {}).get("name", new_default)
+        new_default = COUNTRY_TO_TERRITORY_MAP.get(country, {}).get("name", default)
+        return COUNTRY_TO_TERRITORY_MAP.get(country, {}).get("zones", {}).get(zone_code, {}).get("name", new_default)
     else:
-        return ISO_CODE3_TO_TERRITORY_MAP.get(country, {}).get("name", default)
+        return COUNTRY_TO_TERRITORY_MAP.get(country, {}).get("name", default)
