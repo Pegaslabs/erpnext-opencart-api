@@ -1,6 +1,10 @@
 from __future__ import unicode_literals
+from frappe import _, msgprint, throw
+from erpnext.accounts.party import get_party_account, get_due_date
 
 import frappe
+
+# from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 
 @frappe.whitelist()
@@ -24,6 +28,18 @@ def resolve_mode_of_payment(payment_method_code, territory=''):
 
 def on_submit(self, method=None):
     pass
+
+
+@frappe.whitelist()
+def set_missing_values(self, for_validate=False):
+    raise Exception('sales_invoice')
+    self.set_pos_fields(for_validate)
+    if not self.debit_to:
+        self.debit_to = get_party_account(self.company, self.customer, "Customer")
+    if not self.due_date:
+        self.due_date = get_due_date(self.posting_date, "Customer", self.customer, self.company)
+
+    #super(SalesInvoice, self).set_missing_values(for_validate)
 
     # from erpnext.selling.doctype.customer.customer import get_customer_outstanding
     # customer_outstanding = get_customer_outstanding(self.customer, self.company)
