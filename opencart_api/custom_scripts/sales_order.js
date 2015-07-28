@@ -202,7 +202,7 @@ cur_frm.cscript.make_sales_invoice = function() {
 
 
 // cur_frm.cscript.validate = function(doc) {
-	
+
 // }
 
 // cur_frm.cscript.refresh = function(doc, cdt, cdn) {

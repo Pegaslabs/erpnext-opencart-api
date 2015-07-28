@@ -68,6 +68,7 @@ doc_events = {
 
 doctype_js = {
     "Sales Order": ["custom_scripts/sales_order.js"],
+    "Sales Invoice": ["custom_scripts/sales_invoice.js"],
     "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"]
 }
 

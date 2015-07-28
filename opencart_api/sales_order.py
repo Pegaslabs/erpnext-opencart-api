@@ -22,7 +22,7 @@ def make_sales_invoice(source_name, target_doc=None):
     def set_missing_values(source, target):
         payment_territory = territories.get_by_country(source.oc_pa_country)
         target.mode_of_payment = resolve_mode_of_payment(source.oc_pm_code, payment_territory)
-        target.is_pos = 0
+        target.is_pos = 1
         target.ignore_pricing_rule = 1
         target.run_method("set_missing_values")
         target.run_method("calculate_taxes_and_totals")
