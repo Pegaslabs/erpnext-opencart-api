@@ -13,16 +13,16 @@ cur_frm.cscript.is_pos = function (doc, dt, dn, callback_fn) {
 		} else {
 			return this.frm.call({
 				doc: me.frm.doc,
-				method: "opencart_api.sales_invoice.set_missing_values",
+				method: "set_missing_values",
 				callback: function(r) {
 					if(!r.exc) {
-						if (me.frm.doc.selling_price_list != initial_price_list) {
-							me.frm.doc.selling_price_list = initial_price_list;
-							me.frm.doc.price_list_currency = initial_price_list_currency;
-							me.frm.doc.plc_conversion_rate = initial_plc_conversion_rate;
-							me.frm.doc.currency = initial_currency;
-							me.frm.doc.conversion_rate = initial_conversion_rate;
-						}
+						// if (me.frm.doc.selling_price_list != initial_price_list) {
+						// 	me.frm.doc.selling_price_list = initial_price_list;
+						// 	me.frm.doc.price_list_currency = initial_price_list_currency;
+						// 	me.frm.doc.plc_conversion_rate = initial_plc_conversion_rate;
+						// 	me.frm.doc.currency = initial_currency;
+						// 	me.frm.doc.conversion_rate = initial_conversion_rate;
+						// }
 						me.frm.script_manager.trigger("update_stock");
 						frappe.model.set_default_values(me.frm.doc);
 						me.set_dynamic_labels();

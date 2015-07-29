@@ -4,7 +4,43 @@ from erpnext.accounts.party import get_party_account, get_due_date
 
 import frappe
 
-# from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+import gorilla
+
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
+
+# from erpnext.controllers.selling_controller import SellingController
+
+
+# @gorilla.patch(sales_invoice)
+# class SalesInvoice2():
+#     def set_missing_values(self, for_validate=False):
+#         frappe.msgprint('set_missing_values from OpencartSalesInvoice777')
+#         self.set_pos_fields(for_validate)
+
+#         if not self.debit_to:
+#             self.debit_to = get_party_account(self.company, self.customer, "Customer")
+#         if not self.due_date:
+#             self.due_date = get_due_date(self.posting_date, "Customer", self.customer, self.company)
+
+#         super(SalesInvoice, self).set_missing_values(for_validate)
+
+
+# @gorilla.patch(SalesInvoice)
+def set_missing_values(self, for_validate=False):
+    frappe.msgprint('set_missing_values from OpencartSalesInvoice123')
+    self.set_pos_fields(for_validate)
+
+    if not self.debit_to:
+        self.debit_to = get_party_account(self.company, self.customer, "Customer")
+    if not self.due_date:
+        self.due_date = get_due_date(self.posting_date, "Customer", self.customer, self.company)
+
+    super(SalesInvoice, self).set_missing_values(for_validate)
+
+
+# import types
+# setattr(SalesInvoice, set_missing_values.__name__, types.MethodType(set_missing_values, SalesInvoice))
+setattr(SalesInvoice, 'set_missing_values', set_missing_values)
 
 
 @frappe.whitelist()
@@ -30,14 +66,14 @@ def on_submit(self, method=None):
     pass
 
 
-@frappe.whitelist()
-def set_missing_values(self, for_validate=False):
-    raise Exception('sales_invoice')
-    self.set_pos_fields(for_validate)
-    if not self.debit_to:
-        self.debit_to = get_party_account(self.company, self.customer, "Customer")
-    if not self.due_date:
-        self.due_date = get_due_date(self.posting_date, "Customer", self.customer, self.company)
+# @frappe.whitelist()
+# def set_missing_values(self, for_validate=False):
+#     raise Exception('sales_invoice')
+#     self.set_pos_fields(for_validate)
+#     if not self.debit_to:
+#         self.debit_to = get_party_account(self.company, self.customer, "Customer")
+#     if not self.due_date:
+#         self.due_date = get_due_date(self.posting_date, "Customer", self.customer, self.company)
 
     #super(SalesInvoice, self).set_missing_values(for_validate)
 
