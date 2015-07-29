@@ -80,6 +80,9 @@ fixtures = ["Custom Field", "Custom Script"]
 
 scheduler_events = {
     # "all": [
+    #     "opencart_api.tasks.hourly"
+    # ],
+    # "all": [
     #     "opencart_api.tasks.daily"
     # ],
     "hourly": [
@@ -181,6 +184,7 @@ web_include_js = "/assets/js/opencart_site.js"
 # Overriding Whitelisted Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-#   "frappe.core.doctype.event.event.get_events": "opencart_api.event.get_events"
-# }
+override_whitelisted_methods = {
+  "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
+  # "frappe.core.doctype.event.event.get_events": "opencart_api.event.get_events"
+}

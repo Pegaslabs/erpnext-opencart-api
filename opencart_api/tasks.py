@@ -6,7 +6,6 @@ import frappe
 from items import pull_products_from_oc
 from item_groups import pull_categories_from_oc
 import oc_api
-from orders import pull_added_from
 
 
 EMAIL_SENDER = "scheduler@abc.com"
@@ -16,6 +15,7 @@ EMAIL_SUBJECT = "[%s] Opencart syncing %s "
 @frappe.whitelist()
 def hourly():
     all_oc_sites = frappe.get_all('Opencart Site', fields=['name'])
+    from orders import pull_added_from
     for oc_site in all_oc_sites:
         pull_added_from(oc_site.get('name'))
 
