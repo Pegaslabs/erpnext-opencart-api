@@ -16,7 +16,11 @@ import oc_stores
 import items
 import territories
 import sales_taxes_and_charges_template
+from mode_of_payments import is_pos_payment_method
 from sales_order import make_sales_invoice
+from sales_invoice import on_sales_invoice_added
+
+from patched.erpnext.selling.doctype.customer.customer import check_credit_limit
 
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
@@ -354,18 +358,27 @@ def update_totals(doc_order, oc_order, tax_rate_names=[]):
     })
 
 
-def on_order_added(doc_order):
+def on_sales_order_added(doc_sales_order):
     try:
-        on_submit(doc_order)
-        doc_order.submit()
+        on_submit(doc_sales_order)
+        doc_sales_order.submit()
     except ValidationError:
         pass
     else:
-        sales_invoice = make_sales_invoice(doc_order.get('name'))
-        # sales_invoice.set("update_stock", 1)
-        # sales_invoice.get("items")[0].qty = 3
-        sales_invoice.insert()
-        # sales_invoice.submit()
+        if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
+            sales_invoice = make_sales_invoice(doc_sales_order.get('name'))
+            sales_invoice.insert()
+            sales_invoice = frappe.get_doc('Sales Invoice', sales_invoice.get('name'))
+            on_sales_invoice_added(sales_invoice)
+        else:
+            is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company)
+            if is_credit_ok:
+                sales_invoice = make_sales_invoice(doc_sales_order.get('name'))
+                sales_invoice.insert()
+                sales_invoice = frappe.get_doc('Sales Invoice', sales_invoice.get('name'))
+                on_sales_invoice_added(sales_invoice)
+            else:
+                doc_sales_order.stop_sales_order()
 
 
 @frappe.whitelist()
@@ -589,7 +602,7 @@ def pull_added_from(site_name, silent=False):
 
                     # business logic on adding new order from Opencart site
                     doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
-                    on_order_added(doc_order)
+                    on_sales_order_added(doc_order)
 
         if modified_to > now_date:
             break

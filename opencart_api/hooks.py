@@ -69,6 +69,7 @@ doc_events = {
 doctype_js = {
     "Sales Order": ["custom_scripts/sales_order.js"],
     "Sales Invoice": ["custom_scripts/sales_invoice.js"],
+    "Delivery Note": ["custom_scripts/delivery_note.js"],
     "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"]
 }
 
@@ -184,7 +185,7 @@ web_include_js = "/assets/js/opencart_site.js"
 # Overriding Whitelisted Methods
 # ------------------------------
 #
-override_whitelisted_methods = {
-  "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
+# override_whitelisted_methods = {
+  # "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
   # "frappe.core.doctype.event.event.get_events": "opencart_api.event.get_events"
-}
+# }

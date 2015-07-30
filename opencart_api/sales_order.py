@@ -10,6 +10,7 @@ from frappe.model.mapper import get_mapped_doc
 
 import territories
 from sales_invoice import resolve_mode_of_payment
+import mode_of_payments
 
 
 @frappe.whitelist()
@@ -22,7 +23,13 @@ def make_sales_invoice(source_name, target_doc=None):
     def set_missing_values(source, target):
         payment_territory = territories.get_by_country(source.oc_pa_country)
         target.mode_of_payment = resolve_mode_of_payment(source.oc_pm_code, payment_territory)
-        target.is_pos = 1
+        target.cash_bank_account = get_cash_bank_account(source, mode_of_payment=target.mode_of_payment)
+        target.is_pos = mode_of_payments.is_pos_payment_method(source.oc_pm_code)
+
+        # payment method
+        target.oc_pm_title = source.oc_pm_title
+        target.oc_pm_code = source.oc_pm_code
+
         target.ignore_pricing_rule = 1
         target.run_method("set_missing_values")
         target.run_method("calculate_taxes_and_totals")
@@ -31,6 +38,7 @@ def make_sales_invoice(source_name, target_doc=None):
         target.amount = flt(source.amount) - flt(source.billed_amt)
         target.base_amount = target.amount * flt(source_parent.conversion_rate)
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
+        target.income_account = get_income_account(source_parent)
 
     doclist = get_mapped_doc("Sales Order", source_name, {
         "Sales Order": {
@@ -59,3 +67,25 @@ def make_sales_invoice(source_name, target_doc=None):
     }, target_doc, postprocess)
 
     return doclist
+
+
+def get_income_account(doc):
+    income_account = frappe.db.get_value("Warehouse", doc.warehouse, "default_income_account") or ''
+    if not income_account:
+        income_account = frappe.db.get_value("Company", doc.company, "default_income_account") or ''
+    return income_account
+
+
+def get_cash_bank_account(doc, mode_of_payment=None):
+    cash_bank_account = ''
+    if mode_of_payment is None:
+        payment_territory = territories.get_by_country(doc.oc_pa_country)
+        mode_of_payment = resolve_mode_of_payment(doc.oc_pm_code, payment_territory)
+
+    if mode_of_payment:
+        cash_bank_account = frappe.db.get_value('Mode of Payment Account', {'parent': mode_of_payment, 'parenttype': 'Mode of Payment', 'company': doc.company}, 'default_account')
+
+    if not cash_bank_account:
+        cash_bank_account = frappe.db.get_value("Company", doc.company, "default_bank_account") or ''
+
+    return cash_bank_account

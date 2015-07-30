@@ -3,9 +3,14 @@ from frappe import _, msgprint, throw
 from frappe.utils import cint, cstr, flt
 from erpnext.accounts.party import get_party_account, get_due_date
 
+from frappe.model.mapper import get_mapped_doc
+
 import frappe
 
 import gorilla
+
+from mode_of_payments import is_pos_payment_method
+from delivery_note import on_delivery_note_added
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
@@ -28,8 +33,7 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 # @gorilla.patch(SalesInvoice)
 def set_missing_values(self, for_validate=False):
-    frappe.msgprint('set_missing_values from OpencartSalesInvoice123')
-    self.set_pos_fields(for_validate)
+    # self.set_pos_fields(for_validate)
 
     if not self.debit_to:
         self.debit_to = get_party_account(self.company, self.customer, "Customer")
@@ -45,54 +49,7 @@ setattr(SalesInvoice, 'set_missing_values', set_missing_values)
 
 
 @frappe.whitelist()
-def set_pos_fields(self, for_validate=False):
-        """Set retail related fields from POS Profiles"""
-        if cint(self.is_pos) != 1:
-            return
-
-        from erpnext.stock.get_item_details import get_pos_profiles_item_details, get_pos_profiles
-        pos = get_pos_profiles(self.company)
-
-        if self.selling_price_list:
-            pos.selling_price_list = self.selling_price_list
-            pos.currency = self.currency
-
-        if pos:
-            if not for_validate and not self.customer:
-                self.customer = pos.customer
-                # self.set_customer_defaults()
-
-            for fieldname in ('territory', 'naming_series', 'currency', 'taxes_and_charges', 'letter_head', 'tc_name',
-                'selling_price_list', 'company', 'select_print_heading', 'cash_bank_account',
-                'write_off_account', 'write_off_cost_center'):
-                    if (not for_validate) or (for_validate and not self.get(fieldname)):
-                        self.set(fieldname, pos.get(fieldname))
-
-            if not for_validate:
-                self.update_stock = cint(pos.get("update_stock"))
-
-            # set pos values in items
-            for item in self.get("items"):
-                if item.get('item_code'):
-                    for fname, val in get_pos_profiles_item_details(pos,
-                        frappe._dict(item.as_dict()), pos).items():
-
-                        if (not for_validate) or (for_validate and not item.get(fname)):
-                            item.set(fname, val)
-
-            # fetch terms
-            if self.tc_name and not self.terms:
-                self.terms = frappe.db.get_value("Terms and Conditions", self.tc_name, "terms")
-
-            # fetch charges
-            if self.taxes_and_charges and not len(self.get("taxes")):
-                self.set_taxes()
-
-setattr(SalesInvoice, 'set_pos_fields', set_pos_fields)
-
-
-@frappe.whitelist()
-def resolve_mode_of_payment(payment_method_code, territory=''):
+def resolve_mode_of_payment(payment_method_code, territory='', recursive_call=False):
     res_mode_of_payment = ''
     all_mode_of_payments = frappe.get_all('Mode of Payment', fields=['name', 'oc_territory'], filters={'oc_payment_method_code': payment_method_code})
     if len(all_mode_of_payments) == 1:
@@ -102,6 +59,13 @@ def resolve_mode_of_payment(payment_method_code, territory=''):
             if mop.get('oc_territory') == territory:
                 res_mode_of_payment = mop.get('name')
                 break
+    else:
+        if territory != 'All Territories':
+            res_mode_of_payment = resolve_mode_of_payment(payment_method_code, territory='All Territories', recursive_call=True)
+
+    if not res_mode_of_payment and not recursive_call:
+        frappe.msgprint('Cannot resolve Mode Of Payment for Opencart payment method code "%s" and Territory "%s".\nPlease setup Mode Of Payment entries.' % (payment_method_code, territory))
+
     return res_mode_of_payment
 
 
@@ -139,3 +103,64 @@ def on_submit(self, method=None):
     # # elif doc_order.get('status') == 'Submitted':
     # # elif doc_order.get('status') == 'Stopped':
     # # elif doc_order.get('status') == 'Cancelled':
+
+
+def on_sales_invoice_added(doc_sales_invoice):
+    try:
+        if is_pos_payment_method(doc_sales_invoice.oc_pm_code):
+            doc_sales_invoice.submit()
+    except Exception as ex:
+        frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (doc_sales_invoice.get('name'), str(ex)))
+    else:
+        dn = make_delivery_note(doc_sales_invoice.get('name'))
+        dn.insert()
+        on_delivery_note_added(dn.get('name'))
+
+
+@frappe.whitelist()
+def make_delivery_note(source_name, target_doc=None):
+
+    def set_missing_values(source, target):
+        target.ignore_pricing_rule = 1
+        target.run_method("set_missing_values")
+        target.run_method("calculate_taxes_and_totals")
+
+    def update_item(source_doc, target_doc, source_parent):
+        target_doc.base_amount = (flt(source_doc.qty) - flt(source_doc.delivered_qty)) * \
+            flt(source_doc.base_rate)
+        target_doc.amount = (flt(source_doc.qty) - flt(source_doc.delivered_qty)) * \
+            flt(source_doc.rate)
+        target_doc.qty = flt(source_doc.qty) - flt(source_doc.delivered_qty)
+
+    doclist = get_mapped_doc("Sales Invoice", source_name, {
+        "Sales Invoice": {
+            "doctype": "Delivery Note",
+            "validation": {
+                "docstatus": ["=", 1]
+            }
+        },
+        "Sales Invoice Item": {
+            "doctype": "Delivery Note Item",
+            "field_map": {
+                "name": "si_detail",
+                "parent": "against_sales_invoice",
+                "serial_no": "serial_no",
+                "sales_order": "against_sales_order",
+                "so_detail": "so_detail"
+            },
+            "postprocess": update_item
+        },
+        "Sales Taxes and Charges": {
+            "doctype": "Sales Taxes and Charges",
+            "add_if_empty": True
+        },
+        "Sales Team": {
+            "doctype": "Sales Team",
+            "field_map": {
+                "incentives": "incentives"
+            },
+            "add_if_empty": True
+        }
+    }, target_doc, set_missing_values)
+
+    return doclist

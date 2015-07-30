@@ -137,6 +137,9 @@
 "","""Sales Order-oc_sa_country_id""","Sales Order","Small Text","Country ID","oc_sa_zone_code","","Country ID","","oc_sa_country_id",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country""","Sales Order","Small Text","Country","oc_sa_country_id","","Country","","oc_sa_country",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_is_shipping_included_in_total""","Sales Order","Check","Include Shipping in Total","taxes_and_charges","","","","oc_is_shipping_included_in_total",0,0,0,0,"","1",0,"",0,0,0,0,0,0
+"","""Sales Invoice-oc_payment_settings""","Sales Invoice","Section Break","Opencart Payment Method","ignore_pricing_rule","","","","oc_payment_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Invoice-oc_pm_title""","Sales Invoice","Small Text","Payment Method","oc_payment_settings","","","","oc_pm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Invoice-oc_pm_code""","Sales Invoice","Small Text","Payment Method Code","oc_pm_title","","","","oc_pm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_settings""","Address","Section Break","Opencart Settings","is_shipping_address","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_site""","Address","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_address_id""","Address","Data","Opencart Address ID","oc_site","","Opencart Address ID","","oc_address_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
@@ -151,3 +154,7 @@
 "","""Mode of Payment-oc_payment_method_code""","Mode of Payment","Data","Payment Method Code","oc_settings","","Opencart Site","","oc_payment_method_code",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Mode of Payment-oc_territory""","Mode of Payment","Link","Payment Country","oc_payment_method_code","","Territory","","oc_territory",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Price-oc_is_updating""","Item Price","Check","Is Updating","currency","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Warehouse-oc_accounts_settings""","Warehouse","Section Break","Accounts Settings","postal_code","","","","oc_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_column_break_accounts_settings""","Warehouse","Column Break","","oc_accounts_settings","","","","oc_column_break_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-default_income_account""","Warehouse","Link","Default Income Account","oc_column_break_accounts_settings","","Account","","default_income_account",0,0,0,0,"","",0,"",0,1,0,0,0,0
+"","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0
