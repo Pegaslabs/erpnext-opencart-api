@@ -7,7 +7,7 @@ from frappe.model.mapper import get_mapped_doc
 
 import frappe
 
-import gorilla
+# import gorilla
 
 from mode_of_payments import is_pos_payment_method
 from delivery_note import on_delivery_note_added
