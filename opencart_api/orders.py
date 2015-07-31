@@ -438,8 +438,13 @@ def pull_added_from(site_name, silent=False):
             else:
                 doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
                 if not doc_customer:
-                    doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
-
+                    try:
+                        doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
+                    except Exception as ex:
+                        skip_count += 1
+                        extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), str(ex)))
+                        results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                        continue
             if doc_order:
                 # update existed Sales Order with status "Draft"
                 if doc_order.get('status') != 'Draft':
