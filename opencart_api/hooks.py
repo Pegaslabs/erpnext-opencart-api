@@ -31,7 +31,7 @@ doc_events = {
     },
     "Customer": {
         "validate": "opencart_api.customers.oc_validate",
-        # "on_trash": "opencart_api.customers.oc_delete"
+        "on_trash": "opencart_api.customers.oc_delete"
     },
     "Sales Order": {
         "before_save": "opencart_api.orders.before_save",
