@@ -34,7 +34,6 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 # @gorilla.patch(SalesInvoice)
 def set_missing_values(self, for_validate=False):
     # self.set_pos_fields(for_validate)
-
     if not self.debit_to:
         self.debit_to = get_party_account(self.company, self.customer, "Customer")
     if not self.due_date:

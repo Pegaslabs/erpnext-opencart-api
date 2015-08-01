@@ -9,6 +9,7 @@ from frappe.model.mapper import get_mapped_doc
 # from erpnext.controllers.selling_controller import SellingController
 
 import territories
+import sales_invoice
 from sales_invoice import resolve_mode_of_payment
 import mode_of_payments
 

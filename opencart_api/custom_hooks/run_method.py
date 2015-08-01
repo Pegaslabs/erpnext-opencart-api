@@ -6,7 +6,7 @@ from frappe import _
 from frappe.utils import cint
 
 # patching class methods
-import opencart_api.sales_invoice
+# import opencart_api.sales_invoice
 
 
 @frappe.whitelist()

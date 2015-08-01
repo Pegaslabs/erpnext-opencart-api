@@ -157,4 +157,5 @@
 "","""Warehouse-oc_accounts_settings""","Warehouse","Section Break","Accounts Settings","postal_code","","","","oc_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_column_break_accounts_settings""","Warehouse","Column Break","","oc_accounts_settings","","","","oc_column_break_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-default_income_account""","Warehouse","Link","Default Income Account","oc_column_break_accounts_settings","","Account","","default_income_account",0,0,0,0,"","",0,"",0,1,0,0,0,0
+"","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0

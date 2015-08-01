@@ -19,6 +19,7 @@ import sales_taxes_and_charges_template
 from mode_of_payments import is_pos_payment_method
 from sales_order import make_sales_invoice
 from sales_invoice import on_sales_invoice_added
+import sales_invoice
 
 from patched.erpnext.selling.doctype.customer.customer import check_credit_limit
 

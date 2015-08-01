@@ -1,8 +1,8 @@
-"""
-Author: Nathan Do
-Email: nathan.dole@gmail.com
-"""
-import frappe, json, os, traceback, urllib2
+from __future__ import unicode_literals
+
+import frappe
+
+import json, os, traceback, urllib2
 from decorators import get_only, post_only, authenticated_api, oc_api
 from item_qty import get_item_qty
 # =========== Login API =============
@@ -215,3 +215,4 @@ def get_current_multi_item_qty(config, site_doc):
             continue
         results[prod_id] = get_item_qty(item)
     return results
+

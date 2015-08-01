@@ -59,6 +59,11 @@ doc_events = {
         # "on_submit": "opencart_api.events.oc_dn_submitted",
         # "on_cancel": "opencart_api.events.oc_dn_canceled"
     },
+    "Packing Slip": {
+        "validate": "opencart_api.packing_slip.validate",
+        "on_submit": "opencart_api.packing_slip.on_submit",
+        "on_cancel": "opencart_api.packing_slip.on_cancel"
+    },
     "Stock Entry": {
         # "on_submit": "opencart_api.events.oc_se_changed",
         # "on_cancel": "opencart_api.events.oc_se_changed"
@@ -70,7 +75,12 @@ doctype_js = {
     "Sales Order": ["custom_scripts/sales_order.js"],
     "Sales Invoice": ["custom_scripts/sales_invoice.js"],
     "Delivery Note": ["custom_scripts/delivery_note.js"],
+    "Packing Slip": ["custom_scripts/packing_slip.js"],
     "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"]
+}
+
+doctype_list_js = {
+    "Delivery Note": ["custom_scripts/delivery_note_list.js"],
 }
 
 # Note on Fixtures (Nathan Do):
