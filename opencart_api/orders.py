@@ -444,7 +444,10 @@ def pull_added_from(site_name, silent=False):
                     doc_customer = customers.create_guest_from_order(site_name, oc_order)
             else:
                 doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
-                if not doc_customer:
+                if doc_customer:
+                    # update customer
+                    customers.update_from_oc_order(doc_customer, oc_order)
+                else:
                     try:
                         doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
                     except Exception as ex:
@@ -926,11 +929,11 @@ def resolve_taxes_and_charges(customer, company, db_customer=None, doc_customer=
     else:
         return
 
-    doc_template = sales_taxes_and_charges_template.get_first_by_territory(obj_customer.get('territory'), company_name=company)
-    if not doc_template:
+    template = sales_taxes_and_charges_template.get_first_by_territory(obj_customer.get('territory'), company_name=company)
+    if not template:
         frappe.msgprint('Please specify Sales Taxes and Charges Template for territory "%s"' % (obj_customer.get('territory'), ))
         return
-    return doc_template.get('name')
+    return template
 
 
 def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company):

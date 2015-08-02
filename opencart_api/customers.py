@@ -272,6 +272,14 @@ def create_guest_from_order(site_name, oc_order):
         frappe.throw('Opencart Store with store_id "%s" does not exist' % oc_order.get('store_id'))
 
 
+def update_from_oc_order(doc_customer, oc_order):
+    site_name = doc_customer.get('oc_site')
+
+    # addresses and contacts
+    addresses.create_or_update_from_order(site_name, doc_customer, oc_order)
+    # contacts.create_or_update_from_order(site_name, doc_customer, oc_order)
+
+
 def create_from_oc(site_name, customer_id, oc_order=None):
     if oc_order:
         customer_id = oc_order.get('customer_id')

@@ -2,11 +2,22 @@ import frappe
 
 
 def get_first_by_territory(territory_name, company_name=None):
-    filters = None
-    if company_name:
-        filters = {"company": company_name}
-    for template in frappe.db.get_all("Sales Taxes and Charges Template", filters=filters):
-        doc_template = frappe.get_doc("Sales Taxes and Charges Template", template.name)
-        for doc_territory in doc_template.territories:
-            if territory_name == doc_territory.get("territory"):
-                return doc_template
+    all_app_territories = frappe.db.get_all("Applicable Territory", fields=['parent'], filters={'territory': territory_name, 'parenttype': 'Sales Taxes and Charges Template'})
+    if all_app_territories:
+        for app_territory in all_app_territories:
+            template = frappe.db.get("Sales Taxes and Charges Template", app_territory.get('parent'))
+            if company_name:
+                if company_name == template.get('company'):
+                    return template.get('name')
+            else:
+                return template.get('name')
+    else:
+        if frappe.db.get_value('Territory', territory_name, 'parent_territory') == 'Rest Of The World':
+            all_app_territories = frappe.db.get_all("Applicable Territory", fields=['parent'], filters={'territory': 'Rest Of The World', 'parenttype': 'Sales Taxes and Charges Template'})
+            for app_territory in all_app_territories:
+                template = frappe.db.get("Sales Taxes and Charges Template", app_territory.get('parent'))
+                if company_name:
+                    if company_name == template.get('company'):
+                        return template.get('name')
+                else:
+                    return template.get('name')
