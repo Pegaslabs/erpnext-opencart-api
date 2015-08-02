@@ -366,8 +366,8 @@ def update_discount_price(doc_oc_discount, currency, price):
 def update_discount_prices(doc_oc_discount, oc_discount):
     if oc_discount.get('prices'):
         doc_oc_discount.update({'multi_currency_price': 1})
-    for prouct_price in oc_discount.get('prices'):
-        update_discount_price(doc_oc_discount, prouct_price.get('code'), float(prouct_price.get('price', 0)))
+        for prouct_price in oc_discount.get('prices'):
+            update_discount_price(doc_oc_discount, prouct_price.get('code'), float(prouct_price.get('price', 0)))
 
 
 def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False, is_updating=False):
@@ -437,8 +437,8 @@ def update_opencart_product_price(doc_oc_product, currency, price):
 def update_opencart_product_prices(doc_oc_product, oc_product):
     if oc_product.get('prices'):
         doc_oc_product.update({'multi_currency_price': 1})
-    for prouct_price in oc_product.get('prices'):
-        update_opencart_product_price(doc_oc_product, prouct_price.get('code'), float(prouct_price.get('price', 0)))
+        for prouct_price in oc_product.get('prices'):
+            update_opencart_product_price(doc_oc_product, prouct_price.get('code'), float(prouct_price.get('price', 0)))
 
 
 def update_or_create_opencart_product(site_name, doc_item, oc_product, save=False, is_updating=False):
