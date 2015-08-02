@@ -79,9 +79,6 @@ def on_submit(doc, method=None):
         if not are_totals_equal(doc.get('grand_total'), oc_total):
             frappe.throw('%s: Order\'s Grand Total ($%s) does not equal to Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('grand_total')), str(oc_total)))
 
-    # frappe.db.set(doc, 'oc_status', OC_ORDER_STATUS_PROCESSING)
-    # sync_order_to_opencart(doc)
-
     # # update Opencart status
     # if doc_order.get('status') is None or doc_order.get('status') == 'Draft':
     # elif doc_order.get('status') == 'Submitted':
@@ -91,8 +88,7 @@ def on_submit(doc, method=None):
 
 @sync_to_opencart
 def on_cancel(doc, method=None):
-    frappe.db.set(doc, 'oc_status', OC_ORDER_STATUS_CANCELED)
-    sync_order_status_to_opencart(doc)
+    sync_order_status_to_opencart(doc, new_order_status=OC_ORDER_STATUS_CANCELED)
 
 
 @sync_to_opencart
@@ -106,21 +102,27 @@ def on_trash(doc, method=None):
         frappe.msgprint('Order is not deleted on Opencart site. Error: %s' % resp.get('error', 'Unknown'))
 
 
-def sync_order_status_to_opencart(doc_order):
+def sync_order_status_to_opencart(doc_order, new_order_status=None, new_order_status_id=None):
+    ret = False
     site_name = doc_order.get('oc_site')
     oc_order_id = doc_order.get('oc_order_id')
     get_order_success, oc_order = oc_api.get(site_name).get_order_json(oc_order_id)
 
-    order_status_id = oc_site.get_order_status_id(site_name, doc_order.get('oc_status'))
+    if new_order_status is None:
+        new_order_status = doc_order.get('oc_status')
+    if new_order_status_id is None:
+        new_order_status_id = oc_site.get_order_status_id(site_name, new_order_status)
     if oc_order_id and get_order_success and oc_order_id == oc_order.get('order_id'):
         # update existed order on Opencart site
-        data = {'status': order_status_id}
+        data = {'status': new_order_status_id}
         success, resp = oc_api.get(site_name).update_order(oc_order_id, data)
         if success:
-            frappe.msgprint('Order status "%s" is updated successfully on Opencart site' % doc_order.get('oc_status'))
-            doc_order.update({'oc_last_sync_to': datetime.now()})
+            frappe.db.set_value('Sales Order', doc_order.get('name'), 'oc_status', new_order_status)
+            ret = True
+            frappe.msgprint('Order status "%s" is updated successfully on Opencart site' % new_order_status)
         else:
-            frappe.msgprint('Order status "%s" is not updated on Opencart site.\nError: %s' % (doc_order.get('oc_status'), resp.get('error', 'Unknown')))
+            frappe.msgprint('Order status "%s" is not updated on Opencart site.\nError: %s' % (new_order_status, resp.get('error', 'Unknown')))
+    return ret
 
 
 def sync_order_to_opencart(doc_order):
@@ -366,18 +368,22 @@ def on_sales_order_added(doc_sales_order):
     except ValidationError:
         pass
     else:
+        # update sales order status in Opencart site
+        if doc_sales_order.get('oc_status') == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
+            sync_order_status_to_opencart(doc_sales_order, new_order_status=OC_ORDER_STATUS_PROCESSING)
+
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
-            sales_invoice = make_sales_invoice(doc_sales_order.get('name'))
-            sales_invoice.insert()
-            sales_invoice = frappe.get_doc('Sales Invoice', sales_invoice.get('name'))
-            on_sales_invoice_added(sales_invoice)
+            si = make_sales_invoice(doc_sales_order.get('name'))
+            si.insert()
+            si = frappe.get_doc('Sales Invoice', si.get('name'))
+            on_sales_invoice_added(si)
         else:
             is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company)
             if is_credit_ok:
-                sales_invoice = make_sales_invoice(doc_sales_order.get('name'))
-                sales_invoice.insert()
-                sales_invoice = frappe.get_doc('Sales Invoice', sales_invoice.get('name'))
-                on_sales_invoice_added(sales_invoice)
+                si = make_sales_invoice(doc_sales_order.get('name'))
+                si.insert()
+                si = frappe.get_doc('Sales Invoice', si.get('name'))
+                on_sales_invoice_added(si)
             else:
                 doc_sales_order.stop_sales_order()
 
