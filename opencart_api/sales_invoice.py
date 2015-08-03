@@ -48,29 +48,22 @@ setattr(SalesInvoice, 'set_missing_values', set_missing_values)
 
 
 @frappe.whitelist()
-def resolve_mode_of_payment(payment_method_code, territory='', recursive_call=False):
-    res_mode_of_payment = ''
-    all_mode_of_payments = frappe.get_all('Mode of Payment', fields=['name', 'oc_territory'], filters={'oc_payment_method_code': payment_method_code})
-    if len(all_mode_of_payments) == 1:
-        res_mode_of_payment = all_mode_of_payments[0].get('name')
-    elif len(all_mode_of_payments) > 1:
-        for mop in all_mode_of_payments:
-            if mop.get('oc_territory') == territory:
-                res_mode_of_payment = mop.get('name')
-                break
-    else:
-        if territory != 'All Territories':
-            res_mode_of_payment = resolve_mode_of_payment(payment_method_code, territory='All Territories', recursive_call=True)
-
-    if not res_mode_of_payment and not recursive_call:
-        frappe.msgprint('Cannot resolve Mode Of Payment for Opencart payment method code "%s" and Territory "%s".\nPlease setup Mode Of Payment entries.' % (payment_method_code, territory))
-
-    return res_mode_of_payment
-
-
-# def check_credit_limit(self):
-#     from erpnext.selling.doctype.customer.customer import check_credit_limit
-#     check_credit_limit(self.customer, self.company)
+def resolve_mode_of_payment(payment_method_code, country_territory):
+    all_app_territories = frappe.db.get_all("Applicable Territory", fields=['parent'], filters={'territory': country_territory, 'parenttype': 'Mode of Payment'})
+    if all_app_territories:
+        for app_territory in all_app_territories:
+            mop = frappe.db.get('Mode of Payment', {'name': app_territory.get('parent'), 'oc_payment_method_code': payment_method_code})
+            if mop:
+                return mop.get('name')
+    parent_territory = frappe.db.get_value('Territory', country_territory, 'parent_territory')
+    if parent_territory in ['Rest Of The World', 'All Territories']:
+        all_app_territories = frappe.db.get_all("Applicable Territory", fields=['parent'], filters={'territory': parent_territory, 'parenttype': 'Mode of Payment'})
+        for app_territory in all_app_territories:
+            mop = frappe.db.get('Mode of Payment', app_territory.get('parent'))
+            if mop:
+                return mop.get('name')
+    frappe.msgprint('Cannot resolve Mode Of Payment for Opencart payment method code "%s" and Territory "%s".\nPlease setup Mode Of Payment entries.' % (payment_method_code, country_territory))
+    return ''
 
 
 def on_submit(self, method=None):

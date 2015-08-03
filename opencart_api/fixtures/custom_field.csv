@@ -152,7 +152,7 @@
 "","""Sales Taxes and Charges-oc_is_shipping_entry""","Sales Taxes and Charges","Check","Is Shipping Tax Entry","included_in_print_rate","","","","oc_is_shipping_entry",0,0,0,0,"","0",0,"",0,0,0,0,0,0
 "","""Mode of Payment-oc_settings""","Mode of Payment","Section Break","Opencart Settings","accounts","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Mode of Payment-oc_payment_method_code""","Mode of Payment","Data","Payment Method Code","oc_settings","","Opencart Site","","oc_payment_method_code",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Mode of Payment-oc_territory""","Mode of Payment","Link","Payment Country","oc_payment_method_code","","Territory","","oc_territory",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Mode of Payment-oc_territories""","Mode of Payment","Table","Territories","oc_payment_method_code","","Applicable Territory","","oc_territories",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Price-oc_is_updating""","Item Price","Check","Is Updating","currency","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Warehouse-oc_accounts_settings""","Warehouse","Section Break","Accounts Settings","postal_code","","","","oc_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_column_break_accounts_settings""","Warehouse","Column Break","","oc_accounts_settings","","","","oc_column_break_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
