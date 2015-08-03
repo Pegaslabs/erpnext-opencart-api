@@ -49,19 +49,17 @@ setattr(SalesInvoice, 'set_missing_values', set_missing_values)
 
 @frappe.whitelist()
 def resolve_mode_of_payment(payment_method_code, country_territory):
-    all_app_territories = frappe.db.get_all("Applicable Territory", fields=['parent'], filters={'territory': country_territory, 'parenttype': 'Mode of Payment'})
-    if all_app_territories:
-        for app_territory in all_app_territories:
-            mop = frappe.db.get('Mode of Payment', {'name': app_territory.get('parent'), 'oc_payment_method_code': payment_method_code})
-            if mop:
-                return mop.get('name')
     parent_territory = frappe.db.get_value('Territory', country_territory, 'parent_territory')
-    if parent_territory in ['Rest Of The World', 'All Territories']:
-        all_app_territories = frappe.db.get_all("Applicable Territory", fields=['parent'], filters={'territory': parent_territory, 'parenttype': 'Mode of Payment'})
-        for app_territory in all_app_territories:
-            mop = frappe.db.get('Mode of Payment', app_territory.get('parent'))
-            if mop:
-                return mop.get('name')
+    all_mops = frappe.db.get_all('Mode of Payment', fields=['name'], filters={'oc_payment_method_code': payment_method_code})
+    for mop in all_mops:
+        doc_mop = frappe.get_doc('Mode of Payment', mop.get('name'))
+        for app_territory in doc_mop.get('oc_territories'):
+            if app_territory.get('territory') == 'All Territories':
+                return doc_mop.get('name')
+            elif app_territory.get('territory') == 'Rest Of The World' and parent_territory == 'Rest Of The World':
+                return doc_mop.get('name')
+            elif app_territory.get('territory') == country_territory:
+                return doc_mop.get('name')
     frappe.msgprint('Cannot resolve Mode Of Payment for Opencart payment method code "%s" and Territory "%s".\nPlease setup Mode Of Payment entries.' % (payment_method_code, country_territory))
     return ''
 
