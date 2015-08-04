@@ -490,7 +490,7 @@ def update_or_create_opencart_product(site_name, doc_item, oc_product, save=Fals
             doc_item.save()
 
 
-def update_or_create_item_warehouse(site_name, doc_item, oc_warehouse, save=False, is_updating=False):
+def update_or_create_item_warehouse(site_name, doc_item, oc_warehouse):
     doc_warehouse = warehouses.get(site_name, oc_warehouse.get('warehouse_id'))
     for doc_oc_warehouse in doc_item.get('oc_warehouses'):
         if doc_oc_warehouse.get('warehouse') != doc_warehouse.get('name'):
@@ -513,15 +513,13 @@ def update_or_create_item_warehouse(site_name, doc_item, oc_warehouse, save=Fals
             'subtract_wh': "Yes" if oc_warehouse.get('subtract_wh') == '1'else "No"
         })
         doc_item.append('oc_warehouses', doc_oc_warehouse)
-        if is_updating:
-            doc_item.update({'oc_is_updating': 1})
-        if save:
-            doc_item.save()
+        doc_item.update({'oc_is_updating': 1})
+        doc_item.save()
 
 
-def update_or_create_item_warehouses(site_name, doc_item, oc_warehouses, save=False, is_updating=False):
+def update_or_create_item_warehouses(site_name, doc_item, oc_warehouses):
     for oc_warehouse in oc_warehouses:
-        update_or_create_item_warehouse(site_name, doc_item, oc_warehouse, save=save, is_updating=is_updating)
+        update_or_create_item_warehouse(site_name, doc_item, oc_warehouse)
 
 
 def update_item(site_name, doc_item, oc_product, item_group=None):
@@ -540,7 +538,7 @@ def update_item(site_name, doc_item, oc_product, item_group=None):
     doc_item = frappe.get_doc('Item', doc_item.get('name'))
 
     # warehouses
-    update_or_create_item_warehouses(site_name, doc_item, oc_product.get('warehouses'), save=True, is_updating=True)
+    update_or_create_item_warehouses(site_name, doc_item, oc_product.get('warehouses'))
 
     # updating item brand
     manufacturer_id = oc_product.get('manufacturer_id')
