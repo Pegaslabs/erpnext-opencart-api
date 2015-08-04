@@ -32,7 +32,7 @@ OC_ORDER_STATUS_CANCELED = 'Canceled'
 
 
 OC_CURRENCY_REGEX = re.compile("([A-Z]{3})")
-OC_TOTAL_REGEX = re.compile("([\d,.]+)")
+OC_TOTAL_REGEX = re.compile("([-+]?[\d,.]+)")
 
 TOTALS_PRECISION = 0.02
 
@@ -335,6 +335,7 @@ def get_order(site_name, oc_order_id):
 
 def update_totals(doc_order, oc_order, tax_rate_names=[]):
     sub_total = ''
+    bundle_discount_total = ''
     shipping_total = ''
     tax_rate_name = ''
     tax_total = ''
@@ -342,23 +343,31 @@ def update_totals(doc_order, oc_order, tax_rate_names=[]):
     for t in oc_order.get('totals', []):
         if t.get('title') == 'Sub-Total':
             sub_total = t.get('text')
-        elif t.get('title') == 'Shipping':
+        elif t.get('title') in ['Shipping', 'Flat Shipping Rate']:
             shipping_total = t.get('text')
         elif t.get('title') == 'Total':
             total = t.get('text')
         elif t.get('title') in tax_rate_names or t.get('title') == 'VAT':
             tax_rate_name = t.get('title')
             tax_total = t.get('text')
+        elif t.get('title') == 'Bundle Discount':
+            bundle_discount_total = t.get('text')
         else:
             frappe.msgprint('Unknown total entity "%s" for order %s' % (t.get('title'), oc_order.get('order_id')))
 
     doc_order.update({
         'oc_sub_total': sub_total,
+        'oc_bundle_discount_total': bundle_discount_total,
         'oc_shipping_total': shipping_total,
         'oc_tax_rate_name': tax_rate_name,
         'oc_tax_total': tax_total,
         'oc_total': total
     })
+    if bundle_discount_total:
+        doc_order.update({
+            'discount_amount': abs(get_rate_from_total_str(bundle_discount_total)),
+            'apply_discount_on': 'Net Total',
+        })
 
 
 def on_sales_order_added(doc_sales_order):
@@ -937,55 +946,54 @@ def resolve_taxes_and_charges(customer, company, db_customer=None, doc_customer=
 
 
 def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company):
-        # taxes related part
-        template = resolve_taxes_and_charges(doc_customer.get('name'), company, doc_customer=doc_customer)
-        if not template:
-            frappe.throw('Cannot resolve Sales Taxes and Charges Template for "%s" Territory, order id "%s"' % (doc_customer.get('territory'), oc_order.get('order_id')))
+    # taxes related part
+    template = resolve_taxes_and_charges(doc_customer.get('name'), company, doc_customer=doc_customer)
+    if not template:
+        frappe.throw('Cannot resolve Sales Taxes and Charges Template for "%s" Territory, order id "%s"' % (doc_customer.get('territory'), oc_order.get('order_id')))
 
-        # shipping related part
-        doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
-        shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
-        if not shipping_rule:
-            frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))
+    # shipping related part
+    doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
+    shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
+    if not shipping_rule:
+        frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))
 
-        doc_order.update({
-            'oc_is_shipping_included_in_total': 1,
-            'taxes_and_charges': template or '',
-            'shipping_rule': shipping_rule or ''
+    doc_order.update({
+        'oc_is_shipping_included_in_total': 1,
+        'taxes_and_charges': template or '',
+        'shipping_rule': shipping_rule or ''
+    })
+
+    tax_item = None
+    shipping_item = None
+    taxes_len = len(doc_order.taxes)
+
+    doc_order.set_taxes()
+    doc_order.calculate_taxes_and_totals()
+    if len(doc_order.get('taxes')) > taxes_len:
+        tax_item = doc_order.get('taxes')[-1]
+
+    taxes_len = len(doc_order.taxes)
+    doc_order.apply_shipping_rule()
+    if len(doc_order.get('taxes')) > taxes_len:
+        shipping_item = doc_order.get('taxes')[-1]
+
+    if tax_item and shipping_item:
+        old_tax_item_idx = tax_item.get('idx')
+        old_shipping_item_idx = shipping_item.get('idx')
+        tax_item.update({
+            'idx': old_shipping_item_idx,
         })
-
-        tax_item = None
-        shipping_item = None
-        taxes_len = len(doc_order.taxes)
-
-        doc_order.set_taxes()
-        doc_order.calculate_taxes_and_totals()
-        if len(doc_order.get('taxes')) > taxes_len:
-            tax_item = doc_order.get('taxes')[-1]
-
-        taxes_len = len(doc_order.taxes)
-        doc_order.apply_shipping_rule()
-        if len(doc_order.get('taxes')) > taxes_len:
-            shipping_item = doc_order.get('taxes')[-1]
-
-        if tax_item and shipping_item:
-            old_tax_item_idx = tax_item.get('idx')
-            old_shipping_item_idx = shipping_item.get('idx')
-            tax_item.update({
-                'idx': old_shipping_item_idx,
-            })
-            shipping_item.update({
-                'idx': old_tax_item_idx,
-                'oc_is_shipping_entry': 1
-            })
-            tax_item.update({
-                'charge_type': 'On Previous Row Total',
-                'row_id': shipping_item.get('idx')
-            })
-            doc_order.update({'oc_is_updating': 1})
-            doc_order.save()
-            doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
-            doc_order.calculate_taxes_and_totals()
-
+        shipping_item.update({
+            'idx': old_tax_item_idx,
+            'oc_is_shipping_entry': 1
+        })
+        tax_item.update({
+            'charge_type': 'On Previous Row Total',
+            'row_id': shipping_item.get('idx')
+        })
         doc_order.update({'oc_is_updating': 1})
         doc_order.save()
+        doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
+        doc_order.calculate_taxes_and_totals()
+    doc_order.update({'oc_is_updating': 1})
+    doc_order.save()

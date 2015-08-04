@@ -94,7 +94,8 @@
 "","""Sales Order-oc_status""","Sales Order","Data","Order Status","oc_order_id","","","","oc_status",0,0,1,0,"","Awaiting Fulfillment",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_comment""","Sales Order","Long Text","Comment","oc_status","","Comment","","oc_comment",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sub_total""","Sales Order","Data","Sub Total","oc_comment","","","","oc_sub_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_shipping_total""","Sales Order","Data","Shipping","oc_sub_total","","","","oc_shipping_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_bundle_discount_total""","Sales Order","Data","Bundle Discount","oc_sub_total","","","","oc_bundle_discount_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_shipping_total""","Sales Order","Data","Shipping","oc_bundle_discount_total","","","","oc_shipping_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_tax_rate_name""","Sales Order","Data","Tax Type","oc_shipping_total","","","","oc_tax_rate_name",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_tax_total""","Sales Order","Data","Tax","oc_tax_rate_name","","","","oc_tax_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_total""","Sales Order","Data","Total","oc_tax_total","","","","oc_total",0,0,1,0,"","",0,"",0,0,0,0,0,0
