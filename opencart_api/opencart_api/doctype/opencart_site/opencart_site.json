@@ -212,7 +212,45 @@
    "label": "Test connection",
    "permlevel": 0, 
    "precision": ""
+  },
+  {
+   "fieldname": "oc_warehouses", 
+   "fieldtype": "Section Break", 
+   "label": "OC Warehouses", 
+   "permlevel": 0, 
+   "precision": ""
   }, 
+  {
+   "description": "Press this button to sync manually Warehouses from Opencart site. ", 
+   "fieldname": "pull_warehouses_from_oc_site", 
+   "fieldtype": "Button", 
+   "label": "Pull Warehouses from OC site", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "fieldname": "cb3", 
+   "fieldtype": "Column Break", 
+   "label": "cb3", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "fieldname": "oc_sb_warehouse_sync_log", 
+   "fieldtype": "Section Break", 
+   "label": "", 
+   "permlevel": 0, 
+   "precision": ""
+  }, 
+  {
+   "description": "Warehouse Sync Log", 
+   "fieldname": "warehouse_sync_log", 
+   "fieldtype": "HTML", 
+   "label": "Warehouse Sync Log", 
+   "permlevel": 0, 
+   "precision": "", 
+   "read_only": 0
+  },  
   {
    "fieldname": "oc_stores", 
    "fieldtype": "Section Break", 

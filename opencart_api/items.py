@@ -9,6 +9,7 @@ from frappe.utils.csvutils import read_csv_content_from_attached_file
 
 import oc_api
 import oc_site
+import warehouses
 import brands
 import customer_groups
 import item_groups
@@ -489,6 +490,38 @@ def update_or_create_opencart_product(site_name, doc_item, oc_product, save=Fals
             doc_item.save()
 
 
+def update_or_create_item_warehouse(site_name, doc_item, oc_warehouse, save=False, is_updating=False):
+    doc_warehouse = warehouses.get(site_name, oc_warehouse.get('warehouse_id'))
+    for doc_oc_warehouse in doc_item.get('oc_warehouses'):
+        if doc_oc_warehouse.get('warehouse') != doc_warehouse.get('name'):
+            continue
+        doc_oc_warehouse.update({
+            'quantity': oc_warehouse.get('quantity_product_warehouse'),
+            'stock_status_id_wh': oc_warehouse.get('stock_status_id_wh'),
+            'subtract_wh': oc_warehouse.get('subtract_wh')
+        })
+        doc_oc_warehouse.save()
+        break
+    else:
+        doc_oc_warehouse = frappe.get_doc({
+            'doctype': 'Opencart Warehouse',
+            'warehouse': doc_warehouse.get('name'),
+            'quantity': oc_warehouse.get('quantity_product_warehouse'),
+            'stock_status_id_wh': oc_warehouse.get('stock_status_id_wh'),
+            'subtract_wh': oc_warehouse.get('subtract_wh')
+        })
+        doc_item.append('oc_warehouses', doc_oc_warehouse)
+        if is_updating:
+            doc_item.update({'oc_is_updating': 1})
+        if save:
+            doc_item.save()
+
+
+def update_or_create_item_warehouses(site_name, doc_item, oc_warehouses, save=False, is_updating=False):
+    for oc_warehouse in oc_warehouses:
+        update_or_create_item_warehouse(site_name, doc_item, oc_warehouse, save=save, is_updating=is_updating)
+
+
 def update_item(site_name, doc_item, oc_product, item_group=None):
     # dec_oc_products = doc_item.get('oc_products')
 
@@ -503,6 +536,9 @@ def update_item(site_name, doc_item, oc_product, item_group=None):
     update_or_create_item_discounts(site_name, doc_item, oc_product.get('discounts'), save=True, is_updating=True)
 
     doc_item = frappe.get_doc('Item', doc_item.get('name'))
+
+    # warehouses
+    update_or_create_item_warehouses(site_name, doc_item, oc_product.get('warehouses'), save=True, is_updating=True)
 
     # updating item brand
     manufacturer_id = oc_product.get('manufacturer_id')
@@ -844,6 +880,16 @@ def pull_products_from_oc(site_name, silent=False):
                             'price': oc_discount.get('price'),
                             'date_start': oc_discount.get('date_start'),
                             'date_end': oc_discount.get('date_end'),
+                        })
+
+                    # warehouses
+                    for oc_warehouse in oc_product.get('warehouses'):
+                        doc_warehouse = warehouses.get(site_name, oc_warehouse.get('warehouse_id'))
+                        doc_item.append('oc_warehouses', {
+                            'warehouse': doc_warehouse.get('name'),
+                            'quantity': oc_warehouse.get('quantity_product_warehouse'),
+                            'subtract_wh': oc_warehouse.get('subtract_wh'),
+                            'stock_status_id_wh': oc_warehouse.get('stock_status_id_wh'),
                         })
 
                     # cpesials

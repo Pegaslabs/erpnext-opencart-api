@@ -1,3 +1,38 @@
+print_sync_log_warehouses = function(message, update) {
+    var $table = $('<table class="table table-bordered"></table>');
+    var $th = $('<tr></tr>');
+    var $tbody = $('<tbody></tbody>');
+    $th.html('<th>Name</th><th>Opencart Warehouse ID</th><th>Last Sync</th><th>Last Modified</th><th>Status</th>');
+    var groups = $.map(update ? message.results: message, function(o){
+        $tr = $('<tr>');
+        // Add class
+        $tr.append('<td>'+o[0]+'</td>');
+        $tr.append('<td>'+o[1]+'</td>');
+        $tr.append('<td>'+o[2]+'</td>');
+        $tr.append('<td>'+o[3]+'</td>');
+        if (o[6]) {
+            $tr.append('<td>'+o[6]+'</td>');
+        }
+        $tbody.append($tr);
+    });
+    $table.append($th).append($tbody);
+    var $panel = $('<div class="panel"></div>');
+    var $header = $('<h4>'+__("Warehouse Sync Log: ")+'</h4>');
+    $panel.append($header);
+
+    var $info;
+    if (message.add_count || message.update_count || message.skip_count) {
+        $info = $('<p></p>').html('Checked ' + message.check_count + ' warehouses: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
+    }
+    else {
+        $info = $('<p>All warehouses are up to date</p>');
+    }
+    $panel.append($info);
+    $panel.append($table);
+    var msg = $('<div>').append($panel).html();
+    $(cur_frm.fields_dict['warehouse_sync_log'].wrapper).html(msg);
+}
+
 print_sync_log_stores = function(message, update) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
@@ -354,6 +389,22 @@ cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
         callback: function(data) {
             if (data && data.message) {
                 // print_sync_log_cat(data.message, true);
+            }
+        }
+    });
+}
+
+cur_frm.cscript.pull_warehouses_from_oc_site = function(doc, dt, dn) {
+    frappe.call({
+        freeze: true,
+        type: "GET",
+        args: {
+            cmd: "opencart_api.warehouses.pull",
+            site_name: doc.name
+        },
+        callback: function(data) {
+            if (data && data.message) {
+                print_sync_log_warehouses(data.message, true);
             }
         }
     });

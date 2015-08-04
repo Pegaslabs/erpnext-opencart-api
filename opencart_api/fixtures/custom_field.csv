@@ -157,5 +157,13 @@
 "","""Warehouse-oc_accounts_settings""","Warehouse","Section Break","Accounts Settings","postal_code","","","","oc_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_column_break_accounts_settings""","Warehouse","Column Break","","oc_accounts_settings","","","","oc_column_break_accounts_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-default_income_account""","Warehouse","Link","Default Income Account","oc_column_break_accounts_settings","","Account","","default_income_account",0,0,0,0,"","",0,"",0,1,0,0,0,0
+"","""Warehouse-oc_settings""","Warehouse","Section Break","Opencart Settings","disabled","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_site""","Warehouse","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_warehouse_id""","Warehouse","Data","Opencart Warehouse ID","oc_site","","Opencart Warehouse ID","","oc_warehouse_id",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_settings_cb""","Warehouse","Column Break","","oc_warehouse_id","","","","oc_settings_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_sync_from""","Warehouse","Check","Sync from Opencart","oc_settings_cb","","","","oc_sync_from",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_last_sync_from""","Warehouse","Datetime","Last sync","oc_sync_from","","","","oc_last_sync_from",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_sync_to""","Warehouse","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-oc_last_sync_to""","Warehouse","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0
