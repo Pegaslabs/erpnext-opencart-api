@@ -50,7 +50,7 @@
   {
    "allow_on_submit": 0, 
    "fieldname": "subtract_wh", 
-   "fieldtype": "Float", 
+   "fieldtype": "Data", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "in_filter": 0, 
@@ -68,7 +68,7 @@
   {
    "allow_on_submit": 0, 
    "fieldname": "stock_status_id_wh", 
-   "fieldtype": "Float", 
+   "fieldtype": "Data", 
    "hidden": 0, 
    "ignore_user_permissions": 0, 
    "in_filter": 0, 

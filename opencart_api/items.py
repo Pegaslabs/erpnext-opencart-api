@@ -495,20 +495,22 @@ def update_or_create_item_warehouse(site_name, doc_item, oc_warehouse, save=Fals
     for doc_oc_warehouse in doc_item.get('oc_warehouses'):
         if doc_oc_warehouse.get('warehouse') != doc_warehouse.get('name'):
             continue
+        stock_status_id = oc_site.get_stock_status_name_by_id(site_name, oc_warehouse.get('stock_status_id_wh'))
         doc_oc_warehouse.update({
             'quantity': oc_warehouse.get('quantity_product_warehouse'),
-            'stock_status_id_wh': oc_warehouse.get('stock_status_id_wh'),
-            'subtract_wh': oc_warehouse.get('subtract_wh')
+            'subtract_wh': "Yes" if oc_warehouse.get('subtract_wh') == '1'else "No",
+            'stock_status_id_wh': stock_status_id,
         })
         doc_oc_warehouse.save()
         break
     else:
+        stock_status_id = oc_site.get_stock_status_name_by_id(site_name, oc_warehouse.get('stock_status_id_wh'))
         doc_oc_warehouse = frappe.get_doc({
             'doctype': 'Opencart Warehouse',
             'warehouse': doc_warehouse.get('name'),
             'quantity': oc_warehouse.get('quantity_product_warehouse'),
-            'stock_status_id_wh': oc_warehouse.get('stock_status_id_wh'),
-            'subtract_wh': oc_warehouse.get('subtract_wh')
+            'stock_status_id_wh': stock_status_id,
+            'subtract_wh': "Yes" if oc_warehouse.get('subtract_wh') == '1'else "No"
         })
         doc_item.append('oc_warehouses', doc_oc_warehouse)
         if is_updating:
@@ -885,11 +887,12 @@ def pull_products_from_oc(site_name, silent=False):
                     # warehouses
                     for oc_warehouse in oc_product.get('warehouses'):
                         doc_warehouse = warehouses.get(site_name, oc_warehouse.get('warehouse_id'))
+                        stock_status_id = oc_site.get_stock_status_name_by_id(site_name, oc_warehouse.get('stock_status_id_wh'))
                         doc_item.append('oc_warehouses', {
-                            'warehouse': doc_warehouse.get('name'),
+                            'warehouse_name': doc_warehouse.get('name'),
                             'quantity': oc_warehouse.get('quantity_product_warehouse'),
-                            'subtract_wh': oc_warehouse.get('subtract_wh'),
-                            'stock_status_id_wh': oc_warehouse.get('stock_status_id_wh'),
+                            'subtract_wh': "Yes" if oc_warehouse.get('subtract_wh') == '1'else "No",
+                            'stock_status_id_wh': stock_status_id,
                         })
 
                     # cpesials

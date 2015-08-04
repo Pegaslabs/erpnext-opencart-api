@@ -155,6 +155,14 @@ def get_stock_status_id_by_name(site_name, stock_status_name):
     return res
 
 
+def get_stock_status_name_by_id(site_name, stock_status_id):
+    stock_statuses = get_oc_init(site_name).get('stock_statuses', [])
+    res = next((ss.get('name') for ss in stock_statuses if ss.get('stock_status_id') == stock_status_id), None)
+    if res is None:
+        frappe.throw('Error. Cannot get stock status name by id "%s"' % stock_status_id)
+    return res
+
+
 def get_order_status_id_by_name(site_name, order_status_name):
     order_statuses = get_oc_init(site_name).get('order_statuses', [])
     res = next((ss.get('stock_status_id') for ss in order_statuses if ss.get('name') == order_status_name), None)
