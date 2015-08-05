@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 import frappe
+from frappe import _
+from frappe.utils.csvutils import read_csv_content_from_attached_file
 
 import oc_api
 
@@ -74,3 +76,67 @@ def pull(site_name, silent=False):
         'success': success,
     }
     return results
+
+
+@frappe.whitelist()
+def update_inventory(doc_name):
+    res_items = []
+    try:
+        rows = read_csv_content_from_attached_file(frappe.get_doc('Warehouse', doc_name))
+    except:
+        frappe.throw(_('Please select a valid csv file with data'))
+
+    frappe.throw(str(rows[:10]))
+    # detect item_code, quantity, description
+    is_header_detected = False
+    item_code_idx = 0
+    quantity_idx = 0
+    cost_idx = 0
+    description_idx = 0
+    for row in rows:
+        if not is_header_detected:
+            try:
+                robust_row = ['' if field is None else field.lower().strip() for field in row]
+                item_code_idx = map(lambda a: a.startswith('item no') or a.startswith('item code'), robust_row).index(True)
+                quantity_idx = map(lambda a: a.startswith('quantity'), robust_row).index(True)
+                cost_idx = map(lambda a: a.startswith('cost'), robust_row).index(True)
+                description_idx = map(lambda a: a.startswith('description'), robust_row).index(True)
+            except ValueError:
+                continue
+            else:
+                is_header_detected = True
+                continue
+
+        item_code = row[item_code_idx]
+        # quantity
+        quantity = row[quantity_idx]
+        if isinstance(quantity, basestring):
+            quantity = quantity.strip().replace(',', '')
+            quantity = float(quantity) if quantity else None
+
+        # cost
+        cost = row[cost_idx]
+        if isinstance(cost, basestring):
+            cost = cost.strip().replace(',', '')
+            cost = float(cost) if cost else None
+
+        description = row[description_idx]
+        if item_code is None or quantity is None or description is None or cost is None:
+            continue
+
+        item_code = item_code.upper().strip()
+        list_item = frappe.get_list('Item', fields=['name', 'item_name'], filters={'is_stock_item': 'Yes', 'name': item_code})
+        if not list_item:
+            continue
+        item = list_item[0]
+        item.item_code = item.name
+        item.oc_item_name = item.item_name
+        item.warehouse = doc_name
+        item.qty = quantity
+        item.valuation_rate = cost
+        item.current_qty = quantity
+        item.current_valuation_rate = cost
+        del item['name']
+        res_items.append(item)
+
+    return res_items

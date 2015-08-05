@@ -76,7 +76,8 @@ doctype_js = {
     "Sales Invoice": ["custom_scripts/sales_invoice.js"],
     "Delivery Note": ["custom_scripts/delivery_note.js"],
     "Packing Slip": ["custom_scripts/packing_slip.js"],
-    "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"]
+    "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"],
+    "Warehouse": ["custom_scripts/warehouse.js"]
 }
 
 doctype_list_js = {
