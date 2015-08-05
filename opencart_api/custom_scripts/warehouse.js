@@ -13,16 +13,16 @@ print_update_inventory_log = function(message) {
                     // }
                     // frm.refresh_field("items");
 
-    for(var i=0; i< r.message.length; i++) {
+    for(var i=0; i< message.length; i++) {
         $tr = $('<tr>');
-        $tr.append('<td>'+r.message[i].item_code+'</td>');
+        $tr.append('<td>' + message[i].item_code + '</td>');
         // $tr.append('<td>'+o[1]+'</td>');
         // $tr.append('<td>'+o[2]+'</td>');
         // $tr.append('<td>'+o[3]+'</td>');
         // $tr.append('<td>'+o[4]+'</td>');
         // $tr.append('<td>'+o[7]+'</td>');
         $tbody.append($tr);
-    });
+    }
 
     $table.append($th).append($tbody);
     var $panel = $('<div class="panel"></div>');
@@ -40,6 +40,7 @@ print_update_inventory_log = function(message) {
     $panel.append($table);
     var msg = $('<div>').append($panel).html();
     $(cur_frm.fields_dict['update_inventory_log'].wrapper).html(msg);
+}
 
 
 frappe.ui.form.on("Warehouse", "update_inventory", function(frm) {
@@ -52,9 +53,8 @@ frappe.ui.form.on("Warehouse", "update_inventory", function(frm) {
                     doc_name: frm.doc.name
                 },
                 callback: function(r) {
-
                     if(!r.exc) {
-                        print_update_inventory_log(r.message)
+                        print_update_inventory_log(r.message);
                     }
                 }
             });

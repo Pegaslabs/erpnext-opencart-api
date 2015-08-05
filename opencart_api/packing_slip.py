@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import frappe
 
-from erpnext.accounts.doctype.packing_slip.packing_slip import PackingSlip
+from erpnext.stock.doctype.packing_slip.packing_slip import PackingSlip
 
 from bins import get_bin_location
 
@@ -43,7 +43,7 @@ def update_item_details(self):
         for d in self.get("items"):
             res = frappe.db.get_value("Item", d.item_code, ["net_weight", "weight_uom"], as_dict=True)
 
-            if res and len(res)>0:
+            if res and len(res) > 0:
                 d.net_weight = res["net_weight"]
                 d.weight_uom = res["weight_uom"]
 

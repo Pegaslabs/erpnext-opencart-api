@@ -86,7 +86,6 @@ def update_inventory(doc_name):
     except:
         frappe.throw(_('Please select a valid csv file with data'))
 
-    frappe.throw(str(rows[:10]))
     # detect item_code, quantity, description
     is_header_detected = False
     item_code_idx = 0

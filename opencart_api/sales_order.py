@@ -14,6 +14,60 @@ from sales_invoice import resolve_mode_of_payment
 import mode_of_payments
 
 
+def is_oc_sales_order(doc):
+    return bool(doc.get('oc_site'))
+
+
+@frappe.whitelist()
+def make_delivery_note(source_name, target_doc=None):
+    def set_missing_values(source, target):
+        if source.po_no:
+            if target.po_no:
+                target_po_no = target.po_no.split(", ")
+                target_po_no.append(source.po_no)
+                target.po_no = ", ".join(list(set(target_po_no))) if len(target_po_no) > 1 else target_po_no[0]
+            else:
+                target.po_no = source.po_no
+
+        target.ignore_pricing_rule = 1
+        target.run_method("set_missing_values")
+        target.run_method("calculate_taxes_and_totals")
+
+    def update_item(source, target, source_parent):
+        target.base_amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.base_rate)
+        target.amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.rate)
+        target.qty = flt(source.qty) - flt(source.delivered_qty)
+
+    target_doc = get_mapped_doc("Sales Order", source_name, {
+        "Sales Order": {
+            "doctype": "Delivery Note",
+            "validation": {
+                "docstatus": ["=", 1]
+            }
+        },
+        "Sales Order Item": {
+            "doctype": "Delivery Note Item",
+            "field_map": {
+                "rate": "rate",
+                "name": "so_detail",
+                "parent": "against_sales_order",
+            },
+            "postprocess": update_item,
+            "condition": lambda doc: doc.delivered_qty < doc.qty
+        },
+        "Sales Taxes and Charges": {
+            "doctype": "Sales Taxes and Charges",
+            "add_if_empty": True
+        },
+        "Sales Team": {
+            "doctype": "Sales Team",
+            "add_if_empty": True
+        }
+    }, target_doc, set_missing_values)
+
+    return target_doc
+
+
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None):
     def postprocess(source, target):
@@ -22,14 +76,17 @@ def make_sales_invoice(source_name, target_doc=None):
         target.get_advances()
 
     def set_missing_values(source, target):
-        payment_territory = territories.get_by_country(source.oc_pa_country)
-        target.mode_of_payment = resolve_mode_of_payment(source.oc_pm_code, payment_territory)
         target.cash_bank_account = get_cash_bank_account(source, mode_of_payment=target.mode_of_payment)
-        target.is_pos = mode_of_payments.is_pos_payment_method(source.oc_pm_code)
+        target.is_pos = 0
 
-        # payment method
-        target.oc_pm_title = source.oc_pm_title
-        target.oc_pm_code = source.oc_pm_code
+        if is_oc_sales_order(source):
+            target.is_pos = mode_of_payments.is_pos_payment_method(source.oc_pm_code)
+            payment_territory = territories.get_by_country(source.oc_pa_country)
+            target.mode_of_payment = resolve_mode_of_payment(source.oc_pm_code, payment_territory)
+
+            # payment method
+            target.oc_pm_title = source.oc_pm_title
+            target.oc_pm_code = source.oc_pm_code
 
         target.ignore_pricing_rule = 1
         target.run_method("set_missing_values")
