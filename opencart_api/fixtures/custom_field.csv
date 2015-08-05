@@ -166,10 +166,12 @@
 "","""Warehouse-oc_last_sync_from""","Warehouse","Datetime","Last sync","oc_sync_from","","","","oc_last_sync_from",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_sync_to""","Warehouse","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_last_sync_to""","Warehouse","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Warehouse-inventory_updater""","Warehouse","Section Break","Inventory Updater","pin","","","","inventory_updater",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-inventory_updater""","Warehouse","Section Break","Inventory Updater","","","","","inventory_updater",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-inventory_file""","Warehouse","Attach","Inventory CSV File","inventory_updater","","Inventory Spreadsheet File","","inventory_file",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-update_inventory""","Warehouse","Button","Update Inventory from File","inventory_file","","Update Inventory from File","","update_inventory",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-update_inventory_log""","Warehouse","HTML","Update Inventory Log","update_inventory","","Update Inventory Log","","update_inventory_log",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Bin-bin_location""","Bin","Data","Bin Location","warehouse","","","","bin_location",0,0,0,0,"","",0,"",0,0,0,1,1,0
+"","""Packing Slip Item-bin_location""","Packing Slip Item","Data","Bin Location","","","","","bin_location",0,0,0,0,"","",0,"",0,0,0,0,1,0
+"","""Packing Slip Item-warehouse""","Packing Slip Item","Data","Warehouse","","","","","warehouse",0,0,0,0,"","",0,"",0,0,0,0,0,0
