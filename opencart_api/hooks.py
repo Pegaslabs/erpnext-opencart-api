@@ -196,7 +196,6 @@ web_include_js = "/assets/js/opencart_site.js"
 # Overriding Whitelisted Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-  # "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
-  # "frappe.core.doctype.event.event.get_events": "opencart_api.event.get_events"
-# }
+override_whitelisted_methods = {
+    "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
+}

@@ -5,8 +5,14 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-# patching class methods
-# import opencart_api.sales_invoice
+
+from erpnext.stock.doctype.packing_slip.packing_slip import PackingSlip
+from opencart_api.packing_slip import update_item_details
+
+
+CLASS_METHODS_PATCHES = {
+    'Packing Slip': {'update_item_details': [PackingSlip, update_item_details]}
+}
 
 
 @frappe.whitelist()
@@ -34,17 +40,19 @@ def runserverobj(method, docs=None, dt=None, dn=None, arg=None, args=None):
         except ValueError:
             args = args
 
+        # patching class methods
+        if CLASS_METHODS_PATCHES.get(doc.doctype):
+            for patch_method, patch_refs in CLASS_METHODS_PATCHES.get(doc.doctype).items():
+                setattr(patch_refs[0], patch_method, patch_refs[1])
+
         fnargs, varargs, varkw, defaults = inspect.getargspec(getattr(doc, method))
         if not fnargs or (len(fnargs) == 1 and fnargs[0] == "self"):
-            # frappe.msgprint('1 - runserverobj - ' + str(doc.doctype))
             r = doc.run_method(method)
 
         elif "args" in fnargs or not isinstance(args, dict):
-            # frappe.msgprint('2 - runserverobj - ' + str(doc.doctype))
             r = doc.run_method(method, args)
 
         else:
-            # frappe.msgprint('3 - runserverobj - ' + str(doc.doctype))
             r = doc.run_method(method, **args)
 
         if r:

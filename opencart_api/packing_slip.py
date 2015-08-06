@@ -2,8 +2,6 @@ from __future__ import unicode_literals
 
 import frappe
 
-from erpnext.stock.doctype.packing_slip.packing_slip import PackingSlip
-
 from bins import get_bin_location
 
 
@@ -32,11 +30,11 @@ def on_cancel(doc, method=None):
         pass
 
 
+# overriding PackingSlip class method
 def update_item_details(self):
         """
             Fill empty columns in Packing Slip Item
         """
-        frappe.msgprint('update_item_details from erpnext')
         if not self.from_case_no:
             self.from_case_no = self.get_recommended_case_no()
 
@@ -51,4 +49,5 @@ def update_item_details(self):
             d.bin_location = get_bin_location(d.item_code, d.warehouse)
 
 
-setattr(PackingSlip, 'update_items_details', update_item_details)
+from erpnext.stock.doctype.packing_slip.packing_slip import PackingSlip
+setattr(PackingSlip, 'update_item_details', update_item_details)
