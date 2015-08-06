@@ -79,7 +79,15 @@ def pull(site_name, silent=False):
 
 
 @frappe.whitelist()
-def update_inventory(doc_name):
+def clear_file_data(name):
+    all_file_data = frappe.get_all('File Data', filters={'attached_to_doctype': 'Warehouse', 'attached_to_name': name})
+    for file_data in all_file_data:
+        frappe.get_doc('File Data', file_data.get('name')).delete()
+
+
+@frappe.whitelist()
+def update_inventory(doc_name, item_code_from, update_bin_location, bin_location_from, update_barcode, barcode_from):
+    results = {}
     res_items = []
     try:
         rows = read_csv_content_from_attached_file(frappe.get_doc('Warehouse', doc_name))
@@ -87,19 +95,22 @@ def update_inventory(doc_name):
         frappe.throw(_('Please select a valid csv file with data'))
 
     # detect item_code, quantity, description
+
+    frappe.msgprint(str(rows))
+
     is_header_detected = False
     item_code_idx = 0
-    quantity_idx = 0
-    cost_idx = 0
-    description_idx = 0
+    bin_location_idx = 0
+    barcode_idx = 0
     for row in rows:
         if not is_header_detected:
             try:
                 robust_row = ['' if field is None else field.lower().strip() for field in row]
-                item_code_idx = map(lambda a: a.startswith('item no') or a.startswith('item code'), robust_row).index(True)
-                quantity_idx = map(lambda a: a.startswith('quantity'), robust_row).index(True)
-                cost_idx = map(lambda a: a.startswith('cost'), robust_row).index(True)
-                description_idx = map(lambda a: a.startswith('description'), robust_row).index(True)
+                item_code_idx = map(lambda a: a.startswith(item_code_from.lower().strip()), robust_row).index(True)
+                if update_bin_location:
+                    bin_location_idx = map(lambda a: a.startswith(bin_location_from.lower().strip()), robust_row).index(True)
+                if update_barcode:
+                    barcode_idx = map(lambda a: a.startswith(barcode_from.lower().strip()), robust_row).index(True)
             except ValueError:
                 continue
             else:
@@ -107,35 +118,27 @@ def update_inventory(doc_name):
                 continue
 
         item_code = row[item_code_idx]
-        # quantity
-        quantity = row[quantity_idx]
-        if isinstance(quantity, basestring):
-            quantity = quantity.strip().replace(',', '')
-            quantity = float(quantity) if quantity else None
+        bin_location = row[bin_location_idx]
+        barcode = row[barcode_idx]
 
-        # cost
-        cost = row[cost_idx]
-        if isinstance(cost, basestring):
-            cost = cost.strip().replace(',', '')
-            cost = float(cost) if cost else None
-
-        description = row[description_idx]
-        if item_code is None or quantity is None or description is None or cost is None:
+        if item_code is None or bin_location is None or barcode is None:
             continue
 
-        item_code = item_code.upper().strip()
-        list_item = frappe.get_list('Item', fields=['name', 'item_name'], filters={'is_stock_item': 'Yes', 'name': item_code})
-        if not list_item:
-            continue
-        item = list_item[0]
-        item.item_code = item.name
-        item.oc_item_name = item.item_name
-        item.warehouse = doc_name
-        item.qty = quantity
-        item.valuation_rate = cost
-        item.current_qty = quantity
-        item.current_valuation_rate = cost
-        del item['name']
+        # item_code = item_code.upper().strip()
+        # list_item = frappe.get_list('Item', fields=['name', 'item_name'], filters={'name': item_code})
+        # if not list_item:
+        #     continue
+        # item = list_item[0]
+        # item.item_code = item.name
+        # item.oc_item_name = item.item_name
+        # item.warehouse = doc_name
+        # item.qty = bin_location
+        # item.valuation_rate = barcode
+        # item.current_qty = bin_location
+        # item.current_valuation_rate = barcode
+        # del item['name']
+        item = {'item_code': item_code, 'bin_location': bin_location, 'barcode': barcode}
         res_items.append(item)
 
-    return res_items
+    results['items'] = res_items
+    return results

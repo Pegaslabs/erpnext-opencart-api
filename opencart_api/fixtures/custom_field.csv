@@ -31,8 +31,8 @@
 "","""Item-oc_discounts""","Item","Table","Discounts","oc_discount_settings","","Opencart Discount","","oc_discounts",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_special_settings""","Item","Section Break","Opencart Special Settings","oc_discounts","","","","oc_special_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_specials""","Item","Table","Specials","oc_special_settings","","Opencart Special","","oc_specials",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_warehouse_settings""","Item","Section Break","Optional Warehouses","oc_specials","","","","oc_warehouse_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_warehouses""","Item","Table","Warehouses","oc_warehouse_settings","","Opencart Warehouse","","oc_warehouses",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-warehouse_settings""","Item","Section Break","Inventory per Warehouse","oc_specials","","","","warehouse_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-warehouses""","Item","HTML","Item","warehouse_settings","","Inventory per Warehouse","","warehouses",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_settings""","Item Attribute","Section Break","Opencart Settings","item_attribute_values","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_is_updating""","Item Attribute","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Item Attribute-oc_site""","Item Attribute","Link","Site","oc_is_updating","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0

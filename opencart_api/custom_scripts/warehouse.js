@@ -3,7 +3,7 @@ print_update_inventory_log = function(message) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
     var $tbody = $('<tbody></tbody>');
-    $th.html('<th>Item Code</th><th>Item Group Name</th><th>Opencart Product ID</th><th>Last Sync</th><th>Last Modified</th><th>Status</th>');
+    $th.html('<th>Item Code</th><th>Bin Location</th><th>Barcode</th>');
 
                     // var items = [];
                     // frm.clear_table("items");
@@ -13,14 +13,11 @@ print_update_inventory_log = function(message) {
                     // }
                     // frm.refresh_field("items");
 
-    for(var i=0; i< message.length; i++) {
+    for(var i=0; i< message.items.length; i++) {
         $tr = $('<tr>');
-        $tr.append('<td>' + message[i].item_code + '</td>');
-        // $tr.append('<td>'+o[1]+'</td>');
-        // $tr.append('<td>'+o[2]+'</td>');
-        // $tr.append('<td>'+o[3]+'</td>');
-        // $tr.append('<td>'+o[4]+'</td>');
-        // $tr.append('<td>'+o[7]+'</td>');
+        $tr.append('<td>' + message.items[i].item_code + '</td>');
+        $tr.append('<td>' + message.items[i].bin_location + '</td>');
+        $tr.append('<td>' + message.items[i].barcode + '</td>');
         $tbody.append($tr);
     }
 
@@ -44,17 +41,42 @@ print_update_inventory_log = function(message) {
 
 
 frappe.ui.form.on("Warehouse", "update_inventory", function(frm) {
-    frappe.prompt({label:"Warehouse", fieldtype:"Link", options:"Warehouse", reqd: 1},
+    frappe.prompt([{label: "Use Item Code from Coulumn", fieldtype:"Data", default: "SKU"},
+                   {label:"Bin Location of Bin", fieldtype:"Section Break"},
+                   {label: "Update Bin Location", fieldtype:"Check", default: 1},
+                   {fieldtype:"Column Break"},
+                   {label: "Bin Location from Column", fieldtype:"Data", default: "Bin"},
+                   {label:"Barcode of Item", fieldtype:"Section Break"},
+                   {label: "Update Barcode", fieldtype:"Check", default: 1},
+                   {fieldtype:"Column Break"},
+                   {label: "Barcode from Column", fieldtype:"Data", default: "UPC"}
+                   ],
         function(data) {
             $(cur_frm.fields_dict['update_inventory_log'].wrapper).html("");
             frappe.call({
                 method:"opencart_api.warehouses.update_inventory",
                 args: {
-                    doc_name: frm.doc.name
+                    doc_name: frm.doc.name,
+                    item_code_from: data.use_item_code_from_coulumn,
+                    update_bin_location: data.update_bin_location,
+                    bin_location_from: data.bin_location_from_column,
+                    update_barcode: data.update_barcode,
+                    barcode_from: data.barcode_from_column
                 },
                 callback: function(r) {
                     if(!r.exc) {
                         print_update_inventory_log(r.message);
+
+                        // clean unused file data
+                        frappe.call({
+                            type: "GET",
+                            args: {
+                                cmd: "opencart_api.warehouses.clear_file_data",
+                                name: frm.doc.name
+                            },
+                            callback: function(data) {
+                            }
+                        });
                     }
                 }
             });

@@ -1,0 +1,35 @@
+
+cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
+    frappe.call({
+        method:"opencart_api.bins.get_warehouses",
+        args: {
+            "item_code": doc.item_code,
+        },
+        callback: function(r) {
+            if(!r.exc) {
+                print_warehouses(r.message);
+            }
+        }
+    });
+}
+
+print_warehouses = function(message, update) {
+    var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
+    var $th = $('<tr style="background-color: #F7FAFC; font-size: 85%; color: #8D99A6"></tr>');
+    var $tbody = $('<tbody style="font-family: Helvetica Neue, Helvetica, Arial, "Open Sans", sans-serif;font-size: 11.9px; line-height: 17px; color: #8D99A6;  background-color: #fff;"></tbody>');
+    $th.html('<th>Warehouse</th><th>Actual Quantity</th><th>Stock Value</th>');
+    var groups = $.map(message, function(o){
+        $tr = $('<tr>');
+        $tr.append('<td>' + o[0] + '</td>');
+        $tr.append('<td>' + o[1] + '</td>');
+        if (o[1]> 0) {
+            $tr.append('<td>' + o[2] + '</td>');
+        }
+        $tbody.append($tr);
+    })
+    $table.append($th).append($tbody);
+    var $panel = $('<div class="panel"></div>');  
+    $panel.append($table);
+    var msg = $('<div>').append($panel).html();
+    $(cur_frm.fields_dict['warehouses'].wrapper).html(msg);
+}
