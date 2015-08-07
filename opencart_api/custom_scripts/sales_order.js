@@ -113,8 +113,6 @@ cur_frm.cscript.customer = function() {
 		}
 	});
 
-
-
 	// updating sales order's default warehouse
     frappe.call({
 		method: "opencart_api.orders.resolve_customer_warehouse",
@@ -125,20 +123,10 @@ cur_frm.cscript.customer = function() {
 			if(!r.exc) {
 				if(r.message) {
 				    me.frm.set_value("warehouse", r.message);
+				    me.frm.set_value("company", frappe.model.get_value("Warehouse", r.message, "company"));
 				}
 			}
 		}
-	});
-
-    // updating Sales Order company
-    frappe.model.with_doc("Customer", me.frm.doc.customer, function(r) {
-	    var doc_customer = frappe.model.get_doc("Customer", me.frm.doc.customer);
-        if(doc_customer.oc_site && doc_customer.oc_customer_id) {
-            frappe.model.with_doc("Opencart Site", doc_customer.oc_site, function(r) {
-                var doc_oc_site = frappe.model.get_doc("Opencart Site", doc_customer.oc_site);
-                me.frm.set_value("company", doc_oc_site.company);
-            });
-        }
 	});
 }
 
