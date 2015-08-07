@@ -23,6 +23,7 @@ def make_packing_slip(source_name, target_doc=None):
 
 
 def on_delivery_note_added(delivery_note):
-    ps = make_packing_slip(delivery_note)
-    ps.get_items()
-    ps.insert()
+    pass
+    # ps = make_packing_slip(delivery_note)
+    # ps.get_items()
+    # ps.insert()

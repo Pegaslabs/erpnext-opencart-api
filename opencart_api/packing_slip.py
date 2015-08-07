@@ -51,3 +51,8 @@ def update_item_details(self):
 
 from erpnext.stock.doctype.packing_slip.packing_slip import PackingSlip
 setattr(PackingSlip, 'update_item_details', update_item_details)
+
+
+@frappe.whitelist()
+def get_item_by_barcode(barcode):
+    return frappe.db.get('Item', {'barcode': barcode})

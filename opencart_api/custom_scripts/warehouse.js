@@ -3,36 +3,23 @@ print_update_inventory_log = function(message) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
     var $tbody = $('<tbody></tbody>');
-    $th.html('<th>Item Code</th><th>Bin Location</th><th>Barcode</th>');
+    $th.html('<th>Item Code</th><th>Bin Location</th><th>Barcode</th><th>Status</th>');
 
-                    // var items = [];
-                    // frm.clear_table("items");
-                    // for(var i=0; i< r.message.length; i++) {
-                    //     var d = frm.add_child("items");
-                    //     $.extend(d, r.message[i]);
-                    // }
-                    // frm.refresh_field("items");
-
-    for(var i=0; i< message.items.length; i++) {
+    for(var i=0; i < message.items.length; i++) {
         $tr = $('<tr>');
         $tr.append('<td>' + message.items[i].item_code + '</td>');
         $tr.append('<td>' + message.items[i].bin_location + '</td>');
         $tr.append('<td>' + message.items[i].barcode + '</td>');
+        $tr.append('<td>' + message.items[i].status_message + '</td>');
         $tbody.append($tr);
     }
 
     $table.append($th).append($tbody);
     var $panel = $('<div class="panel"></div>');
-    var $header = $('<h4>'+__("Item Sync Log: ")+'</h4>');
-    $panel.append($header);
+    // var $header = $('<h4>'+__("Sync Log: ")+'</h4>');
+    // $panel.append($header);
 
-    var $info;
-    if (message.check_count) {
-        $info = $('<p></p>').html('Checked ' + message.check_count + ' products: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
-    }
-    else {
-        $info = $('<p>All products are up to date</p>');
-    }
+    var $info = $('<p></p>').html('Processed ' + message.items.length + ' entries');
     $panel.append($info);
     $panel.append($table);
     var msg = $('<div>').append($panel).html();
@@ -56,7 +43,7 @@ frappe.ui.form.on("Warehouse", "update_inventory", function(frm) {
             frappe.call({
                 method:"opencart_api.warehouses.update_inventory",
                 args: {
-                    doc_name: frm.doc.name,
+                    warehouse: frm.doc.name,
                     item_code_from: data.use_item_code_from_coulumn,
                     update_bin_location: data.update_bin_location,
                     bin_location_from: data.bin_location_from_column,

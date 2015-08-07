@@ -162,7 +162,7 @@
 "","""Warehouse-inventory_updater""","Warehouse","Section Break","Inventory Updater","default_income_account","","","","inventory_updater",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-inventory_file""","Warehouse","Attach","Inventory CSV File","inventory_updater","","Inventory Spreadsheet File","","inventory_file",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-update_inventory""","Warehouse","Button","Update Inventory from File","inventory_file","","Update Inventory from File","","update_inventory",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Warehouse-update_inventory_log""","Warehouse","HTML","Update Inventory Log","update_inventory","","Update Inventory Log","","update_inventory_log",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-update_inventory_log""","Warehouse","HTML","Update Inventory Log","update_inventory","","","","update_inventory_log",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_settings""","Warehouse","Section Break","Opencart Settings","disabled","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_site""","Warehouse","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_warehouse_id""","Warehouse","Data","Opencart Warehouse ID","oc_site","","Opencart Warehouse ID","","oc_warehouse_id",0,0,0,0,"","",0,"",0,0,0,0,0,0
@@ -173,6 +173,12 @@
 "","""Warehouse-oc_last_sync_to""","Warehouse","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Packing Slip-scan_items_sb""","Packing Slip","Section Break","Scanning Items","items","","","","scan_items_sb",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Packing Slip-scan_items""","Packing Slip","Button","Scan Items","scan_items_sb","","","","scan_items",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Packing Slip-scan_items_log_cb""","Packing Slip","Column Break","","scan_items","","","","scan_items_log_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Packing Slip-check_scanned_items""","Packing Slip","Button","Check All Scanned Items","scan_items_log_cb","","","","check_scanned_items",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Packing Slip-scan_items_log_sb""","Packing Slip","Section Break","","check_scanned_items","","","","scan_items_log_sb",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Packing Slip-scan_items_log""","Packing Slip","HTML","Scan Items Log","scan_items_log_sb","","","","scan_items_log",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Bin-bin_location""","Bin","Data","Bin Location","warehouse","","","","bin_location",0,0,0,0,"","",0,"",0,0,0,1,1,0
 "","""Packing Slip Item-bin_location""","Packing Slip Item","Data","Bin Location","","","","","bin_location",0,0,0,0,"","",0,"",0,0,0,0,1,0
 "","""Packing Slip Item-warehouse""","Packing Slip Item","Data","Warehouse","","","","","warehouse",0,0,0,0,"","",0,"",0,0,0,0,0,0

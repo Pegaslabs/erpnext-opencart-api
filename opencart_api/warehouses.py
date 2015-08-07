@@ -86,17 +86,13 @@ def clear_file_data(name):
 
 
 @frappe.whitelist()
-def update_inventory(doc_name, item_code_from, update_bin_location, bin_location_from, update_barcode, barcode_from):
+def update_inventory(warehouse, item_code_from, update_bin_location, bin_location_from, update_barcode, barcode_from):
     results = {}
     res_items = []
     try:
-        rows = read_csv_content_from_attached_file(frappe.get_doc('Warehouse', doc_name))
+        rows = read_csv_content_from_attached_file(frappe.get_doc('Warehouse', warehouse))
     except:
         frappe.throw(_('Please select a valid csv file with data'))
-
-    # detect item_code, quantity, description
-
-    frappe.msgprint(str(rows))
 
     is_header_detected = False
     item_code_idx = 0
@@ -117,27 +113,42 @@ def update_inventory(doc_name, item_code_from, update_bin_location, bin_location
                 is_header_detected = True
                 continue
 
-        item_code = row[item_code_idx]
-        bin_location = row[bin_location_idx]
-        barcode = row[barcode_idx]
+        item_code = row[item_code_idx] or ''
+        item_code = item_code.upper().strip()
+        bin_location = row[bin_location_idx] or ''
+        bin_location = bin_location.strip()
+        barcode = row[barcode_idx] or ''
+        barcode = barcode.strip()
+        status_message = ''
 
-        if item_code is None or bin_location is None or barcode is None:
+        if not item_code or (bin_location in ['-', '', None] and barcode in ['-', '', None]):
             continue
 
-        # item_code = item_code.upper().strip()
-        # list_item = frappe.get_list('Item', fields=['name', 'item_name'], filters={'name': item_code})
-        # if not list_item:
-        #     continue
-        # item = list_item[0]
-        # item.item_code = item.name
-        # item.oc_item_name = item.item_name
-        # item.warehouse = doc_name
-        # item.qty = bin_location
-        # item.valuation_rate = barcode
-        # item.current_qty = bin_location
-        # item.current_valuation_rate = barcode
-        # del item['name']
-        item = {'item_code': item_code, 'bin_location': bin_location, 'barcode': barcode}
+        # update Bin with new bin location
+        if update_bin_location:
+            db_bin = frappe.db.get('Bin', {'item_code': item_code, 'warehouse': warehouse})
+            if db_bin:
+                if bin_location in ['-', '', None]:
+                    status_message += '\Bin Location is not invalid.'
+                else:
+                    frappe.db.set_value('Bin', db_bin.get('name'), 'bin_location', bin_location)
+                    status_message += 'Bin Location is updated.'
+            else:
+                status_message += 'Bin was not updated: Bin with Item Code "%s" and Warehouse "%s" not found.' % (item_code, warehouse)
+
+        # update Item with new barcode
+        if update_barcode:
+            db_item = frappe.db.get('Item', {'name': item_code})
+            if db_item:
+                if barcode in ['-', '', None]:
+                    status_message += '\nBarcode is not invalid.'
+                else:
+                    frappe.db.set_value('Item', db_item.get('name'), 'barcode', barcode)
+                    status_message += '\nBarcode is updated.'
+            else:
+                status_message += '\nItem was not updated: Item with Item Code "%s" not found.' % (item_code,)
+
+        item = {'item_code': item_code, 'bin_location': bin_location, 'barcode': barcode, 'status_message': status_message}
         res_items.append(item)
 
     results['items'] = res_items
