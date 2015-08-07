@@ -196,7 +196,10 @@ def update_guest_from_order(doc_customer, oc_order):
         customer_group_name = doc_store.get('oc_customer_group')
         if customer_group_name:
             doc_customer_group = frappe.get_doc('Customer Group', customer_group_name)
-            territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+            if oc_order.get('shipping_iso_code_3') and oc_order.get('shipping_zone_code'):
+                territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+            else:
+                territory_name = territories.get_by_iso_code3(oc_order.get('payment_iso_code_3'), oc_order.get('payment_zone_code'))
             # create new Customer
             doc_customer.update({
                 'territory': territory_name,
@@ -232,7 +235,10 @@ def create_guest_from_order(site_name, oc_order):
         if customer_group_name:
             doc_customer_group = frappe.get_doc('Customer Group', customer_group_name)
             default_price_list = doc_customer_group.get('default_price_list')
-            territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+            if oc_order.get('shipping_iso_code_3') and oc_order.get('shipping_zone_code'):
+                territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+            else:
+                territory_name = territories.get_by_iso_code3(oc_order.get('payment_iso_code_3'), oc_order.get('payment_zone_code'))
             # create new Customer
             params = {
                 'doctype': 'Customer',
@@ -298,7 +304,10 @@ def create_from_oc(site_name, customer_id, oc_order=None):
     default_price_list = doc_customer_group.get('default_price_list')
     territory_name = territories.DEFAULT
     if oc_order:
-        territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+        if oc_order.get('shipping_iso_code_3') and oc_order.get('shipping_zone_code'):
+            territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
+        else:
+            territory_name = territories.get_by_iso_code3(oc_order.get('payment_iso_code_3'), oc_order.get('payment_zone_code'))
     # create new Customer
     params = {
         'doctype': 'Customer',

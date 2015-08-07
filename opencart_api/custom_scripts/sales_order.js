@@ -126,6 +126,20 @@ cur_frm.cscript.customer = function() {
 			}
 		}
 	});
+
+    frappe.call({
+    	freeze: true,
+		method: "opencart_api.orders.resolve_customer_pricings",
+		args: {
+			"customer": me.frm.doc.customer,
+		},
+		callback: function(r) {
+			if(!r.exc) {
+			    me.frm.set_value("selling_price_list", r.message.selling_price_list);
+			}
+		}
+	});
+
 }
 
 cur_frm.cscript.item_code = function(doc, cdt, cdn) {

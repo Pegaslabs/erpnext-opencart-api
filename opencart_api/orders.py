@@ -842,46 +842,87 @@ def pull_orders_from_oc(site_name, silent=False):
 
 
 def resolve_customer_group_rules(oc_order, doc_customer, params):
-        territory_to_price_list_map = {}
-        territory_to_warehouse_map = {}
-        doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
-        rules = doc_customer_group.get('oc_customer_group_rule')
-        for rule in rules:
-            if rule.get('condition') == 'If Territory of Customer is':
-                parent_territory = rule.get('condition_territory')
-                territory_to_price_list_map[parent_territory] = rule.get('action_price_list')
-                territory_to_warehouse_map[parent_territory] = rule.get('action_warehouse')
+    territory_to_price_list_map = {}
+    territory_to_warehouse_map = {}
+    doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
+    rules = doc_customer_group.get('oc_customer_group_rule')
+    for rule in rules:
+        if rule.get('condition') == 'If Territory of Customer is':
+            parent_territory = rule.get('condition_territory')
+            territory_to_price_list_map[parent_territory] = rule.get('action_price_list')
+            territory_to_warehouse_map[parent_territory] = rule.get('action_warehouse')
 
-                # child territories of level 1
-                child_territories_1 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': parent_territory})
-                for territory_1 in child_territories_1:
-                    territory_to_price_list_map[territory_1.get('name')] = rule.get('action_price_list')
-                    territory_to_warehouse_map[territory_1.get('name')] = rule.get('action_warehouse')
+            # child territories of level 1
+            child_territories_1 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': parent_territory})
+            for territory_1 in child_territories_1:
+                territory_to_price_list_map[territory_1.get('name')] = rule.get('action_price_list')
+                territory_to_warehouse_map[territory_1.get('name')] = rule.get('action_warehouse')
 
-                    # child territories of level 2
-                    child_territories_2 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': territory_1})
-                    for territory_2 in child_territories_2:
-                        territory_to_price_list_map[territory_2.get('name')] = rule.get('action_price_list')
-                        territory_to_warehouse_map[territory_2.get('name')] = rule.get('action_warehouse')
-
+                # child territories of level 2
+                child_territories_2 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': territory_1.get('name')})
+                for territory_2 in child_territories_2:
+                    territory_to_price_list_map[territory_2.get('name')] = rule.get('action_price_list')
+                    territory_to_warehouse_map[territory_2.get('name')] = rule.get('action_warehouse')
+    if oc_order.get('shipping_iso_code_3') and oc_order.get('shipping_zone_code'):
         territory_name = territories.get_by_iso_code3(oc_order.get('shipping_iso_code_3'), oc_order.get('shipping_zone_code'))
-        price_list_name = territory_to_price_list_map.get(territory_name, doc_customer_group.get('default_price_list'))
-        # doc_price_list = price_lists.get_by_name(site_name, price_list_name)
-        warehouse_name = territory_to_warehouse_map.get(territory_name, '')
-        if not price_list_name:
-            frappe.throw('Please specify Default Price List for Customer Group "%s"' % cstr(doc_customer_group.get('customer_group_name')))
+    else:
+        territory_name = territories.get_by_iso_code3(oc_order.get('payment_iso_code_3'), oc_order.get('payment_zone_code'))
+    price_list_name = territory_to_price_list_map.get(territory_name, doc_customer_group.get('default_price_list'))
+    # doc_price_list = price_lists.get_by_name(site_name, price_list_name)
+    warehouse_name = territory_to_warehouse_map.get(territory_name, '')
+    if not price_list_name:
+        frappe.throw('Please specify Default Price List for Customer Group "%s"' % cstr(doc_customer_group.get('customer_group_name')))
 
-        if territory_name != doc_customer.get('territory'):
-            doc_customer.update({'territory': territory_name})
-            doc_customer.update({'oc_is_updating': 1})
-            doc_customer.save()
+    if territory_name != doc_customer.get('territory'):
+        doc_customer.update({'territory': territory_name})
+        doc_customer.update({'oc_is_updating': 1})
+        doc_customer.save()
 
-        params.update({
-            'territory': territory_name,
-            'selling_price_list': price_list_name,
-            # 'price_list_currency': doc_price_list.get('currency'),
-            'warehouse': warehouse_name,
-        })
+    params.update({
+        'territory': territory_name,
+        'selling_price_list': price_list_name,
+        # 'price_list_currency': doc_price_list.get('currency'),
+        'warehouse': warehouse_name,
+    })
+
+
+@frappe.whitelist()
+def resolve_customer_pricings(customer):
+    doc_customer = frappe.get_doc('Customer', customer)
+    territory_to_price_list_map = {}
+    territory_to_warehouse_map = {}
+    doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
+    rules = doc_customer_group.get('oc_customer_group_rule')
+    for rule in rules:
+        if rule.get('condition') == 'If Territory of Customer is':
+            parent_territory = rule.get('condition_territory')
+            territory_to_price_list_map[parent_territory] = rule.get('action_price_list')
+            territory_to_warehouse_map[parent_territory] = rule.get('action_warehouse')
+
+            # child territories of level 1
+            child_territories_1 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': parent_territory})
+            for territory_1 in child_territories_1:
+                territory_to_price_list_map[territory_1.get('name')] = rule.get('action_price_list')
+                territory_to_warehouse_map[territory_1.get('name')] = rule.get('action_warehouse')
+
+                # child territories of level 2
+                child_territories_2 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': territory_1.get('name')})
+                for territory_2 in child_territories_2:
+                    territory_to_price_list_map[territory_2.get('name')] = rule.get('action_price_list')
+                    territory_to_warehouse_map[territory_2.get('name')] = rule.get('action_warehouse')
+    territory = doc_customer.get('territory')
+    price_list_name = territory_to_price_list_map.get(territory, doc_customer_group.get('default_price_list'))
+    # doc_price_list = price_lists.get_by_name(site_name, price_list_name)
+    warehouse_name = territory_to_warehouse_map.get(territory, '')
+    if not price_list_name:
+        frappe.throw('Please specify Default Price List for Customer Group "%s"' % cstr(doc_customer_group.get('customer_group_name')))
+
+    return {
+        'territory': territory,
+        'selling_price_list': price_list_name,
+        # 'price_list_currency': doc_price_list.get('currency'),
+        'warehouse': warehouse_name,
+    }
 
 
 @frappe.whitelist()
@@ -905,7 +946,7 @@ def resolve_customer_warehouse(customer, doc_customer=None):
                 territory_to_warehouse_map[territory_1.get('name')] = rule.get('action_warehouse')
 
                 # child territories of level 2
-                child_territories_2 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': territory_1})
+                child_territories_2 = frappe.get_all('Territory', fields=['name'], filters={'parent_territory': territory_1.get('name')})
                 for territory_2 in child_territories_2:
                     # territory_to_price_list_map[territory_2.get('name')] = rule.get('action_price_list')
                     territory_to_warehouse_map[territory_2.get('name')] = rule.get('action_warehouse')
