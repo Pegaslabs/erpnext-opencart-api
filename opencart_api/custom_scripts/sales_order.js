@@ -80,51 +80,49 @@ cur_frm.cscript.customer = function() {
     erpnext.utils.get_party_details(this.frm, null, null, function(){me.apply_pricing_rule()});
 
     // custom code
-	// updating taxes and charges
-    frappe.call({
-    	freeze: true,
-		method: "opencart_api.orders.resolve_taxes_and_charges",
-		args: {
-			"customer": me.frm.doc.customer,
-			"company": me.frm.doc.company
-		},
-		callback: function(r) {
-			if(!r.exc) {
-				if(r.message) {
-				    me.frm.set_value("taxes_and_charges", r.message);
-				    me.calculate_taxes_and_totals();
-
-					// updating shipping rule
-				    frappe.call({
-						method: "opencart_api.orders.resolve_shipping_rule",
-						args: {
-							"customer": me.frm.doc.customer,
-						},
-						callback: function(r) {
-							if(!r.exc) {
-								if(r.message) {
-								    me.frm.set_value("shipping_rule", r.message);
-								}
-							}
-						}
-					});
-				}
-			}
-		}
-	});
-
 	// updating sales order's default warehouse
     frappe.call({
-		method: "opencart_api.orders.resolve_customer_warehouse",
+    	freeze: true,
+		method: "opencart_api.orders.resolve_customer_warehouse_and_company",
 		args: {
 			"customer": me.frm.doc.customer,
 		},
 		callback: function(r) {
 			if(!r.exc) {
-				if(r.message) {
-				    me.frm.set_value("warehouse", r.message);
-				    me.frm.set_value("company", frappe.model.get_value("Warehouse", r.message, "company"));
-				}
+			    me.frm.set_value("warehouse", r.message.warehouse);
+			    me.frm.set_value("company", r.message.company);
+
+				// updating taxes and charges
+			    frappe.call({
+					method: "opencart_api.orders.resolve_taxes_and_charges",
+					args: {
+						"customer": me.frm.doc.customer,
+						"company": me.frm.doc.company
+					},
+					callback: function(r) {
+						if(!r.exc) {
+							if(r.message) {
+							    me.frm.set_value("taxes_and_charges", r.message);
+							    me.calculate_taxes_and_totals();
+
+								// updating shipping rule
+							    frappe.call({
+									method: "opencart_api.orders.resolve_shipping_rule",
+									args: {
+										"customer": me.frm.doc.customer,
+									},
+									callback: function(r) {
+										if(!r.exc) {
+											if(r.message) {
+											    me.frm.set_value("shipping_rule", r.message);
+											}
+										}
+									}
+								});
+							}
+						}
+					}
+				});
 			}
 		}
 	});

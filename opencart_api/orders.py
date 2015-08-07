@@ -916,6 +916,13 @@ def resolve_customer_warehouse(customer, doc_customer=None):
 
 
 @frappe.whitelist()
+def resolve_customer_warehouse_and_company(customer, doc_customer=None):
+    warehouse = resolve_customer_warehouse(customer, doc_customer=doc_customer)
+    company = frappe.db.get_value('Warehouse', warehouse, 'company')
+    return {'warehouse': warehouse, 'company': company}
+
+
+@frappe.whitelist()
 def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None):
     if db_customer is not None:
         obj_customer = db_customer
