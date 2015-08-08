@@ -974,8 +974,16 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
     else:
         return
 
+    if obj_customer.get('shipping_rule'):
+        return obj_customer.get('shipping_rule')
+
     oc_site = obj_customer.get('oc_site')
     customer_group = obj_customer.get('customer_group')
+
+    doc_customer_group = frappe.get_doc('Customer Group', customer_group)
+    if doc_customer_group.get('shipping_rule'):
+        return doc_customer_group.get('shipping_rule')
+
     if oc_site:
         # resolve shipping rule for customr from Opencart site
         # resolve doc_oc_store
