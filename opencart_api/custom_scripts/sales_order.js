@@ -1,3 +1,6 @@
+cur_frm.add_fetch('company','default_letter_head','letter_head');
+cur_frm.add_fetch('company','default_print_heading','select_print_heading');
+
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 	if(doc.__islocal) {
 		delivery_date = frappe.datetime.add_days(frappe.datetime.nowdate(), 7);

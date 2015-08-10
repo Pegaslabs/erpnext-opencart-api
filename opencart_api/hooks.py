@@ -16,7 +16,7 @@ app_version = "0.0.1"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/css/opencart_api.css"
-app_include_js = "/assets/js/opencart_site.js"
+# app_include_js = "/assets/js/opencart_site.js"
 
 doc_events = {
     "Opencart Site": {
@@ -113,7 +113,7 @@ scheduler_events = {
 # include js, css files in header of web template
 # web_include_css = "/assets/opencart_api/css/opencart_api.css"
 # web_include_js = "/assets/opencart_api/js/opencart_site.js"
-web_include_js = "/assets/js/opencart_site.js"
+# web_include_js = "/assets/js/opencart_site.js"
 
 # Home Pages
 # ----------

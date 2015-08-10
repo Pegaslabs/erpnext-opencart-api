@@ -1,3 +1,5 @@
+cur_frm.add_fetch('delivery_note','letter_head','letter_head');
+// cur_frm.add_fetch('delivery_note','select_print_heading','select_print_heading');
 
 function print_scan_items_log() {
     var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
