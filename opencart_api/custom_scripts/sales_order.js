@@ -228,7 +228,9 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 			}
 			if (r.message.packing_slip) {
 				for (var i in r.message.packing_slip.delivery_note) {
-					cur_frm.dashboard.add_doctype_badge("Packing Slip", "delivery_note", r.message.packing_slip.packing_slip[i], r.message.packing_slip.delivery_note[i][0]);
+					if (r.message.packing_slip.packing_slip[i]) {
+						cur_frm.dashboard.add_doctype_badge("Packing Slip", "delivery_note", r.message.packing_slip.packing_slip[i], r.message.packing_slip.delivery_note[i][0]);
+					}
 				}
 			}
 		}

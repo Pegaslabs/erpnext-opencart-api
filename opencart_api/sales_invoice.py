@@ -169,6 +169,8 @@ def get_sales_statistic(customer):
                 pack_list.append(packing_slip)
                 packing_slip_no = {'delivery_note': delivery_note_no, 'packing_slip': pack_list}
                 sales_statistic = {'sales_order': sales_order_no, 'sales_invoice': sales_invoice_no, 'delivery_note': delivery_note_no, 'packing_slip': packing_slip_no}
+            else:
+                sales_statistic = {'sales_order': sales_order_no, 'sales_invoice': sales_invoice_no, 'delivery_note': delivery_note_no}
     else:
         sales_statistic = {'sales_order': sales_order_no, 'sales_invoice': sales_invoice_no, 'delivery_note': delivery_note_no}
     return sales_statistic
