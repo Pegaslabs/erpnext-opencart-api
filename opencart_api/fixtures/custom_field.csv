@@ -173,6 +173,7 @@
 "","""Warehouse-oc_last_sync_from""","Warehouse","Datetime","Last sync","oc_sync_from","","","","oc_last_sync_from",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_sync_to""","Warehouse","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_last_sync_to""","Warehouse","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
+"","""Warehouse-country""","Warehouse","Link","Country","city","","Country","","country",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-scan_items_sb""","Packing Slip","Section Break","Scanning Items","items","","","","scan_items_sb",0,0,0,0,"","",0,"",0,0,0,0,0,0
