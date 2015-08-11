@@ -72,6 +72,13 @@ doc_events = {
 
 
 doctype_js = {
+    "Journal Entry": ["custom_scripts/journal_entry.js"],
+    "Purchase Order": ["custom_scripts/purchase_order.js"],
+    "Supplier Quotation": ["custom_scripts/supplier_quotation.js"],
+    "Quotation": ["custom_scripts/quotation.js"],
+    "Material Request": ["custom_scripts/material_request.js"],
+    "Purchase Receipt": ["custom_scripts/purchase_receipt.js"],
+    "Stock Entry": ["custom_scripts/stock_entry.js"],
     "Item": ["custom_scripts/item.js"],
     "Sales Order": ["custom_scripts/sales_order.js"],
     "Sales Invoice": ["custom_scripts/sales_invoice.js"],
