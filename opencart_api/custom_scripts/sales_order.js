@@ -220,37 +220,29 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 		type: "GET",
 		method: "opencart_api.sales_invoice.get_sales_statistic",
 		args: {
-			customer: doc.customer
+			sales_order: doc.name
 		},
 		callback: function(r) {
 			if (Object.keys(r.message.sales_invoice).length >= 1) {
-				cur_frm.dashboard.add_doctype_badge("Sales Invoice", "customer", r.message.sales_invoice);
+				cur_frm.dashboard.add_doctype_badge("Sales Invoice", "sales_order", r.message.sales_invoice);
 			}
 			if (Object.keys(r.message.delivery_note).length >= 1) {
-				cur_frm.dashboard.add_doctype_badge("Delivery Note", "customer", r.message.delivery_note);
+				cur_frm.dashboard.add_doctype_badge("Delivery Note", "sales_order", r.message.delivery_note);
 			}
-			if (r.message.packing_slip) {
-				for (var i in r.message.packing_slip.delivery_note) {
-					if (r.message.packing_slip.packing_slip[i]) {
-						cur_frm.dashboard.add_doctype_badge("Packing Slip", "delivery_note", r.message.packing_slip.packing_slip[i], r.message.packing_slip.delivery_note[i][0]);
-					}
-				}
+			if (Object.keys(r.message.packing_slip).length >=1) {
+				cur_frm.dashboard.add_doctype_badge("Packing Slip", "sales_order", r.message.packing_slip);
 			}
 		}
 	});
 }
 
-cur_frm.dashboard.add_doctype_badge = function(doctype, fieldname, no, del_no) {
+cur_frm.dashboard.add_doctype_badge = function(doctype, fieldname, no) {
 	if(frappe.model.can_read(doctype)) {
 		this.add_badge(__(doctype), no, doctype, function() {
 			frappe.route_options = {};
-			if (fieldname != "delivery_note") {
-				frappe.route_options[fieldname] = cur_frm.doc.customer;
-			} else {
-				frappe.route_options[fieldname] = del_no;
-			}
+			frappe.route_options[fieldname] = cur_frm.doc.name;
 			if (no.length > 1) {
-				frappe.set_route("List", doctype);
+					frappe.set_route("List", doctype);
 			} else {
 			 	frappe.set_route("Form", doctype, no);
 			}

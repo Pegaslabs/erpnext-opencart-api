@@ -41,6 +41,9 @@ def make_delivery_note(source_name, target_doc=None):
     target_doc = get_mapped_doc("Sales Order", source_name, {
         "Sales Order": {
             "doctype": "Delivery Note",
+            "field_map": {
+                "name": "sales_order",
+            },
             "validation": {
                 "docstatus": ["=", 1]
             }
@@ -101,6 +104,9 @@ def make_sales_invoice(source_name, target_doc=None):
     doclist = get_mapped_doc("Sales Order", source_name, {
         "Sales Order": {
             "doctype": "Sales Invoice",
+            "field_map": {
+                "name": "sales_order",
+            },
             "validation": {
                 "docstatus": ["=", 1]
             }

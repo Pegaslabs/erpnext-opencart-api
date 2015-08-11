@@ -157,20 +157,8 @@ def make_delivery_note(source_name, target_doc=None):
 
 
 @frappe.whitelist()
-def get_sales_statistic(customer):
-    sales_order_no = frappe.db.get_values('Sales Order', {'customer': customer}, 'name')
-    delivery_note_no = frappe.db.get_values('Delivery Note', {'customer': customer}, 'name')
-    sales_invoice_no = frappe.db.get_values('Sales Invoice', {'customer': customer}, 'name')
-    pack_list = []
-    if delivery_note_no:
-        for i in delivery_note_no:
-            packing_slip = frappe.db.get_values('Packing Slip', {'delivery_note': i[0]}, 'name')
-            if packing_slip:
-                pack_list.append(packing_slip)
-                packing_slip_no = {'delivery_note': delivery_note_no, 'packing_slip': pack_list}
-                sales_statistic = {'sales_order': sales_order_no, 'sales_invoice': sales_invoice_no, 'delivery_note': delivery_note_no, 'packing_slip': packing_slip_no}
-            else:
-                sales_statistic = {'sales_order': sales_order_no, 'sales_invoice': sales_invoice_no, 'delivery_note': delivery_note_no}
-    else:
-        sales_statistic = {'sales_order': sales_order_no, 'sales_invoice': sales_invoice_no, 'delivery_note': delivery_note_no}
-    return sales_statistic
+def get_sales_statistic(sales_order):
+    delivery_note_no = frappe.db.get_values('Delivery Note', {'sales_order': sales_order}, 'name')
+    sales_invoice_no = frappe.db.get_values('Sales Invoice', {'sales_order': sales_order}, 'name')
+    packing_slip_no = frappe.db.get_values('Packing Slip', {'sales_order': sales_order}, 'name')
+    return {'delivery_note': delivery_note_no, 'sales_invoice': sales_invoice_no, 'packing_slip': packing_slip_no}
