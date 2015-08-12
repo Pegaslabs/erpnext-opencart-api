@@ -4,6 +4,11 @@ import frappe
 from frappe.model.mapper import get_mapped_doc
 
 
+def before_submit(self, method=None):
+    if not self.oc_tracking_number:
+        frappe.throw('Please submit at first the Packing Slip.\nTracking number is missed in this Delivery Note document.')
+
+
 @frappe.whitelist()
 def make_packing_slip(source_name, target_doc=None):
     doclist = get_mapped_doc("Delivery Note", source_name, {

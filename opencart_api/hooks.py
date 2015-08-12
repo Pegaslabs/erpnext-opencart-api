@@ -56,6 +56,7 @@ doc_events = {
         # "on_cancel": "opencart_api.events.oc_pr_canceled"
     },
     "Delivery Note": {
+        "before_submit": "opencart_api.delivery_note.before_submit"
         # "on_submit": "opencart_api.events.oc_dn_submitted",
         # "on_cancel": "opencart_api.events.oc_dn_canceled"
     },
