@@ -2,7 +2,7 @@ cur_frm.add_fetch('delivery_note','letter_head','letter_head');
 // cur_frm.add_fetch('delivery_note','select_print_heading','select_print_heading');
 
 cur_frm.cscript.on_submit = function(doc, сdt, сdn) {
-    window.location.reload();
+    frappe.set_route("Form", "Delivery Note", doc.delivery_note);
 }
 
 function print_scan_items_log() {

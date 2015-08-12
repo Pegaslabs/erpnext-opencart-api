@@ -11,6 +11,11 @@ def validate(doc, method=None):
         frappe.db.set_value('Delivery Note', doc.get('delivery_note'), 'oc_tracking_number', doc.get('oc_tracking_number'))
 
 
+def before_submit(doc, method=None):
+    if not doc.oc_tracking_number:
+        frappe.throw('Packing Slip cannot be submitted with tracking number not set.')
+
+
 def on_submit(doc, method=None):
     dn = frappe.get_doc('Delivery Note', doc.get('delivery_note'))
     # packing_slips = frappe.get_all('Packing Slip', fields=['name', 'docstatus'], filters={'delivery_note': doc.get('delivery_note')})

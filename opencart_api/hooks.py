@@ -62,6 +62,7 @@ doc_events = {
     },
     "Packing Slip": {
         "validate": "opencart_api.packing_slip.validate",
+        "before_submit": "opencart_api.packing_slip.before_submit",
         "on_submit": "opencart_api.packing_slip.on_submit",
         "on_cancel": "opencart_api.packing_slip.on_cancel"
     },
