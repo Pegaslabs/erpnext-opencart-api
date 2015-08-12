@@ -6,6 +6,8 @@ import frappe
 from frappe.utils import add_days, nowdate, getdate, cstr
 from frappe.exceptions import ValidationError
 
+from erpnext.accounts.utils import get_fiscal_year
+
 from utils import sync_info
 from decorators import sync_to_opencart
 import addresses
@@ -538,6 +540,12 @@ def pull_added_from(site_name, silent=False):
                     #
                     'oc_last_sync_from': datetime.now(),
                 })
+
+                # updating fiscal year
+                fiscal_year = get_fiscal_year(date=getdate(oc_order.get('date_added', '')), company=company)
+                if fiscal_year:
+                    params.update({'fiscal_year': fiscal_year[0]})
+
                 doc_order.update(params)
                 update_totals(doc_order, oc_order, tax_rate_names)
                 doc_order.save()
@@ -605,6 +613,12 @@ def pull_added_from(site_name, silent=False):
                     'oc_sync_to': True,
                     'oc_last_sync_to': datetime.now(),
                 })
+
+                # updating fiscal year
+                fiscal_year = get_fiscal_year(date=getdate(oc_order.get('date_added', '')), company=company)
+                if fiscal_year:
+                    params.update({'fiscal_year': fiscal_year[0]})
+
                 doc_order = frappe.get_doc(params)
                 if not oc_order.get('products'):
                     skip_count += 1
