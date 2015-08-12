@@ -1,6 +1,10 @@
 cur_frm.add_fetch('delivery_note','letter_head','letter_head');
 // cur_frm.add_fetch('delivery_note','select_print_heading','select_print_heading');
 
+cur_frm.cscript.on_submit = function(doc, сdt, сdn) {
+    window.location.reload();
+}
+
 function print_scan_items_log() {
     var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
     var $th = $('<tr style="background-color: #F7FAFC; font-size: 85%; color: #8D99A6"></tr>');
