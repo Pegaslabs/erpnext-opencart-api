@@ -34,6 +34,13 @@ def pull_categories_from_oc(site_name, silent=False):
         doc_parent_item_group = doc_root_item_group
         if oc_category.parent_id:
             doc_parent_item_group = get_item_group(site_name, oc_category.parent_id)
+
+        if not doc_parent_item_group:
+            skip_count += 1
+            extras = (1, 'skipped', 'Skipped: parent group missed')
+            results_list.append((oc_category.name, '', oc_category.id, '', '') + extras)
+            continue
+
         if doc_item_group:
             # update existed Item Group
             params = {

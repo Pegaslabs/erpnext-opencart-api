@@ -33,22 +33,32 @@ def pull(site_name, silent=False):
         doc_customer_group = get(site_name, oc_customer_group.id)
         if doc_customer_group:
             # update existed Customer Group
-            doc_customer_group = frappe.get_doc('Customer Group', oc_customer_group.name)
-            params = {
-                'doctype': 'Customer Group',
-                'customer_group_name': oc_customer_group.name,
-                'description': oc_customer_group.description,
-                'oc_last_sync_from': datetime.now(),
-            }
-            doc_customer_group.update(params)
-            doc_customer_group.save()
-            update_count += 1
-            extras = (1, 'updated', 'Updated')
-            results_list.append((doc_customer_group.get('name'),
-                                doc_customer_group.get('parent_customer_group'),
-                                doc_customer_group.get('oc_customer_group_id'),
-                                doc_customer_group.get_formatted('oc_last_sync_from'),
-                                doc_customer_group.get('modified') or '') + extras)
+            db_customer_group = frappe.db.get('Customer Group', oc_customer_group.name)
+
+            if db_customer_group:
+                doc_customer_group = frappe.get_doc('Customer Group', oc_customer_group.name)
+                params = {
+                    'doctype': 'Customer Group',
+                    'customer_group_name': oc_customer_group.name,
+                    'description': oc_customer_group.description,
+                    'oc_last_sync_from': datetime.now(),
+                }
+                doc_customer_group.update(params)
+                doc_customer_group.save()
+                update_count += 1
+                extras = (1, 'updated', 'Updated')
+                results_list.append((doc_customer_group.get('name'),
+                                    doc_customer_group.get('parent_customer_group'),
+                                    doc_customer_group.get('oc_customer_group_id'),
+                                    doc_customer_group.get_formatted('oc_last_sync_from'),
+                                    doc_customer_group.get('modified') or '') + extras)
+            else:
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: not found name')
+                results_list.append((oc_customer_group.name, '',
+                                    oc_customer_group.customer_group_id,
+                                    '', '') + extras)
+                continue
         else:
             params = {
                 'doctype': 'Customer Group',
