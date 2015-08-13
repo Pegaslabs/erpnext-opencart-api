@@ -54,8 +54,14 @@ frappe.scan_prompt = function(fields, callback, title, primary_label) {
     return d;
 }
 
-
+var old_custom_refresh = cur_frm.cscript.custom_refresh;
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
+    if(!doc.__islocal) {
+        cur_frm.cscript.setup_dashboard(doc);
+        if (old_custom_refresh) {
+            old_custom_refresh(doc, dt, dn);
+        }
+    }
     cur_frm.cscript.scanned_items = [];
     cur_frm.cscript.items_to_scan = {};
 
@@ -145,3 +151,30 @@ frappe.ui.form.on("Packing Slip", "check_scanned_items", function(frm) {
     }
 });
 
+cur_frm.cscript.setup_dashboard = function(doc) {
+    cur_frm.dashboard.reset(doc);
+    cur_frm.dashboard.add_doctype_badge("Delivery Note", doc.delivery_note);
+}
+
+cur_frm.dashboard.add_doctype_badge = function(doctype, no) {
+    if(frappe.model.can_read(doctype)) {
+        this.add_badge(__(doctype), no, doctype, function() {
+            frappe.set_route("Form", doctype, no);
+        }).attr("data-doctype", doctype);
+    }
+}
+
+cur_frm.dashboard.add_badge = function(label, no, doctype, onclick) {
+        var label = label + '<br>' + no;
+
+        var badge = $(repl('<div class="col-md-4">\
+            <div class="alert-badge">\
+                <a class="badge-link grey">%(label)s</a>\
+            </div></div>', {label:label, icon: frappe.boot.doctype_icons[doctype]}))
+                .appendTo(this.body)
+
+        badge.find(".badge-link").click(onclick);
+        this.wrapper.toggle(true);
+
+        return badge.find(".alert-badge");
+}

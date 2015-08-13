@@ -54,7 +54,7 @@ def pull(site_name, silent=False):
                                     doc_customer_group.get('modified') or '') + extras)
             else:
                 skip_count += 1
-                extras = (1, 'skipped', 'Skipped: not found name')
+                extras = (1, 'skipped', 'Skipped: not found customer group by name')
                 results_list.append((oc_customer_group.name, '',
                                     oc_customer_group.customer_group_id,
                                     '', '') + extras)
