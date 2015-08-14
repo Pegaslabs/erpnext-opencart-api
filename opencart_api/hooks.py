@@ -48,6 +48,7 @@ doc_events = {
         # "on_trash": "opencart_api.orders.on_trash"
     },
     "Sales Invoice": {
+        "validate": "opencart_api.sales_invoice.validate",
         "before_submit": "opencart_api.sales_invoice.on_submit",
         "on_submit": "opencart_api.sales_invoice.on_submit",
     },
@@ -56,7 +57,8 @@ doc_events = {
         # "on_cancel": "opencart_api.events.oc_pr_canceled"
     },
     "Delivery Note": {
-        "before_submit": "opencart_api.delivery_note.before_submit"
+        "validate": "opencart_api.delivery_note.validate",
+        "before_submit": "opencart_api.delivery_note.before_submit",
         # "on_submit": "opencart_api.events.oc_dn_submitted",
         # "on_cancel": "opencart_api.events.oc_dn_canceled"
     },

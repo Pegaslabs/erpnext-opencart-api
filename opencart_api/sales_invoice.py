@@ -14,6 +14,13 @@ from delivery_note import on_delivery_note_added
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
+
+def validate(doc, method=None):
+    db_sales_invoice = frappe.db.get_value('Sales Invoice', {'sales_order': doc.sales_order}, ['name', 'docstatus'], as_dict=True)
+    if db_sales_invoice is not None and db_sales_invoice.get('docstatus') != 2:
+        frappe.throw('Cannot make new Sales Invoice: Sales Order is already had Sales Invoice %s and its docstatus is not canceled.' % db_sales_invoice.get('name'))
+
+
 # from erpnext.controllers.selling_controller import SellingController
 
 
@@ -121,6 +128,11 @@ def make_delivery_note(source_name, target_doc=None):
         target_doc.amount = (flt(source_doc.qty) - flt(source_doc.delivered_qty)) * \
             flt(source_doc.rate)
         target_doc.qty = flt(source_doc.qty) - flt(source_doc.delivered_qty)
+
+    db_sales_order = frappe.db.get_value('Sales Invoice', source_name, 'sales_order')
+    db_delivery_note_docstatus = frappe.db.get_value('Delivery Note', {'sales_order': db_sales_order}, 'docstatus')
+    if db_delivery_note_docstatus is not None and db_delivery_note_docstatus != 2:
+        frappe.throw('Cannot make new Delivery Note: Delivery Note is already created and its docstatus is not canceled.')
 
     doclist = get_mapped_doc("Sales Invoice", source_name, {
         "Sales Invoice": {

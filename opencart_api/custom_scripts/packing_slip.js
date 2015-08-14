@@ -54,13 +54,10 @@ frappe.scan_prompt = function(fields, callback, title, primary_label) {
     return d;
 }
 
-var old_custom_refresh = cur_frm.cscript.custom_refresh;
+
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
-    if(!doc.__islocal) {
+    if(!doc.__islocal && doc.docstatus == 0) {
         cur_frm.cscript.setup_dashboard(doc);
-        if (old_custom_refresh) {
-            old_custom_refresh(doc, dt, dn);
-        }
     }
     cur_frm.cscript.scanned_items = [];
     cur_frm.cscript.items_to_scan = {};

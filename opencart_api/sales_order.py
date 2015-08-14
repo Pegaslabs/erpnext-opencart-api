@@ -38,6 +38,10 @@ def make_delivery_note(source_name, target_doc=None):
         target.amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.rate)
         target.qty = flt(source.qty) - flt(source.delivered_qty)
 
+    db_delivery_docstatus = frappe.db.get_value('Delivery Note', {'sales_order': source_name}, 'docstatus')
+    if db_delivery_docstatus is not None and db_delivery_docstatus != 2:
+        frappe.throw('Cannot make new Delivery Note: Delivery Note is already created and its docstatus is not canceled.')
+
     target_doc = get_mapped_doc("Sales Order", source_name, {
         "Sales Order": {
             "doctype": "Delivery Note",
@@ -100,6 +104,10 @@ def make_sales_invoice(source_name, target_doc=None):
         target.base_amount = target.amount * flt(source_parent.conversion_rate)
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
         target.income_account = get_income_account(source_parent)
+
+    db_sales_invoice_docstatus = frappe.db.get_value('Sales Invoice', {'sales_order': source_name}, 'docstatus')
+    if db_sales_invoice_docstatus is not None and db_sales_invoice_docstatus != 2:
+        frappe.throw('Cannot make new Sales Invoice: Sales Invoice is already created and its docstatus is not canceled.')
 
     doclist = get_mapped_doc("Sales Order", source_name, {
         "Sales Order": {
