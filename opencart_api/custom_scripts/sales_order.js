@@ -223,7 +223,7 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 			sales_order: doc.name
 		},
 		callback: function(r) {
-			if (Object.keys(r.message.sales_invoice).length > 0) {
+			if (Object.keys(r.message.back_order).length > 0) {
 				cur_frm.dashboard.add_doctype_badge("Back Order", "sales_order", r.message.back_order);
 			}
 			if (Object.keys(r.message.sales_invoice).length > 0) {

@@ -4,7 +4,7 @@ import json
 import frappe.utils
 from frappe.utils import cstr, flt, getdate, comma_and
 from frappe import _
-from frappe.model.mapper import get_mapped_doc
+from frappe.model.mapper import get_mapped_doc, map_doc
 
 # from erpnext.controllers.selling_controller import SellingController
 
@@ -15,13 +15,64 @@ import mode_of_payments
 
 
 def validate(doc, method=None):
-    if not frappe.db.get_all('Back Order', filters={'sales_order': doc.name}):
-        doc_back_order = make_back_order(doc.name)
-        doc_back_order.save()
+    pass
+
+
+def on_update(doc, method=None):
+    if doc.back_order_items:
+        back_orders = frappe.db.get_all('Back Order', filters={'sales_order': doc.name})
+        if len(back_orders) > 1:
+            frappe.throw('Only one Back Order can be linked with Sales Order')
+        elif len(back_orders) == 1:
+            doc_back_order = frappe.get_doc('Back Order', back_orders[0].get('name'))
+            new_doc_back_order = make_back_order(doc.name)
+            doc_back_order.items = new_doc_back_order.items
+            doc_back_order.save()
+            frappe.clear_cache()
+        else:
+            doc_back_order = make_back_order(doc.name)
+            if doc_back_order.items:
+                doc_back_order.save()
+                frappe.msgprint('Back Order %s is created and linked to this Sales Order' % doc_back_order.name)
+
+    # frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
+    # def update_current_stock(self):
+    #     if self.get("_action") and self._action != "update_after_submit":
+    #         for d in self.get('items'):
+    #             d.actual_qty = frappe.db.get_value("Bin", {"item_code": d.item_code,
+    #                 "warehouse": d.warehouse}, "actual_qty")
+
+    #         for d in self.get('packed_items'):
+    #             bin_qty = frappe.db.get_value("Bin", {"item_code": d.item_code,
+    #                 "warehouse": d.warehouse}, ["actual_qty", "projected_qty"], as_dict=True)
+    #             if bin_qty:
+    #                 d.actual_qty = flt(bin_qty.actual_qty)
+    #                 d.projected_qty = flt(bin_qty.projected_qty)
+
+
+# def update_back_order(doc_back_order, doc_sales_order):
+#     doc_back_order.items = []
+#     for source_item in doc_sales_order.items:
+#         target_item = frappe.get_doc({'doctype': 'Back Order Item'})
+#         if flt(source_item.qty) - flt(source_item.actual_qty) > 0:
+#             map_doc(source_item, target_item, {}, None)
+#             target_item.qty = flt(source_item.qty) - flt(source_item.actual_qty)
+#             target_item.base_amount = flt(target_item.qty) * flt(source_item.base_rate)
+#             target_item.amount = flt(target_item.qty) * flt(source_item.rate)
+#             frappe.msgprint('===' + str(target_item.qty))
+#             doc_back_order.items.append(target_item)
 
 
 @frappe.whitelist()
 def make_back_order(source_name, target_doc=None):
+    def postprocess(source, target):
+        target.items = [item for item in target.items if item.qty > 0]
+
+    def update_item(obj, target, source_parent):
+        target.qty = flt(obj.qty) - flt(obj.actual_qty) if flt(obj.qty) > flt(obj.actual_qty) else 0
+        target.base_amount = flt(target.qty) * flt(obj.base_rate)
+        target.amount = flt(target.qty) * flt(obj.rate)
+
     doclist = get_mapped_doc("Sales Order", source_name, {
         "Sales Order": {
             "doctype": "Back Order",
@@ -36,9 +87,10 @@ def make_back_order(source_name, target_doc=None):
             "doctype": "Back Order Item",
             "field_map": {
                 "parent": "prevdoc_docname"
-            }
+            },
+            "postprocess": update_item
         }
-    }, target_doc)
+    }, target_doc, postprocess)
 
     return doclist
 

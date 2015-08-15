@@ -97,7 +97,8 @@
    "fieldtype": "Table", 
    "label": "Items", 
    "options": "Back Order Item", 
-   "permlevel": 0
+   "permlevel": 0, 
+   "reqd": 0
   }, 
   {
    "fieldname": "contact_info", 
