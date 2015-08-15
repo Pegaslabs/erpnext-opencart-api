@@ -223,13 +223,16 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 			sales_order: doc.name
 		},
 		callback: function(r) {
-			if (Object.keys(r.message.sales_invoice).length >= 1) {
+			if (Object.keys(r.message.sales_invoice).length > 0) {
+				cur_frm.dashboard.add_doctype_badge("Back Order", "sales_order", r.message.back_order);
+			}
+			if (Object.keys(r.message.sales_invoice).length > 0) {
 				cur_frm.dashboard.add_doctype_badge("Sales Invoice", "sales_order", r.message.sales_invoice);
 			}
-			if (Object.keys(r.message.delivery_note).length >= 1) {
+			if (Object.keys(r.message.delivery_note).length > 0) {
 				cur_frm.dashboard.add_doctype_badge("Delivery Note", "sales_order", r.message.delivery_note);
 			}
-			if (Object.keys(r.message.packing_slip).length >=1) {
+			if (Object.keys(r.message.packing_slip).length > 0) {
 				cur_frm.dashboard.add_doctype_badge("Packing Slip", "sales_order", r.message.packing_slip);
 			}
 		}

@@ -16,9 +16,10 @@ from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 
 
 def validate(doc, method=None):
-    db_sales_invoice = frappe.db.get_value('Sales Invoice', {'sales_order': doc.sales_order}, ['name', 'docstatus'], as_dict=True)
-    if db_sales_invoice is not None and db_sales_invoice.get('docstatus') != 2:
-        frappe.throw('Cannot make new Sales Invoice: Sales Order is already had Sales Invoice %s and its docstatus is not canceled.' % db_sales_invoice.get('name'))
+    pass
+    # db_sales_invoice = frappe.db.get_value('Sales Invoice', {'sales_order': doc.sales_order}, ['name', 'docstatus'], as_dict=True)
+    # if db_sales_invoice is not None and db_sales_invoice.get('docstatus') != 2:
+    #     frappe.throw('Cannot make new Sales Invoice: Sales Order has already Sales Invoice %s created and its docstatus is not canceled.' % db_sales_invoice.get('name'))
 
 
 # from erpnext.controllers.selling_controller import SellingController
@@ -170,7 +171,13 @@ def make_delivery_note(source_name, target_doc=None):
 
 @frappe.whitelist()
 def get_sales_statistic(sales_order):
+    back_order_no = frappe.db.get_values('Back Order', {'sales_order': sales_order}, 'name')
     delivery_note_no = frappe.db.get_values('Delivery Note', {'sales_order': sales_order}, 'name')
     sales_invoice_no = frappe.db.get_values('Sales Invoice', {'sales_order': sales_order}, 'name')
     packing_slip_no = frappe.db.get_values('Packing Slip', {'sales_order': sales_order}, 'name')
-    return {'delivery_note': delivery_note_no, 'sales_invoice': sales_invoice_no, 'packing_slip': packing_slip_no}
+    return {
+        'back_order': back_order_no,
+        'delivery_note': delivery_note_no,
+        'sales_invoice': sales_invoice_no,
+        'packing_slip': packing_slip_no
+    }

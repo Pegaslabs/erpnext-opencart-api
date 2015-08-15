@@ -5,13 +5,14 @@ from frappe.model.mapper import get_mapped_doc
 
 
 def validate(doc, method=None):
-    db_packing_slip_docstatus = frappe.db.get_value('Packing Slip', {'delivery_note': doc.sales_order}, 'docstatus')
-    if db_packing_slip_docstatus is not None and db_packing_slip_docstatus != 2:
-        frappe.throw('Cannot make new Packing Slip: Packing Slip is already created and its docstatus is not canceled.')
+    pass
+    # db_packing_slip_docstatus = frappe.db.get_value('Packing Slip', {'delivery_note': doc.sales_order}, 'docstatus')
+    # if db_packing_slip_docstatus is not None and db_packing_slip_docstatus != 2:
+    #     frappe.throw('Cannot make new Packing Slip: Packing Slip is already created and its docstatus is not canceled.')
 
-    db_delivery_note = frappe.db.get_value('Delivery Note', {'sales_order': doc.sales_order}, ['name', 'docstatus'], as_dict=True)
-    if db_delivery_note is not None and db_delivery_note.get('docstatus') != 2:
-        frappe.throw('Cannot make new Delivery Note: Sales Order is already had Delivery Note %s and its docstatus is not canceled.' % db_delivery_note.get('name'))
+    # db_delivery_note = frappe.db.get_value('Delivery Note', {'sales_order': doc.sales_order}, ['name', 'docstatus'], as_dict=True)
+    # if db_delivery_note is not None and db_delivery_note.get('docstatus') != 2:
+    #     frappe.throw('Cannot make new Delivery Note: Sales Order has already Delivery Note %s created and its docstatus is not canceled.' % db_delivery_note.get('name'))
 
 
 def before_submit(self, method=None):

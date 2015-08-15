@@ -88,6 +88,7 @@
 "","""Customer-oc_sync_to""","Customer","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_last_sync_to""","Customer","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-shipping_rule""","Customer","Link","Shipping Rule","territory","","Shipping Rule","","shipping_rule",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-back_order_items""","Sales Order","Check","Back order items","order_type","","","","back_order_items",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-warehouse""","Sales Order","Link","Default Delivery Warehouse","delivery_date","","Warehouse","","warehouse",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_settings""","Sales Order","Section Break","Opencart Settings","po_no","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_is_updating""","Sales Order","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0

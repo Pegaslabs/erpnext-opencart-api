@@ -14,6 +14,35 @@ from sales_invoice import resolve_mode_of_payment
 import mode_of_payments
 
 
+def validate(doc, method=None):
+    if not frappe.db.get_all('Back Order', filters={'sales_order': doc.name}):
+        doc_back_order = make_back_order(doc.name)
+        doc_back_order.save()
+
+
+@frappe.whitelist()
+def make_back_order(source_name, target_doc=None):
+    doclist = get_mapped_doc("Sales Order", source_name, {
+        "Sales Order": {
+            "doctype": "Back Order",
+            "field_map": {
+                "name": "sales_order",
+            },
+            "validation": {
+                "docstatus": ["=", 0]
+            }
+        },
+        "Sales Order Item": {
+            "doctype": "Back Order Item",
+            "field_map": {
+                "parent": "prevdoc_docname"
+            }
+        }
+    }, target_doc)
+
+    return doclist
+
+
 def is_oc_sales_order(doc):
     return bool(doc.get('oc_site'))
 
