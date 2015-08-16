@@ -178,6 +178,7 @@
 "","""Warehouse-country""","Warehouse","Link","Country","city","","Country","","country",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-sales_order""","Delivery Note","Link","Sales Order","po_no","","Sales Order","","sales_order",0,0,0,0,"","",1,"",0,0,0,0,0,0
+"","""Delivery Note-back_order_items""","Delivery Note","Check","Back order items on submit","conversion_rate","","","","back_order_items",0,0,0,0,"","0",0,"",0,0,0,0,0,0
 "","""Packing Slip-oc_tracking_number""","Packing Slip","Data","Tracking Number","from_case_no","","","","oc_tracking_number",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-scan_items_sb""","Packing Slip","Section Break","Scanning Items","items","","","","scan_items_sb",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-scan_items""","Packing Slip","Button","Scan Items","scan_items_sb","","","","scan_items",0,0,0,0,"","",0,"",0,0,0,0,0,0

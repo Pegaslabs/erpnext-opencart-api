@@ -39,13 +39,16 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 				sales_order: doc.sales_order
 			},
 			callback: function(r) {
+				if (Object.keys(r.message.back_order).length > 0) {
+					cur_frm.dashboard.add_doctype_badge("Back Order", r.message.back_order, "sales_order");
+				}
 				if (doc.sales_order) {
 					cur_frm.dashboard.add_doctype_badge("Sales Order", doc.sales_order);
 				}
-				if (Object.keys(r.message.delivery_note).length >= 1) {
+				if (Object.keys(r.message.delivery_note).length > 0) {
 					cur_frm.dashboard.add_doctype_badge("Sales Invoice",  r.message.sales_invoice, "sales_order");
 				}
-				if (Object.keys(r.message.packing_slip).length >= 1) {
+				if (Object.keys(r.message.packing_slip).length > 0) {
 					cur_frm.dashboard.add_doctype_badge("Packing Slip", r.message.packing_slip, "sales_order");
 				}
 			}
@@ -78,7 +81,7 @@ cur_frm.dashboard.add_badge = function(label, no, doctype, onclick) {
 			var label = label + '<br>' + no;
 		}
 
-		var badge = $(repl('<div class="col-md-4">\
+		var badge = $(repl('<div class="col-md-3">\
 			<div class="alert-badge">\
 				<a class="badge-link grey">%(label)s</a>\
 			</div></div>', {label:label, icon: frappe.boot.doctype_icons[doctype]}))

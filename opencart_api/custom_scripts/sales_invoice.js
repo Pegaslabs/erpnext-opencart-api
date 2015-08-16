@@ -63,7 +63,7 @@ cur_frm.dashboard.add_badge = function(label, no, doctype, onclick) {
 			var label = label + '<br>' + no;
 		}
 
-		var badge = $(repl('<div class="col-md-4">\
+		var badge = $(repl('<div class="col-md-3">\
 			<div class="alert-badge">\
 				<a class="badge-link grey">%(label)s</a>\
 			</div></div>', {label:label, icon: frappe.boot.doctype_icons[doctype]}))
