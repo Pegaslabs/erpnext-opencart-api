@@ -76,6 +76,7 @@ doc_events = {
 
 
 doctype_js = {
+    "Customer": ["custom_scripts/customer.js"],
     "Journal Entry": ["custom_scripts/journal_entry.js"],
     "Purchase Order": ["custom_scripts/purchase_order.js"],
     "Supplier Quotation": ["custom_scripts/supplier_quotation.js"],
