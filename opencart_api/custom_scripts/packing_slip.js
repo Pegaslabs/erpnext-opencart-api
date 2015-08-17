@@ -49,7 +49,9 @@ frappe.scan_prompt = function(fields, callback, title, primary_label) {
                 d.get_primary_btn().trigger("click");
             }
     });
-
+    d.$wrapper.on("shown.bs.modal", function() {
+        d.$wrapper.find(".modal-body :input:first").get(0).focus();
+    })
     d.show();
     return d;
 }
