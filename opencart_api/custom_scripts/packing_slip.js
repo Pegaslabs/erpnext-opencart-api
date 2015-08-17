@@ -64,13 +64,15 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
     cur_frm.cscript.scanned_items = [];
     cur_frm.cscript.items_to_scan = {};
 
-    for(var i=0; i < doc.items.length; i++) {
-        cur_frm.cscript.items_to_scan[doc.items[i].item_code] = {
-            "item_code": doc.items[i].item_code,
-            "quantity": doc.items[i].qty,
-            "scanned_quantity": 0,
-            "barcode": ""
-        };
+    if (doc.items) {
+        for(var i=0; i < doc.items.length; i++) {
+            cur_frm.cscript.items_to_scan[doc.items[i].item_code] = {
+                "item_code": doc.items[i].item_code,
+                "quantity": doc.items[i].qty,
+                "scanned_quantity": 0,
+                "barcode": ""
+            };
+        }
     }
 }
 
@@ -100,30 +102,34 @@ function on_item_scanned(item, scanned_quantity) {
 
 
 function scan_items(frm) {
-    print_scan_items_log();
-    frappe.scan_prompt([{label:"Barcode", fieldtype:"Data", reqd: 1},
-                        {fieldtype:"Column Break"},
-                        {label:"Quantity", fieldtype:"Float", reqd: 1, default: 1}
-                       ],
-        function(data) {
-            frappe.call({
-                method:"opencart_api.packing_slip.get_item_by_barcode",
-                args: {
-                    barcode: data.barcode
-                },
-                callback: function(r) {
-                    if(!r.exc) {
-                        if(r.message) {
-                            on_item_scanned(r.message, data.quantity);
-                        } else {
-                            frappe.msgprint("Could not found Item with barcode " + data.barcode)
+    if (frm.doc.items) {
+        print_scan_items_log();
+        frappe.scan_prompt([{label:"Barcode", fieldtype:"Data", reqd: 1},
+                            {fieldtype:"Column Break"},
+                            {label:"Quantity", fieldtype:"Float", reqd: 1, default: 1}
+                           ],
+            function(data) {
+                frappe.call({
+                    method:"opencart_api.packing_slip.get_item_by_barcode",
+                    args: {
+                        barcode: data.barcode
+                    },
+                    callback: function(r) {
+                        if(!r.exc) {
+                            if(r.message) {
+                                on_item_scanned(r.message, data.quantity);
+                            } else {
+                                show_alert("Could not found Item with barcode " + data.barcode, 2);
+                            }
                         }
+                        scan_items(frm);
                     }
-                    scan_items(frm);
-                }
-            });
-        }
-    , __("Scan Items"), __("Proceed"));
+                });
+            }
+        , __("Scan Items"), __("Proceed"));
+    } else {
+        frappe.msgprint('You cannot scan items for empty item list.');
+    }
 }
 
 frappe.ui.form.on("Packing Slip", "scan_items", scan_items);
