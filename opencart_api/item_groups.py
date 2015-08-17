@@ -50,7 +50,17 @@ def pull_categories_from_oc(site_name, silent=False):
                 'oc_last_sync_from': datetime.now()
             }
             doc_item_group.update(params)
-            doc_item_group.save()
+            try:
+                doc_item_group.save()
+            except Exception as ex:
+                update_count += 1
+                extras = (1, 'updated', 'Updated: due to exception: %s' % str(ex))
+                results_list.append((doc_item_group.get('name'),
+                                    doc_item_group.get('parent_item_group'),
+                                    doc_item_group.get('oc_category_id'),
+                                    doc_item_group.get_formatted('oc_last_sync_from') or '',
+                                    doc_item_group.get('modified') or '') + extras)
+                continue
             update_count += 1
             extras = (1, 'updated', 'Updated')
             results_list.append((doc_item_group.get('name'),
@@ -86,7 +96,17 @@ def pull_categories_from_oc(site_name, silent=False):
                     'is_group': 'Yes'
                 }
                 doc_item_group = frappe.get_doc(params)
-                doc_item_group.insert(ignore_permissions=True)
+                try:
+                    doc_item_group.insert(ignore_permissions=True)
+                except Exception as ex:
+                    add_count += 1
+                    extras = (1, 'added', 'Added: due to exception: %s' % str(ex))
+                    results_list.append((doc_item_group.get('item_group_name'),
+                                        doc_item_group.get('parent_item_group'),
+                                        doc_item_group.get('oc_category_id') or '',
+                                        doc_item_group.get_formatted('oc_last_sync_from') or '',
+                                        doc_item_group.get('modified') or '') + extras)
+                    continue
                 add_count += 1
                 extras = (1, 'added', 'Added')
                 results_list.append((doc_item_group.get('name'),
