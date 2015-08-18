@@ -1,16 +1,18 @@
 
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
-    frappe.call({
-        method:"opencart_api.bins.get_warehouses",
-        args: {
-            "item_code": doc.item_code,
-        },
-        callback: function(r) {
-            if(!r.exc) {
-                print_warehouses(r.message);
+    if (!doc.__islocal) {
+        frappe.call({
+            method:"opencart_api.bins.get_warehouses",
+            args: {
+                "item_code": doc.item_code,
+            },
+            callback: function(r) {
+                if(!r.exc) {
+                    print_warehouses(r.message);
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 print_warehouses = function(message, update) {
