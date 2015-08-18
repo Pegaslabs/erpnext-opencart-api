@@ -20,20 +20,23 @@ def validate(doc, method=None):
 
 def on_update(doc, method=None):
     if doc.back_order_items:
-        back_orders = frappe.db.get_all('Back Order', filters={'sales_order': doc.name})
+        back_orders = frappe.db.get_all('Back Order', filters={'sales_order': doc.name, 'docstatus': 0})
         if len(back_orders) > 1:
             frappe.throw('Only one Back Order can be linked with Sales Order')
         elif len(back_orders) == 1:
-            doc_back_order = frappe.get_doc('Back Order', back_orders[0].get('name'))
             new_doc_back_order = make_back_order(doc.name)
-            doc_back_order.items = new_doc_back_order.items
-            doc_back_order.save()
-            frappe.clear_cache()
+            if new_doc_back_order.items:
+                doc_back_order = frappe.get_doc('Back Order', back_orders[0].get('name'))
+                doc_back_order.items = new_doc_back_order.items
+                doc_back_order.save()
+                update_sales_order_from_back_order(doc, new_doc_back_order)
+                frappe.clear_cache()
         else:
             doc_back_order = make_back_order(doc.name)
             if doc_back_order.items:
                 doc_back_order.save()
                 frappe.msgprint('Back Order %s is created and linked to this Sales Order' % doc_back_order.name)
+                update_sales_order_from_back_order(doc, doc_back_order)
 
     # frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
     # def update_current_stock(self):
@@ -63,13 +66,24 @@ def on_update(doc, method=None):
 #             doc_back_order.items.append(target_item)
 
 
+def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
+    back_order_item_map = {i.item_code: i for i in doc_back_order.items}
+    sales_order_item_map = {i.item_code: i for i in doc_sales_order.items}
+    for bo_item_code, bo_doc_item in back_order_item_map.items():
+        so_doc_item = sales_order_item_map.get(bo_item_code)
+        so_doc_item.update({
+            "qty": flt(so_doc_item.qty) - flt(bo_doc_item.qty),
+        })
+        so_doc_item.save()
+
+
 @frappe.whitelist()
 def make_back_order(source_name, target_doc=None):
     def postprocess(source, target):
         target.items = [item for item in target.items if item.qty > 0]
 
     def update_item(obj, target, source_parent):
-        target.qty = flt(obj.qty) - flt(obj.actual_qty) if flt(obj.qty) > flt(obj.actual_qty) else 0
+        target.qty = flt(obj.qty) - flt(obj.projected_qty) if flt(obj.qty) > flt(obj.projected_qty) else 0
         target.base_amount = flt(target.qty) * flt(obj.base_rate)
         target.amount = flt(target.qty) * flt(obj.rate)
 
@@ -78,9 +92,6 @@ def make_back_order(source_name, target_doc=None):
             "doctype": "Back Order",
             "field_map": {
                 "name": "sales_order",
-            },
-            "validation": {
-                "docstatus": ["=", 0]
             }
         },
         "Sales Order Item": {
@@ -242,3 +253,33 @@ def get_cash_bank_account(doc, mode_of_payment=None):
         cash_bank_account = frappe.db.get_value("Company", doc.company, "default_bank_account") or ''
 
     return cash_bank_account
+
+
+@frappe.whitelist()
+def get_back_order_list(sales_order):
+    return frappe.db.get_values('Back Order', {'docstatus': '0', 'customer': frappe.db.get_value('Sales Order', sales_order, 'customer')}, 'name', as_dict=True)
+
+
+@frappe.whitelist()
+def load_items_from_back_order(sales_order, back_order, submit_back_order):
+    doc_back_order = frappe.get_doc('Back Order', back_order)
+    doc_sales_order = frappe.get_doc('Sales Order', sales_order)
+
+    back_order_item_map = {i.item_code: i for i in doc_back_order.items}
+    sales_order_item_map = {i.item_code: i for i in doc_sales_order.items}
+    for bo_item_code, bo_doc_item in back_order_item_map.items():
+        so_doc_item = sales_order_item_map.get(bo_item_code)
+        if so_doc_item:  # update Sales Order Item
+            so_doc_item.update({
+                "qty": flt(so_doc_item.qty) + flt(bo_doc_item.qty),
+            })
+        else:  # add new Sales Order Item from Back Order Item
+            doc_sales_order.append("items", {
+                "item_code": bo_doc_item.item_code,
+                "qty": flt(bo_doc_item.qty),
+            })
+    doc_sales_order.update({'back_order_items': 0})
+    doc_sales_order.save()
+
+    if submit_back_order:
+        doc_back_order.submit()

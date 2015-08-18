@@ -171,7 +171,7 @@ def make_delivery_note(source_name, target_doc=None):
 
 @frappe.whitelist()
 def get_sales_statistic(sales_order):
-    back_order_no = frappe.db.get_values('Back Order', {'sales_order': sales_order}, 'name')
+    back_order_no = frappe.db.get_values('Back Order', {'docstatus': '0', 'customer': frappe.db.get_value('Sales Order', sales_order, 'customer')}, 'name')
     delivery_note_no = frappe.db.get_values('Delivery Note', {'sales_order': sales_order}, 'name')
     sales_invoice_no = frappe.db.get_values('Sales Invoice', {'sales_order': sales_order}, 'name')
     packing_slip_no = frappe.db.get_values('Packing Slip', {'sales_order': sales_order}, 'name')

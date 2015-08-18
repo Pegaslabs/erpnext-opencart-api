@@ -22,6 +22,7 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 			}
 		});
 	}
+	init_back_order_info(doc, dt, dn);
 }
 
 cur_frm.cscript.oc_is_shipping_included_in_total = function() {
@@ -224,7 +225,7 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 		},
 		callback: function(r) {
 			if (Object.keys(r.message.back_order).length > 0) {
-				cur_frm.dashboard.add_doctype_badge("Back Order", "sales_order", r.message.back_order);
+				cur_frm.dashboard.add_doctype_badge("Back Order", "customer", r.message.back_order, "customer");
 			}
 			if (Object.keys(r.message.sales_invoice).length > 0) {
 				cur_frm.dashboard.add_doctype_badge("Sales Invoice", "sales_order", r.message.sales_invoice);
@@ -239,11 +240,14 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 	});
 }
 
-cur_frm.dashboard.add_doctype_badge = function(doctype, fieldname, no) {
+cur_frm.dashboard.add_doctype_badge = function(doctype, fieldname, no, filter_fieldname) {
 	if(frappe.model.can_read(doctype)) {
 		this.add_badge(__(doctype), no, doctype, function() {
 			frappe.route_options = {};
-			frappe.route_options[fieldname] = cur_frm.doc.name;
+			if (!filter_fieldname) {
+				filter_fieldname = "name"
+			}
+			frappe.route_options[fieldname] = cur_frm.doc[filter_fieldname];
 			if (no.length > 1) {
 					frappe.set_route("List", doctype);
 			} else {
@@ -269,6 +273,47 @@ cur_frm.dashboard.add_badge = function(label, no, doctype, onclick) {
 		return badge.find(".alert-badge");
 }
 
+
+function init_back_order_info(doc, dt, dn) {
+	cur_frm.cscript.back_order_list = [];
+	frappe.call({
+		method: "opencart_api.sales_order.get_back_order_list",
+		args: {
+			"sales_order": doc.name,
+		},
+		callback: function(r) {
+			if(!r.exc) {
+				cur_frm.cscript.back_order_list = r.message;
+			}
+		}
+	});
+}
+
+
+frappe.ui.form.on("Sales Order", "load_items_from_back_order", function(frm, cdt, cdn) {
+	if (cur_frm.cscript.back_order_list.length > 0) {
+		back_order = cur_frm.cscript.back_order_list[0];
+		frappe.prompt([{label:"Back Order", fieldtype:"Link", options:"Back Order", reqd: 1, default: back_order.name},
+			           {label:"Submit Back Order", fieldtype:"Check", default: 1}],
+			function(data) {
+				frappe.call({
+					freeze: true,
+					method:"opencart_api.sales_order.load_items_from_back_order",
+					args: {
+						sales_order: frm.doc.name,
+						back_order: data.back_order,
+						submit_back_order: data.submit_back_order
+					},
+					callback: function(r) {
+                        me.frm.reload_doc();
+					}
+				});
+			}
+		, __("Load Items from Back Order"), __("Load"));
+	} else {
+		show_alert("No Back Orders found", 2);
+	}
+});
 
 
 // cur_frm.cscript.validate = function(doc) {

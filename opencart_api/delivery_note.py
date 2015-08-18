@@ -29,11 +29,23 @@ def before_submit(self, method=None):
     dn_details_map = {dn_detail.get('item_code'): dn_detail for dn_detail in dn_details}
 
     if self.back_order_items:
-        back_orders = frappe.db.get_all('Back Order', filters={'sales_order': self.sales_order})
+        back_orders = frappe.db.get_all('Back Order', filters={'sales_order': self.sales_order, 'docstatus': 0})
         if self.sales_order and len(back_orders) > 1:
             frappe.throw('Only one Back Order can be linked with Sales Order')
         elif self.sales_order and len(back_orders) == 1:
-            frappe.throw('There is already Back Order %s created and linked to Sales Order %s' % (back_orders[0].get('name'), self.sales_order))
+            doc_back_order = frappe.get_doc('Back Order', back_orders[0].get('name'))
+            new_doc_back_order = make_back_order(self.name, packing_slip_doc=ps)
+            back_order_item_map = {i.item_code: i for i in doc_back_order.items}
+            for new_bo_item in new_doc_back_order.items:
+                bo_item = back_order_item_map.get()
+                if bo_item:
+                    bo_item.update({'qty': flt(bo_item.qty) + flt(new_bo_item.qty)})
+                    bo_item.save()
+                else:
+                    # TODO
+                    pass
+            doc_back_order.save()
+            frappe.msgprint('Back Order %s is updated successfully' % (back_orders[0].get('name'),))
         else:
             doc_back_order = make_back_order(self.name, packing_slip_doc=ps)
             doc_back_order.save()
