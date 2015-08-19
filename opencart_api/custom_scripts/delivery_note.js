@@ -45,7 +45,7 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 				if (doc.sales_order) {
 					cur_frm.dashboard.add_doctype_badge("Sales Order", doc.sales_order);
 				}
-				if (Object.keys(r.message.delivery_note).length > 0) {
+				if (Object.keys(r.message.sales_invoice).length > 0) {
 					cur_frm.dashboard.add_doctype_badge("Sales Invoice",  r.message.sales_invoice, "sales_order");
 				}
 				if (Object.keys(r.message.packing_slip).length > 0) {
