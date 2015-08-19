@@ -17,6 +17,10 @@ def validate(doc, method=None):
 
 
 def before_submit(self, method=None):
+    # nothing to do for if it's return
+    if self.is_return:
+        return
+
     packing_slips = frappe.db.get_values('Packing Slip', {'delivery_note': self.name, 'docstatus': 1}, 'name', as_dict=True)
     if len(packing_slips) > 1:
         frappe.throw('Cannot submit: this Delivery Note has more than one Packing Slips')
