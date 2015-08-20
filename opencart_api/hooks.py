@@ -71,6 +71,12 @@ doc_events = {
     "Stock Entry": {
         # "on_submit": "opencart_api.events.oc_se_changed",
         # "on_cancel": "opencart_api.events.oc_se_changed"
+    },
+    "Comment": {
+        "before_save": "opencart_api.comments.before_save",
+    },
+    "Communication": {
+        "before_save": "opencart_api.communications.before_save",
     }
 }
 
