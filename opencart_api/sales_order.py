@@ -30,8 +30,8 @@ def on_update(doc, method=None):
                 doc_back_order.items = new_doc_back_order.items
                 doc_back_order.save()
                 if update_sales_order_from_back_order(doc, new_doc_back_order):
-                    # validate document, so totals are re-calculated with reduced item quantities
-                    doc.validate()
+                    # save document, so totals are re-calculated with reduced item quantities
+                    doc.save()
 
                 frappe.clear_cache()
         else:
@@ -40,8 +40,8 @@ def on_update(doc, method=None):
                 doc_back_order.save()
                 frappe.msgprint('Back Order %s is created and linked to this Sales Order' % doc_back_order.name)
                 if update_sales_order_from_back_order(doc, doc_back_order):
-                    # validate document, so totals are re-calculated with reduced item quantities
-                    doc.validate()
+                    # save document, so totals are re-calculated with reduced item quantities
+                    doc.save()
 
     # frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
     # def update_current_stock(self):
@@ -78,12 +78,12 @@ def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
     for bo_item_code, bo_doc_item in back_order_item_map.items():
         so_doc_item = sales_order_item_map.get(bo_item_code)
         new_qty = flt(so_doc_item.qty) - flt(bo_doc_item.qty) if (flt(so_doc_item.qty) - flt(bo_doc_item.qty)) > 0 else 0
-        so_doc_item.update({
-            "qty": new_qty
-        })
-        so_doc_item.save()
-        updated_items = True
-
+        if new_qty != so_doc_item.qty:
+            so_doc_item.update({
+                "qty": new_qty
+            })
+            so_doc_item.save()
+            updated_items = True
     return updated_items
 
 
