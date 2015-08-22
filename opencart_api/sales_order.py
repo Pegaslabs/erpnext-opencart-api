@@ -29,14 +29,19 @@ def on_update(doc, method=None):
                 doc_back_order = frappe.get_doc('Back Order', back_orders[0].get('name'))
                 doc_back_order.items = new_doc_back_order.items
                 doc_back_order.save()
-                update_sales_order_from_back_order(doc, new_doc_back_order)
+                if update_sales_order_from_back_order(doc, new_doc_back_order):
+                    # validate document, so totals are re-calculated with reduced item quantities
+                    doc.validate()
+
                 frappe.clear_cache()
         else:
             doc_back_order = make_back_order(doc.name)
             if doc_back_order.items:
                 doc_back_order.save()
                 frappe.msgprint('Back Order %s is created and linked to this Sales Order' % doc_back_order.name)
-                update_sales_order_from_back_order(doc, doc_back_order)
+                if update_sales_order_from_back_order(doc, doc_back_order):
+                    # validate document, so totals are re-calculated with reduced item quantities
+                    doc.validate()
 
     # frappe.db.get_value("Stock Settings", None, "allow_negative_stock")
     # def update_current_stock(self):
@@ -69,12 +74,17 @@ def on_update(doc, method=None):
 def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
     back_order_item_map = {i.item_code: i for i in doc_back_order.items}
     sales_order_item_map = {i.item_code: i for i in doc_sales_order.items}
+    updated_items = False
     for bo_item_code, bo_doc_item in back_order_item_map.items():
         so_doc_item = sales_order_item_map.get(bo_item_code)
+        new_qty = flt(so_doc_item.qty) - flt(bo_doc_item.qty) if (flt(so_doc_item.qty) - flt(bo_doc_item.qty)) > 0 else 0
         so_doc_item.update({
-            "qty": flt(so_doc_item.qty) - flt(bo_doc_item.qty) if (flt(so_doc_item.qty) - flt(bo_doc_item.qty)) > 0 else 0,
+            "qty": new_qty
         })
         so_doc_item.save()
+        updated_items = True
+
+    return updated_items
 
 
 @frappe.whitelist()
@@ -83,7 +93,10 @@ def make_back_order(source_name, target_doc=None):
         target.items = [item for item in target.items if item.qty > 0]
 
     def update_item(obj, target, source_parent):
-        target.qty = flt(obj.qty) - flt(obj.projected_qty) if flt(obj.qty) > flt(obj.projected_qty) else 0
+        if flt(obj.projected_qty) > 0:
+            target.qty = flt(obj.qty) - flt(obj.projected_qty) if flt(obj.qty) > flt(obj.projected_qty) else 0
+        else:
+            target.qty = flt(obj.qty)
         target.base_amount = flt(target.qty) * flt(obj.base_rate)
         target.amount = flt(target.qty) * flt(obj.rate)
 
