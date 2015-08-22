@@ -75,14 +75,6 @@ def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
             "qty": flt(so_doc_item.qty) - flt(bo_doc_item.qty) if (flt(so_doc_item.qty) - flt(bo_doc_item.qty)) > 0 else 0,
         })
         so_doc_item.save()
-    # len_doc_sales_order_items = len(doc_sales_order.items)
-    # for i in range(len_doc_sales_order_items):
-    #     try:
-    #         if doc_sales_order.items[i].get("qty") == 0:
-    #             doc_sales_order.items.remove(doc_sales_order.items[i])
-    #             doc_sales_order.save()
-    #     except:
-    #         pass
 
 
 @frappe.whitelist()

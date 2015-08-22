@@ -70,6 +70,21 @@ def before_save(doc, method=None):
 
 def on_submit(doc, method=None):
     check_oc_sales_order_totals(doc)
+    # try:
+    items = [item for item in doc.items if item.qty > 0]
+    # items = []
+    # for i in doc.items:
+    #     if i.get('qty') > 0:
+    #         items.append(i)
+    #     else:
+    #         frappe.throw('There are no items in sales order')
+    try:
+        doc.update(
+            {'items': items},
+        )
+        doc.save()
+    except:
+        frappe.throw('There are no items in sales order')
     if is_oc_sales_order(doc):
         if not doc.get('oc_is_auto_processing'):
             # submitting orders manually
