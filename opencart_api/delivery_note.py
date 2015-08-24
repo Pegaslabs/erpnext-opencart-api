@@ -61,7 +61,7 @@ def before_submit(self, method=None):
 
 
 def on_submit(self, method=None):
-    if not erpnext_sales_order.has_active_si(self.name):
+    if not erpnext_sales_order.has_active_si(frappe.db.get_value('Delivery Note', self.name, 'sales_order')):
         si = erpnext_delivery_note.make_sales_invoice(self.get('name'))
         si.insert()
         frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
