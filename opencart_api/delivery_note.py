@@ -3,17 +3,12 @@ from __future__ import unicode_literals
 import frappe
 from frappe.utils import flt, cstr
 from frappe.model.mapper import get_mapped_doc
+from erpnext.stock.doctype.delivery_note import delivery_note as erpnext_delivery_note
+from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 
 
 def validate(doc, method=None):
     pass
-    # db_packing_slip_docstatus = frappe.db.get_value('Packing Slip', {'delivery_note': doc.sales_order}, 'docstatus')
-    # if db_packing_slip_docstatus is not None and db_packing_slip_docstatus != 2:
-    #     frappe.throw('Cannot make new Packing Slip: Packing Slip is already created and its docstatus is not canceled.')
-
-    # db_delivery_note = frappe.db.get_value('Delivery Note', {'sales_order': doc.sales_order}, ['name', 'docstatus'], as_dict=True)
-    # if db_delivery_note is not None and db_delivery_note.get('docstatus') != 2:
-    #     frappe.throw('Cannot make new Delivery Note: Sales Order has already Delivery Note %s created and its docstatus is not canceled.' % db_delivery_note.get('name'))
 
 
 def before_submit(self, method=None):
@@ -63,6 +58,13 @@ def before_submit(self, method=None):
             if flt(item.get('packed_qty')) < flt(item.get('qty')):
                 frappe.msgprint('Please enable back order items or adjust items manually.')
                 frappe.throw('Only %s of %s %s items from Delivery Note were packed in Packing Slip %s.' % (cstr(item.get('packed_qty')), cstr(item.get('qty')), item.get('item_code'), ps.name))
+
+
+def on_submit(self, method=None):
+    if not erpnext_sales_order.has_active_si(self.name):
+        si = erpnext_delivery_note.make_sales_invoice(self.get('name'))
+        si.insert()
+        frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
 
 
 @frappe.whitelist()
@@ -126,6 +128,3 @@ def make_packing_slip(source_name, target_doc=None):
 
 def on_delivery_note_added(delivery_note):
     pass
-    # ps = make_packing_slip(delivery_note)
-    # ps.get_items()
-    # ps.insert()

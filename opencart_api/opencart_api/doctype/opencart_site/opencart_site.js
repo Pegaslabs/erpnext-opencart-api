@@ -315,22 +315,6 @@ print_sync_log_orders = function(message, update) {
     $(cur_frm.fields_dict['orders_sync_log'].wrapper).html(msg);
 }
 
-print_children_group = function(doc, dt, dn) {
-    frappe.call({
-        freeze: true,
-        type: "GET",
-        args: {
-            cmd: "opencart_api.item_groups.get_child_groups",
-            item_group_name: doc.root_item_group
-        },
-        callback: function(data) {
-            if (data && data.message) {
-                print_sync_log_cat(data.message);
-            }
-        }
-    });
-}
-
 print_related_stores = function(doc, dt, dn) {
     frappe.call({
         freeze: true,

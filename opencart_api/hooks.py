@@ -48,19 +48,14 @@ doc_events = {
         # "on_trash": "opencart_api.orders.on_trash"
     },
     "Sales Invoice": {
-        "validate": "opencart_api.sales_invoice.validate",
-        "before_submit": "opencart_api.sales_invoice.on_submit",
-        "on_submit": "opencart_api.sales_invoice.on_submit",
+        # "on_submit": "opencart_api.sales_invoice.on_submit"
     },
     "Purchase Receipt": {
-        # "on_submit": "opencart_api.events.oc_pr_submitted",
-        # "on_cancel": "opencart_api.events.oc_pr_canceled"
     },
     "Delivery Note": {
         "validate": "opencart_api.delivery_note.validate",
         "before_submit": "opencart_api.delivery_note.before_submit",
-        # "on_submit": "opencart_api.events.oc_dn_submitted",
-        # "on_cancel": "opencart_api.events.oc_dn_canceled"
+        "on_submit": "opencart_api.delivery_note.on_submit"
     },
     "Packing Slip": {
         "validate": "opencart_api.packing_slip.validate",
@@ -69,8 +64,6 @@ doc_events = {
         "on_cancel": "opencart_api.packing_slip.on_cancel"
     },
     "Stock Entry": {
-        # "on_submit": "opencart_api.events.oc_se_changed",
-        # "on_cancel": "opencart_api.events.oc_se_changed"
     },
     "Comment": {
         "before_save": "opencart_api.comments.before_save",

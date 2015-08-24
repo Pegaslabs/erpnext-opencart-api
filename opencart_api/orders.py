@@ -10,7 +10,6 @@ from erpnext.accounts.utils import get_fiscal_year
 
 from utils import sync_info
 from decorators import sync_to_opencart
-import addresses
 import oc_api
 import oc_site
 import customers
@@ -19,10 +18,10 @@ import items
 import territories
 import sales_taxes_and_charges_template
 from mode_of_payments import is_pos_payment_method
-from sales_order import make_sales_invoice, make_delivery_note, is_oc_sales_order
-from sales_invoice import on_sales_invoice_added
-from delivery_note import make_packing_slip
+import delivery_note
 import sales_invoice
+import sales_order
+from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 
 from patched.erpnext.selling.doctype.customer.customer import check_credit_limit
 
@@ -70,52 +69,33 @@ def before_save(doc, method=None):
 
 def on_submit(doc, method=None):
     check_oc_sales_order_totals(doc)
-    # try:
-    items = [item for item in doc.items if item.qty > 0]
-    # items = []
-    # for i in doc.items:
-    #     if i.get('qty') > 0:
-    #         items.append(i)
-    #     else:
-    #         frappe.throw('There are no items in sales order')
-    try:
-        doc.update(
-            {'items': items},
-        )
-        doc.save()
-    except:
-        frappe.throw('There are no items in sales order')
-    if is_oc_sales_order(doc):
+    if sales_order.is_oc_sales_order(doc):
         if not doc.get('oc_is_auto_processing'):
             # submitting orders manually
             # create sales invoice
-            si = make_sales_invoice(doc.get('name'))
+            si = sales_order.make_sales_invoice(doc.get('name'))
             si.insert()
             frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
 
             # create delivery note
-            dn = make_delivery_note(doc.get('name'))
+            dn = erpnext_sales_order.make_delivery_note(doc.get('name'))
             dn.insert()
             frappe.msgprint('Delivery Note %s was created automatically' % dn.get('name'))
 
             # create packing slip
-            ps = make_packing_slip(dn.get('name'))
+            ps = delivery_note.make_packing_slip(dn.get('name'))
             ps.get_items()
             ps.insert()
             frappe.msgprint('Packing Slip %s was created automatically' % ps.get('name'))
 
     else:
-        si = make_sales_invoice(doc.get('name'))
-        si.insert()
-        frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
-
         # create delivery note
-        dn = make_delivery_note(doc.get('name'))
+        dn = erpnext_sales_order.make_delivery_note(doc.get('name'))
         dn.insert()
         frappe.msgprint('Delivery Note %s was created automatically' % dn.get('name'))
 
         # create packing slip
-        ps = make_packing_slip(dn.get('name'))
+        ps = delivery_note.make_packing_slip(dn.get('name'))
         ps.get_items()
         ps.insert()
         frappe.msgprint('Packing Slip %s was created automatically' % ps.get('name'))
@@ -143,7 +123,7 @@ def on_trash(doc, method=None):
 
 
 def check_oc_sales_order_totals(doc):
-    if is_oc_sales_order(doc):
+    if sales_order.is_oc_sales_order(doc):
         if doc.get('oc_check_totals'):
             oc_sub_total = get_rate_from_total_str(doc.get('oc_sub_total') or '')
             # oc_shipping_total = get_rate_from_total_str(doc.get('oc_shipping_total') or '')
@@ -438,17 +418,17 @@ def on_sales_order_added(doc_sales_order):
             sync_order_status_to_opencart(doc_sales_order, new_order_status=OC_ORDER_STATUS_PROCESSING)
 
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
-            si = make_sales_invoice(doc_sales_order.get('name'))
+            si = sales_order.make_sales_invoice(doc_sales_order.get('name'))
             si.insert()
             si = frappe.get_doc('Sales Invoice', si.get('name'))
-            on_sales_invoice_added(si)
+            sales_invoice.on_sales_invoice_added(si)
         else:
             is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company)
             if is_credit_ok:
-                si = make_sales_invoice(doc_sales_order.get('name'))
+                si = sales_order.make_sales_invoice(doc_sales_order.get('name'))
                 si.insert()
                 si = frappe.get_doc('Sales Invoice', si.get('name'))
-                on_sales_invoice_added(si)
+                sales_invoice.on_sales_invoice_added(si)
             else:
                 doc_sales_order.stop_sales_order()
 

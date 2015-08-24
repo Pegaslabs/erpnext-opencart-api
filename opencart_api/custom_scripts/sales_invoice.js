@@ -7,13 +7,6 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 	}
 }
 
-cur_frm.cscript['Make Delivery Note'] = function() {
-	frappe.model.open_mapped_doc({
-		method: "opencart_api.sales_invoice.make_delivery_note",
-		frm: cur_frm
-	})
-}
-
 cur_frm.cscript.setup_dashboard = function(doc) {
 	cur_frm.dashboard.reset(doc);
 	if (doc.sales_order) {

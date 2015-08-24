@@ -6,10 +6,9 @@ from frappe.utils import cstr, flt, getdate, comma_and
 from frappe import _
 from frappe.model.mapper import get_mapped_doc, map_doc
 
-# from erpnext.controllers.selling_controller import SellingController
+from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 
 import territories
-import sales_invoice
 from sales_invoice import resolve_mode_of_payment
 import mode_of_payments
 
@@ -124,63 +123,6 @@ def is_oc_sales_order(doc):
 
 
 @frappe.whitelist()
-def make_delivery_note(source_name, target_doc=None):
-    def set_missing_values(source, target):
-        if source.po_no:
-            if target.po_no:
-                target_po_no = target.po_no.split(", ")
-                target_po_no.append(source.po_no)
-                target.po_no = ", ".join(list(set(target_po_no))) if len(target_po_no) > 1 else target_po_no[0]
-            else:
-                target.po_no = source.po_no
-
-        target.ignore_pricing_rule = 1
-        target.run_method("set_missing_values")
-        target.run_method("calculate_taxes_and_totals")
-
-    def update_item(source, target, source_parent):
-        target.base_amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.base_rate)
-        target.amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.rate)
-        target.qty = flt(source.qty) - flt(source.delivered_qty)
-
-    db_delivery_docstatus = frappe.db.get_value('Delivery Note', {'sales_order': source_name}, 'docstatus')
-    if db_delivery_docstatus is not None and db_delivery_docstatus != 2:
-        frappe.throw('Cannot make new Delivery Note: Delivery Note is already created and its docstatus is not canceled.')
-
-    target_doc = get_mapped_doc("Sales Order", source_name, {
-        "Sales Order": {
-            "doctype": "Delivery Note",
-            "field_map": {
-                "name": "sales_order",
-            },
-            "validation": {
-                "docstatus": ["=", 1]
-            }
-        },
-        "Sales Order Item": {
-            "doctype": "Delivery Note Item",
-            "field_map": {
-                "rate": "rate",
-                "name": "so_detail",
-                "parent": "against_sales_order",
-            },
-            "postprocess": update_item,
-            "condition": lambda doc: doc.delivered_qty < doc.qty
-        },
-        "Sales Taxes and Charges": {
-            "doctype": "Sales Taxes and Charges",
-            "add_if_empty": True
-        },
-        "Sales Team": {
-            "doctype": "Sales Team",
-            "add_if_empty": True
-        }
-    }, target_doc, set_missing_values)
-
-    return target_doc
-
-
-@frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None):
     def postprocess(source, target):
         set_missing_values(source, target)
@@ -210,8 +152,7 @@ def make_sales_invoice(source_name, target_doc=None):
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
         target.income_account = get_income_account(source_parent)
 
-    db_sales_invoice_docstatus = frappe.db.get_value('Sales Invoice', {'sales_order': source_name}, 'docstatus')
-    if db_sales_invoice_docstatus is not None and db_sales_invoice_docstatus != 2:
+    if erpnext_sales_order.has_active_si(source_name):
         frappe.throw('Cannot make new Sales Invoice: Sales Invoice is already created and its docstatus is not canceled.')
 
     doclist = get_mapped_doc("Sales Order", source_name, {
