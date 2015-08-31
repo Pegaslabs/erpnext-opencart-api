@@ -190,7 +190,6 @@
 "","""Packing Slip-scan_items_log_sb""","Packing Slip","Section Break","","check_scanned_items","","","","scan_items_log_sb",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-scan_items_log""","Packing Slip","HTML","Scan Items Log","scan_items_log_sb","","","","scan_items_log",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Packing Slip-sales_order""","Packing Slip","Link","Sales Order","letter_head","","Sales Order","","sales_order",0,0,0,0,"","",1,"",0,0,0,0,0,0
-"","""Bin-bin_location""","Bin","Data","Bin Location","warehouse","","","","bin_location",0,0,0,0,"","",0,"",0,0,0,1,1,0
 "","""Packing Slip Item-bin_location""","Packing Slip Item","Data","Bin Location","","","","","bin_location",0,0,0,0,"","",0,"",0,0,0,0,1,0
 "","""Packing Slip Item-warehouse""","Packing Slip Item","Data","Warehouse","","","","","warehouse",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Company-default_print_heading""","Company","Link","Print Heading","default_letter_head","","Print Heading","","default_print_heading",0,0,0,0,"","",0,"",1,0,1,0,0,0
