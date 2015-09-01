@@ -61,10 +61,17 @@ def before_submit(self, method=None):
 
 
 def on_submit(self, method=None):
-    if not erpnext_sales_order.has_active_si(frappe.db.get_value('Delivery Note', self.name, 'sales_order')):
+    sales_order = frappe.db.get_value('Delivery Note', self.name, 'sales_order')
+    if not erpnext_sales_order.has_active_si(sales_order):
         si = erpnext_delivery_note.make_sales_invoice(self.get('name'))
         si.insert()
-        frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
+        si.submit()
+        frappe.msgprint('Sales Invoice %s was created and submitted automatically' % si.get('name'))
+    else:
+        for si in frappe.get_all('Sales Invoice', fields=['name'], filters={'sales_order': sales_order, 'docstatus': 0}):
+            si = frappe.get_doc('Sales Invoice', si.get('name'))
+            si.submit()
+            frappe.msgprint('Sales Invoice %s was submitted automatically' % si.get('name'))
 
 
 @frappe.whitelist()
