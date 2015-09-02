@@ -22,6 +22,7 @@ def on_submit(doc, method=None):
     # if dn.get('docstatus') == 0 and packing_slips and all(map(lambda ps: ps.docstatus == 1, packing_slips)):
     if dn.get('docstatus') == 0:  # "Draft" or "Ready to ship"
         frappe.db.set_value('Delivery Note', doc.get('delivery_note'), 'status', 'Ready to ship')
+        frappe.clear_cache()
 
 
 def on_cancel(doc, method=None):

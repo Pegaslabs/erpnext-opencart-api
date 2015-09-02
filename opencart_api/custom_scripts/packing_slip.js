@@ -5,6 +5,20 @@ cur_frm.cscript.on_submit = function(doc, сdt, сdn) {
     frappe.set_route("Form", "Delivery Note", doc.delivery_note);
 }
 
+
+cur_frm.cscript.validate_duplicate_items = function(doc, ps_detail) {
+    for(var i=0; i<ps_detail.length; i++) {
+        for(var j=0; j<ps_detail.length; j++) {
+            if(i!=j && ps_detail[i].item_code && ps_detail[i].item_code==ps_detail[j].item_code) {
+                msgprint(__("You have entered duplicate items. Please rectify and try again."));
+                validated = false;
+                return;
+            }
+        }
+    }
+}
+
+
 function print_scan_items_log() {
     var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
     var $th = $('<tr style="background-color: #F7FAFC; font-size: 85%; color: #8D99A6"></tr>');

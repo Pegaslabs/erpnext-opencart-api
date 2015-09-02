@@ -36,28 +36,68 @@ def before_submit(self, method=None):
             new_doc_back_order = make_back_order(self.name, packing_slip_doc=ps)
             back_order_item_map = {i.item_code: i for i in doc_back_order.items}
             for new_bo_item in new_doc_back_order.items:
-                bo_item = back_order_item_map.get()
+                bo_item = back_order_item_map.get(new_bo_item.get('item_code'))
                 if bo_item:
-                    bo_item.update({'qty': flt(bo_item.qty) + flt(new_bo_item.qty)})
+                    bo_item.update({
+                        'qty': flt(bo_item.qty) + flt(new_bo_item.qty),
+                        'amount': (flt(bo_item.qty) + flt(new_bo_item.qty)) * flt(bo_item.rate)})
                     bo_item.save()
                 else:
-                    # TODO
-                    pass
+                    doc_back_order.append('items', {
+                        'item_code': new_bo_item.item_code,
+                        'item_name': new_bo_item.item_name,
+                        'description': new_bo_item.description,
+                        'stock_uom': new_bo_item.stock_uom,
+                        'qty': flt(new_bo_item.qty),
+                        'amount': flt(new_bo_item.amount),
+                        'rate': new_bo_item.rate,
+                        'warehouse': new_bo_item.warehouse,
+                        'discount_percentage': new_bo_item.discount_percentage,
+                        'price_list_rate': new_bo_item.price_list_rate,
+                        'base_price_list_rate': new_bo_item.base_price_list_rate,
+                        'base_amount': new_bo_item.base_amount,
+                        'base_rate': new_bo_item.base_rate,
+                        'prevdoc_docname': new_bo_item.prevdoc_docname,
+                        'image': new_bo_item.image
+                    })
             doc_back_order.save()
             frappe.msgprint('Back Order %s is updated successfully' % (back_orders[0].get('name'),))
+            update_delivery_note_from_packing_slip(self, ps)
+            frappe.clear_cache()
         else:
             doc_back_order = make_back_order(self.name, packing_slip_doc=ps)
             doc_back_order.save()
             frappe.msgprint('Back Order %s is created and linked to Sales Order %s' % (doc_back_order.name, self.sales_order))
-            for item in self.items:
-                dn_item = dn_details_map.get(item.item_code)
-                if flt(dn_item.get('packed_qty')) < flt(dn_item.get('qty')):
-                    item.update({'qty': dn_item.get('packed_qty')})
+            update_delivery_note_from_packing_slip(self, ps)
+            frappe.clear_cache()
     else:
+        if len(self.items) > len(dn_details):
+            frappe.msgprint('Please enable back order items or adjust items manually.')
+            frappe.throw('Some items from Delivery Note were not packed in Packing Slip %s.' % ps.name)
         for item in dn_details:
             if flt(item.get('packed_qty')) < flt(item.get('qty')):
                 frappe.msgprint('Please enable back order items or adjust items manually.')
                 frappe.throw('Only %s of %s %s items from Delivery Note were packed in Packing Slip %s.' % (cstr(item.get('packed_qty')), cstr(item.get('qty')), item.get('item_code'), ps.name))
+
+
+def update_delivery_note_from_packing_slip(doc_delivery_note, packing_slip_doc):
+    ps_item_map = {i.item_code: i for i in packing_slip_doc.items}
+    delivery_note_item_map = {i.item_code: i for i in doc_delivery_note.items}
+    for dn_item_code, dn_doc_item in delivery_note_item_map.items():
+        dln_doc_item = ps_item_map.get(dn_item_code)
+        if dln_doc_item:
+            dn_doc_item.update({
+                'qty': flt(dln_doc_item.qty),
+            })
+        else:
+            doc_delivery_note.items.remove(dn_doc_item)
+        if len(doc_delivery_note.items) > 1 and dn_doc_item.qty == 0:
+            doc_delivery_note.items.remove(dn_doc_item)
+        doc_delivery_note.validate()
+    sales_order = frappe.db.get_value('Delivery Note', doc_delivery_note.name, 'sales_order')
+    if erpnext_sales_order.has_active_si(sales_order):
+        si = frappe.get_doc('Sales Invoice', {'sales_order': sales_order})
+        si.delete()
 
 
 def on_submit(self, method=None):
@@ -67,6 +107,7 @@ def on_submit(self, method=None):
         si.insert()
         si.submit()
         frappe.msgprint('Sales Invoice %s was created and submitted automatically' % si.get('name'))
+        frappe.clear_cache()
     else:
         for si in frappe.get_all('Sales Invoice', fields=['name'], filters={'sales_order': sales_order, 'docstatus': 0}):
             si = frappe.get_doc('Sales Invoice', si.get('name'))
