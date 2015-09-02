@@ -58,11 +58,6 @@ frappe.scan_prompt = function(fields, callback, title, primary_label) {
         callback(values);
     })
 
-    d.get_input("barcode").on("keypress", function(e) {
-            if(e.which===13) {
-                d.get_primary_btn().trigger("click");
-            }
-    });
     d.$wrapper.on("shown.bs.modal", function() {
         d.$wrapper.find(".modal-body :input:first").get(0).focus();
     })
