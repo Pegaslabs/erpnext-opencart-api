@@ -93,7 +93,7 @@ function on_item_scanned(item, scanned_quantity) {
         if(item_counting.scanned_quantity + scanned_quantity > item_counting.quantity) {
             frappe.msgprint("Warning. It is already scanned " + item_counting.scanned_quantity + " of " + item_counting.quantity + " items (Item Code: " + item.item_code + ", Barcode: " + item.barcode + ").");
         } else {
-            item_counting.scanned_quantity += 1;
+            item_counting.scanned_quantity = scanned_quantity;
             item_counting["barcode"] = item.barcode;
             cur_frm.cscript.scanned_items.push({
                 "item_code": item.item_code,
