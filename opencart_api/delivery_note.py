@@ -125,9 +125,14 @@ def make_back_order(source_name, target_doc=None, packing_slip_doc=None):
 
     def update_item(obj, target, source_parent):
         dn_item = dn_details_map.get(obj.item_code)
-        target.qty = flt(dn_item.get('qty')) - flt(dn_item.get('packed_qty')) if flt(dn_item.get('qty')) > flt(dn_item.get('packed_qty')) else 0
-        target.base_amount = flt(target.qty) * flt(obj.base_rate)
-        target.amount = flt(target.qty) * flt(obj.rate)
+        if dn_item:
+            target.qty = flt(dn_item.get('qty')) - flt(dn_item.get('packed_qty')) if flt(dn_item.get('qty')) > flt(dn_item.get('packed_qty')) else 0
+            target.base_amount = flt(target.qty) * flt(obj.base_rate)
+            target.amount = flt(target.qty) * flt(obj.rate)
+        else:
+            target.qty = flt(obj.qty)
+            target.base_amount = flt(obj.qty) * flt(obj.base_rate)
+            target.amount = flt(obj.qty) * flt(obj.rate)
 
     doclist = get_mapped_doc("Delivery Note", source_name, {
         "Delivery Note": {
