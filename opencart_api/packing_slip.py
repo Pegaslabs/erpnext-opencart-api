@@ -2,8 +2,6 @@ from __future__ import unicode_literals
 
 import frappe
 
-from bins import get_bin_location
-
 
 def validate(doc, method=None):
     # update tracking number from packing slip to delivery note
@@ -34,29 +32,6 @@ def on_cancel(doc, method=None):
         # dn.cancel()
     elif dn.get('docstatus') == 2:  # "Cancelled":
         pass
-
-
-# overriding PackingSlip class method
-def update_item_details(self):
-        """
-            Fill empty columns in Packing Slip Item
-        """
-        if not self.from_case_no:
-            self.from_case_no = self.get_recommended_case_no()
-
-        for d in self.get("items"):
-            res = frappe.db.get_value("Item", d.item_code, ["net_weight", "weight_uom"], as_dict=True)
-
-            if res and len(res) > 0:
-                d.net_weight = res["net_weight"]
-                d.weight_uom = res["weight_uom"]
-
-            d.warehouse = frappe.db.get_value('Delivery Note Item', {'item_code': d.item_code}, 'warehouse')
-            d.bin_location = get_bin_location(d.item_code, d.warehouse)
-
-
-from erpnext.stock.doctype.packing_slip.packing_slip import PackingSlip
-setattr(PackingSlip, 'update_item_details', update_item_details)
 
 
 @frappe.whitelist()

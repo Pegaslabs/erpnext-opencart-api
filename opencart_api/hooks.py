@@ -208,6 +208,6 @@ scheduler_events = {
 # Overriding Whitelisted Methods
 # ------------------------------
 #
-override_whitelisted_methods = {
-    "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
-}
+# override_whitelisted_methods = {
+#     "runserverobj": ["opencart_api.custom_hooks.run_method.runserverobj"]
+# }
