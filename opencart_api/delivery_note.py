@@ -82,8 +82,8 @@ def before_submit(self, method=None):
 
 def update_delivery_note_from_packing_slip(doc_delivery_note, packing_slip_doc):
     ps_item_map = {i.item_code: i for i in packing_slip_doc.items}
-    delivery_note_item_map = {i.item_code: i for i in doc_delivery_note.items}
-    for dn_item_code, dn_doc_item in delivery_note_item_map.items():
+    dn_item_map = {i.item_code: i for i in doc_delivery_note.items}
+    for dn_item_code, dn_doc_item in dn_item_map.items():
         dln_doc_item = ps_item_map.get(dn_item_code)
         if dln_doc_item:
             dn_doc_item.update({
@@ -91,7 +91,7 @@ def update_delivery_note_from_packing_slip(doc_delivery_note, packing_slip_doc):
             })
         else:
             doc_delivery_note.items.remove(dn_doc_item)
-        if len(doc_delivery_note.items) > 1 and dn_doc_item.qty == 0:
+        if len(doc_delivery_note.items) > 1 and dn_doc_item.qty == 0 and dn_doc_item in doc_delivery_note.items:
             doc_delivery_note.items.remove(dn_doc_item)
         doc_delivery_note.validate()
     sales_order = frappe.db.get_value('Delivery Note', doc_delivery_note.name, 'sales_order')
