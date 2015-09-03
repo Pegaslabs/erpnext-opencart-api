@@ -635,19 +635,23 @@ def pull_added_from(site_name, silent=False):
                         break
 
                     # price_list_rate = frappe.db.get_value('Item Price', {'price_list': price_list_name, 'item_code': doc_item.get('item_code')}, 'price_list_rate') or 0
-                    doc_order.append('items', {
+                    so_item = {
                         'item_code': doc_item.get('item_code'),
                         # 'base_price_list_rate': price_list_rate,
                         # 'price_list_rate': price_list_rate,
                         'warehouse': doc_order.get('warehouse') or site_doc.get('items_default_warehouse'),
                         'qty': product.get('quantity'),
-                        'base_rate': product.get('price'),
-                        'base_amount': product.get('total'),
-                        'rate': product.get('price'),
-                        'amount': product.get('total'),
                         'currency': product.get('currency_code'),
                         'description': product.get('name')
-                    })
+                    }
+                    if is_pos_payment_method(doc_order.get('oc_pm_code')):
+                        so_item.update({
+                            'base_rate': product.get('price'),
+                            'base_amount': product.get('total'),
+                            'rate': product.get('price'),
+                            'amount': product.get('total'),
+                        })
+                    doc_order.append('items', so_item)
                     items_count += 1
                 else:
                     if not items_count:
