@@ -8,7 +8,7 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 	} else {
 		cur_frm.cscript.setup_dashboard(doc);
 	}
-       
+
 	if(doc.oc_site) {
 		frappe.call({
 			method: "opencart_api.oc_site.get_order_status_name_list",
@@ -284,7 +284,7 @@ function init_back_order_info(doc, dt, dn) {
 
 
 frappe.ui.form.on("Sales Order", "load_items_from_back_order", function(frm, cdt, cdn) {
-	if (cur_frm.cscript.back_order_list.length > 0) {
+	if (cur_frm.cscript.back_order_list && cur_frm.cscript.back_order_list.length > 0) {
 		back_order = cur_frm.cscript.back_order_list[0];
 		frappe.prompt([{label:"Back Order", fieldtype:"Link", options:"Back Order", reqd: 1, default: back_order.name},
 			           {label:"Submit Back Order", fieldtype:"Check", default: 1}],

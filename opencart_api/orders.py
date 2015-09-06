@@ -71,11 +71,12 @@ def on_submit(doc, method=None):
     check_oc_sales_order_totals(doc)
     if sales_order.is_oc_sales_order(doc):
         if not doc.get('oc_is_auto_processing'):
-            # submitting orders manually
-            # create sales invoice
-            si = sales_order.make_sales_invoice(doc.get('name'))
-            si.insert()
-            frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
+            if is_pos_payment_method(doc.get('oc_pm_code')):
+                # submitting orders manually
+                # create sales invoice
+                si = sales_order.make_sales_invoice(doc.get('name'))
+                si.insert()
+                frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
 
             # create delivery note
             dn = erpnext_sales_order.make_delivery_note(doc.get('name'))
