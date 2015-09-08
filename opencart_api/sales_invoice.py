@@ -18,16 +18,19 @@ from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sale
 @frappe.whitelist()
 def resolve_mode_of_payment(payment_method_code, country_territory):
     parent_territory = frappe.db.get_value('Territory', country_territory, 'parent_territory')
-    all_mops = frappe.db.get_all('Mode of Payment', fields=['name'], filters={'oc_payment_method_code': payment_method_code})
+    all_mops = frappe.db.get_all('Mode of Payment', fields=['name', 'oc_payment_method_code'])
     for mop in all_mops:
-        doc_mop = frappe.get_doc('Mode of Payment', mop.get('name'))
-        for app_territory in doc_mop.get('oc_territories'):
-            if app_territory.get('territory') == 'All Territories':
-                return doc_mop.get('name')
-            elif app_territory.get('territory') == 'Rest Of The World' and parent_territory == 'Rest Of The World':
-                return doc_mop.get('name')
-            elif app_territory.get('territory') == country_territory:
-                return doc_mop.get('name')
+        if mop.get('oc_payment_method_code'):
+            for i in mop.get('oc_payment_method_code').split(','):
+                if i.strip() == payment_method_code:
+                    doc_mop = frappe.get_doc('Mode of Payment', mop.get('name'))
+                    for app_territory in doc_mop.get('oc_territories'):
+                        if app_territory.get('territory') == 'All Territories':
+                            return doc_mop.get('name')
+                        elif app_territory.get('territory') == 'Rest Of The World' and parent_territory == 'Rest Of The World':
+                            return doc_mop.get('name')
+                        elif app_territory.get('territory') == country_territory:
+                            return doc_mop.get('name')
     frappe.msgprint('Cannot resolve Mode Of Payment for Opencart payment method code "%s" and Territory "%s".\nPlease setup Mode Of Payment entries.' % (payment_method_code, country_territory))
     return ''
 

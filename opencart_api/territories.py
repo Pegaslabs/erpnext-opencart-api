@@ -796,7 +796,8 @@ COUNTRY_TO_TERRITORY_MAP = {
     "Western Sahara": {"name": "Western Sahara"},
     "Yemen": {"name": "Yemen"},
     "Zambia": {"name": "Zambia"},
-    "Zimbabwe": {"name": "Zimbabwe"}
+    "Zimbabwe": {"name": "Zimbabwe"},
+    "Rest Of The World": {"name": "Rest Of The World"}
 }
 
 
