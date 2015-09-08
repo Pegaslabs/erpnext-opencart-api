@@ -35,5 +35,8 @@ def on_cancel(doc, method=None):
 
 
 @frappe.whitelist()
-def get_item_by_barcode(barcode):
-    return frappe.db.get('Item', {'barcode': barcode})
+def get_item_by_barcode_or_item_code(barcode, item_code):
+    if barcode:
+        return frappe.db.get('Item', {'barcode': barcode})
+    elif item_code:
+        return frappe.db.get('Item', {'item_code': item_code.upper()})

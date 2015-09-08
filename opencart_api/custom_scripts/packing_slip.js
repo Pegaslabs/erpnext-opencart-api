@@ -71,11 +71,15 @@ frappe.scan_prompt_dialog1 = function(callback, notification) {
                         "</div>"
             },
             {fieldtype:"Section Break"},
-            {label:"Barcode", fieldtype:"Data", reqd: 1}
+            {label:"Barcode", fieldtype:"Data"},
+            {fieldtype:"Column Break"},
+            {label:"Item Code", fieldtype:"Data"}
         ];
     } else {
         var fields = [
-            {label:"Barcode", fieldtype:"Data", reqd: 1}
+            {label:"Barcode", fieldtype:"Data"},
+            {fieldtype:"Column Break"},
+            {label:"Item Code", fieldtype:"Data"}
         ];
     }
     var d = new frappe.ui.Dialog({
@@ -97,7 +101,7 @@ frappe.scan_prompt_dialog1 = function(callback, notification) {
     d.show();
 }
 
-frappe.scan_prompt_dialog2 = function(barcode, item, callback) {
+frappe.scan_prompt_dialog2 = function(barcode, item_code, item, callback) {
     var fields = [
         {
             fieldname:"item_description",
@@ -131,8 +135,15 @@ frappe.scan_prompt_dialog2 = function(barcode, item, callback) {
                             "<div style=\"\" class=\"control-value like-disabled-input\">" + barcode + "</div>" +
                         "</div>" +
                     "</div>"
-        },
+        },      
         {fieldtype:"Column Break"},
+        {
+            label:"Package No",
+            fieldname: "package_no",
+            fieldtype:"Int",
+            reqd: 1,
+            default: 1
+        },
         {
             label:"Quantity",
             fieldname: "qty",
@@ -162,15 +173,15 @@ frappe.scan_prompt_dialog2 = function(barcode, item, callback) {
     d.show();
 }
 
-frappe.scan_prompt = function(barcode, item, callback, notification) {
+frappe.scan_prompt = function(barcode, item_code, item, callback, notification) {
     // initial dialog to enter barcode and quantity
-    if (barcode == undefined && item == undefined) {
+    if ((barcode == undefined || item_code == undefined) && item == undefined) {
         frappe.scan_prompt_dialog1(callback, notification);
         return;
     }
-    if (barcode) {
+    if (barcode || item_code) {
         if (item) {
-            frappe.scan_prompt_dialog2(barcode, item, callback);
+            frappe.scan_prompt_dialog2(barcode, item_code, item, callback);
         } else {
             frappe.scan_prompt_dialog1(callback, notification);
         }
@@ -179,78 +190,22 @@ frappe.scan_prompt = function(barcode, item, callback, notification) {
     }
 }
 
-// ---
-//             var d = new frappe.ui.Dialog({
-//                 title: __("Upload User Permissions"),
-//                 fields: [
-//                     {
-//                         fieldtype:"HTML",
-//                         options: '<p class="text-muted"><ol>'+
-//                             "<li>"+__("Upload CSV file containing all user permissions in the same format as Download.")+"</li>"+
-//                             "<li><strong>"+__("Any existing permission will be deleted / overwritten.")+"</strong></li>"+
-//                         '</p>'
-//                     },
-//                     {
-//                         fieldtype:"Attach", fieldname:"attach",
-//                     }
-//                 ],
-//                 primary_action_label: __("Upload and Sync"),
-//                 primary_action: function() {
-//                     frappe.call({
-//                         method:"frappe.core.page.user_permissions.user_permissions.import_user_permissions",
-//                         args: {
-//                             filedata: d.fields_dict.attach.get_value()
-//                         },
-//                         callback: function(r) {
-//                             if(!r.exc) {
-//                                 msgprint(__("Permissions Updated"));
-//                                 d.hide();
-//                             }
-//                         }
-//                     });
-//                 }
-//             });
-//             d.show();
-
-
-// --------------
-// var d = new frappe.ui.Dialog({
-//                 title: "Workflow: "
-//                     + frappe.workflow.workflows[me.frm.doctype].name
-//             })
-//             var next_html = $.map(frappe.workflow.get_transitions(me.frm.doctype, state),
-//                 function(d) {
-//                     return d.action.bold() + __(" by Role ") + d.allowed;
-//                 }).join(", ") || __("None: End of Workflow").bold();
-
-//             $(d.body).html("<p>"+__("Current status")+": " + state.bold() + "</p>"
-//                 + "<p>"+__("Document is only editable by users of role")+": "
-//                     + frappe.workflow.get_document_state(me.frm.doctype,
-//                         state).allow_edit.bold() + "</p>"
-//                 + "<p>"+__("Next actions")+": "+ next_html +"</p>"
-//                 + (me.frm.doc.__islocal ? ("<div class='alert alert-info'>"
-//                     +__("Workflow will start after saving.")+"</div>") : "")
-//                 + "<p class='help'>"+__("Note: Other permission rules may also apply")+"</p>"
-//                 ).css({padding: '15px'});
-//             d.show();
-// ==================
-
-
-function scan_items(frm, cdt, cdn, barcode, item, callback, notification) {
+function scan_items(frm, cdt, cdn, barcode, item_code, item, callback, notification) {
     if (frm.doc.items) {
         check_scanned_items(frm);
         if (callback == undefined) {
             callback = function(data1) {
                 frappe.call({
-                    method:"opencart_api.packing_slip.get_item_by_barcode",
+                    method:"opencart_api.packing_slip.get_item_by_barcode_or_item_code",
                     args: {
-                        barcode: data1.barcode
+                        barcode: data1.barcode || "",
+                        item_code: data1.item_code || ""
                     },
                     callback: function(r) {
                         if(!r.exc) {
                             if(r.message) {
                                 var item = r.message;
-                                scan_items(frm, cdt, cdn, data1.barcode, item, function(data2) {
+                                scan_items(frm, cdt, cdn, data1.barcode, data1.item_code, item, function(data2) {
                                     var items = frm.doc.items || [];
                                     var item_found = false;
                                     for(var i = 0; i < items.length; i++) {
@@ -261,36 +216,127 @@ function scan_items(frm, cdt, cdn, barcode, item, callback, notification) {
                                             }
                                             if (items[i].scanned_qty + data2.qty > items[i].qty) {
                                                 var exceed_qty = items[i].scanned_qty + data2.qty - items[i].qty;
-                                                scan_items(frm, cdt, cdn, data1.barcode, undefined, undefined, ["danger", "Not added: total quantity of scanned items will exceed the required quantity more then " + exceed_qty + " items"]);
+                                                scan_items(frm, cdt, cdn, data1.barcode, data1.item_code, undefined, undefined, ["danger", "Not added: total quantity of scanned items will exceed the required quantity more then " + exceed_qty + " items"]);
                                                 break;
                                             }
                                             items[i].scanned_qty += data2.qty;
-                                            items[i].barcode = data2.barcode;
+                                            if (data2.barcode) {
+                                                items[i].barcode = data2.barcode;
+                                            }
+                                            var package_no = data2.package_no;
+                                            var packages = {};
+                                            if (items[i].packages_json) {
+                                                packages = JSON.parse(items[i].packages_json);
+                                                if (packages[package_no]) {
+                                                    var pckg = packages[package_no];
+                                                    if (pckg[items[i].item_code]) {
+                                                        pckg[items[i].item_code] += data2.qty;
+                                                    } else {
+                                                        pckg[items[i].item_code] = data2.qty;
+                                                    }
+                                                } else {
+                                                    var pckg = {};
+                                                    pckg[items[i].item_code] = data2.qty;
+                                                    packages[package_no] = pckg;
+                                                }
+                                            } else {
+                                                packages = {};
+                                                var pckg = {};
+                                                pckg[items[i].item_code] = data2.qty;
+                                                packages[package_no] = pckg;
+                                            }
+                                            items[i].packages_json = JSON.stringify(packages);
                                             frm.save("Save", function() {
-                                                scan_items(frm, cdt, cdn, data1.barcode, undefined, undefined, ["success", "Last successful scanning: " + data2.qty + " " + item.item_code + " items"]);
+                                                scan_items(frm, cdt, cdn, data1.barcode, data1.item_code, undefined, undefined, ["success", "Last successful scanning: " + data2.qty + " " + item.item_code + " items"]);
                                             });
                                             break;
                                         }
                                     }
                                     if (!item_found) {
-                                        scan_items(frm, cdt, cdn, data1.barcode, undefined, undefined, ["danger", "Not added: Item \"" + item.item_code + "\" not found in the Item list of this Packing Slip"]);
+                                        scan_items(frm, cdt, cdn, data1.barcode, data1.item_code, undefined, undefined, ["danger", "Not added: Item \"" + item.item_code + "\" not found in the Item list of this Packing Slip"]);
                                     }
                                 });
                             } else {
-                                scan_items(frm, cdt, cdn, data1.barcode, undefined, undefined, ["danger", "Item with barcode \"" + data1.barcode + "\" not found"]);
+                                scan_items(frm, cdt, cdn, data1.barcode, data1.item_code, undefined, undefined, ["danger", "Item with barcode \"" + data1.barcode + "\" not found"]);
                             }
                         }
                     }
                 });
             }
         }
-        frappe.scan_prompt(barcode, item, callback, notification);
+        frappe.scan_prompt(barcode, item_code, item, callback, notification);
     } else {
         frappe.msgprint('You cannot scan items for empty item list.');
     }
 }
 
 frappe.ui.form.on("Packing Slip", "scan_items", scan_items);
+
+
+var sort_object_by_key = function(obj) {
+    var keys = [];
+    var sorted_obj = {};
+
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key)) {
+            keys.push(key);
+        }
+    }
+
+    keys.sort();
+    $.each(keys, function(i, key) {
+        sorted_obj[key] = obj[key];
+    });
+
+    return sorted_obj;
+}
+
+function itemize_packages(frm) {
+    var merged_packages = {};
+    var items = frm.doc.items || [];
+    for(var i = 0; i < items.length; i++) {
+        packages = JSON.parse(items[i].packages_json || "{}");
+        for(var pckg_no in packages) {
+            if (merged_packages[pckg_no]) {
+                var merged_pckg = merged_packages[pckg_no];
+                var pckg = packages[pckg_no];
+                for(var item_code in pckg) {
+                    if (merged_pckg[item_code]) {
+                        merged_pckg[item_code] += pckg[item_code];
+                    } else {
+                        merged_pckg[item_code] = pckg[item_code];
+                    }
+                }
+            } else {
+                merged_packages[pckg_no] = packages[pckg_no];
+            }
+        }
+    }
+    merged_packages = sort_object_by_key(merged_packages);
+
+    var $panel = $('<div class="panel"></div>');
+    for(var pckg_no in merged_packages) {
+        var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
+        var $th = $('<tr style="background-color: #F7FAFC; font-size: 85%; color: #8D99A6"></tr>');
+        var $tbody = $('<tbody id="scan-items-tbody" style="font-family: Helvetica Neue, Helvetica, Arial, "Open Sans", sans-serif;font-size: 11.9px; line-height: 17px; color: #8D99A6;  background-color: #fff;"></tbody>');
+        $th.html('<th>Item Code</th><th>Packed Quantity</th>');
+        for(var item_code in merged_packages[pckg_no]) {
+            $tr = $('<tr>');
+            $tr.append('<td>' + item_code + '</td>');
+            $tr.append('<td>' + merged_packages[pckg_no][item_code] + '</td>');
+            $tbody.append($tr);
+        }
+        $table.append($th).append($tbody);
+        $panel.append('<h4 class="form-section-heading">Package No. ' + pckg_no + '</h4>');
+        $panel.append($table);
+    }
+    var msg = $('<div>').append($panel).html();
+    $(frm.fields_dict['itemized_packages'].wrapper).html(msg);
+}
+
+frappe.ui.form.on("Packing Slip", "itemize_packages", function(frm) {
+    itemize_packages(frm);
+});
 
 function check_scanned_items(frm) {
     // alert("background-color:red");
@@ -325,6 +371,7 @@ cur_frm.cscript.reset_scanned_items = function(doc) {
     var items = doc.items || [];
     for(var i = 0; i < items.length; i++){
         items[i].scanned_qty = 0.0;
+        items[i].packages_json = "{}";
     }
     refresh_field('items');
 }
