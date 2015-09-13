@@ -18,12 +18,11 @@ import items
 import territories
 import sales_taxes_and_charges_template
 from mode_of_payments import is_pos_payment_method
-import delivery_note
 import sales_invoice
 import sales_order
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
-
-from patched.erpnext.selling.doctype.customer.customer import check_credit_limit
+from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
+from erpnext.selling.doctype.customer.customer import check_credit_limit
 
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
@@ -84,7 +83,7 @@ def on_submit(doc, method=None):
             frappe.msgprint('Delivery Note %s was created automatically' % dn.get('name'))
 
             # create packing slip
-            ps = delivery_note.make_packing_slip(dn.get('name'))
+            ps = make_packing_slip(dn.get('name'))
             ps.get_items()
             ps.insert()
             frappe.msgprint('Packing Slip %s was created automatically' % ps.get('name'))
@@ -96,7 +95,7 @@ def on_submit(doc, method=None):
         frappe.msgprint('Delivery Note %s was created automatically' % dn.get('name'))
 
         # create packing slip
-        ps = delivery_note.make_packing_slip(dn.get('name'))
+        ps = make_packing_slip(dn.get('name'))
         ps.get_items()
         ps.insert()
         frappe.msgprint('Packing Slip %s was created automatically' % ps.get('name'))
@@ -582,7 +581,6 @@ def pull_added_from(site_name, silent=False):
                     'customer': doc_customer.name,
                     'transaction_date': getdate(oc_order.get('date_added', '')),
                     'delivery_date': add_days(nowdate(), 7),
-                    'back_order_items': 0,
                     'oc_is_updating': 1,
                     'oc_is_auto_processing': 1,
                     'oc_site': site_name,
@@ -784,7 +782,6 @@ def pull_orders_from_oc(site_name, silent=False):
                     'company': company,
                     'customer': doc_customer.name,
                     'delivery_date': add_days(nowdate(), 7),
-                    'back_order_items': 0,
                     'oc_is_updating': 1,
                     'oc_site': site_name,
                     'oc_order_id': oc_order.id,
@@ -1006,7 +1003,7 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
         if doc_oc_store is None:
             doc_oc_store = oc_stores.get(oc_site, obj_customer.get('oc_store_id'))
             if not doc_oc_store:
-                frappe.msgprint('Cannot resolve Shipping Rule: Customer does not belong to any of Opencart stores')
+                # frappe.msgprint('Cannot resolve Shipping Rule: Customer does not belong to any of Opencart stores')
                 return
 
         # check for strong coincidence

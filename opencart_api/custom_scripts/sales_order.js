@@ -22,7 +22,6 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 			}
 		});
 	}
-	init_back_order_info(doc, dt, dn);
 }
 
 cur_frm.cscript.oc_is_shipping_included_in_total = function() {
@@ -148,56 +147,6 @@ cur_frm.cscript.customer = function() {
 
 }
 
-cur_frm.cscript.item_code = function(doc, cdt, cdn) {
-	var me = this;
-	var item = frappe.get_doc(cdt, cdn);
-
-	if(item.item_code || item.barcode || item.serial_no) {
-		if(!this.validate_company_and_party()) {
-			cur_frm.fields_dict["items"].grid.grid_rows[item.idx - 1].remove();
-		} else {
-			return this.frm.call({
-				method: "erpnext.stock.get_item_details.get_item_details",
-				child: item,
-				args: {
-					args: {
-						item_code: item.item_code,
-						barcode: item.barcode,
-						serial_no: item.serial_no,
-						warehouse: me.frm.doc.warehouse || item.warehouse,
-						parenttype: me.frm.doc.doctype,
-						parent: me.frm.doc.name,
-						customer: me.frm.doc.customer,
-						supplier: me.frm.doc.supplier,
-						currency: me.frm.doc.currency,
-						conversion_rate: me.frm.doc.conversion_rate,
-						price_list: me.frm.doc.selling_price_list ||
-							 me.frm.doc.buying_price_list,
-						price_list_currency: me.frm.doc.price_list_currency,
-						plc_conversion_rate: me.frm.doc.plc_conversion_rate,
-						company: me.frm.doc.company,
-						order_type: me.frm.doc.order_type,
-						is_pos: cint(me.frm.doc.is_pos),
-						is_subcontracted: me.frm.doc.is_subcontracted,
-						transaction_date: me.frm.doc.transaction_date || me.frm.doc.posting_date,
-						ignore_pricing_rule: me.frm.doc.ignore_pricing_rule,
-						doctype: item.doctype,
-						name: item.name,
-						project_name: item.project_name || me.frm.doc.project_name,
-						qty: item.qty
-					}
-				},
-
-				callback: function(r) {
-					if(!r.exc) {
-						me.frm.script_manager.trigger("price_list_rate", cdt, cdn);
-					}
-				}
-			});
-		}
-	}
-}
-
 
 cur_frm.cscript.make_sales_invoice = function() {
 	frappe.model.open_mapped_doc({
@@ -265,49 +214,6 @@ cur_frm.dashboard.add_badge = function(label, no, doctype, onclick) {
 
 		return badge.find(".alert-badge");
 }
-
-
-function init_back_order_info(doc, dt, dn) {
-	cur_frm.cscript.back_order_list = [];
-	frappe.call({
-		method: "opencart_api.sales_order.get_back_order_list",
-		args: {
-			"sales_order": doc.name,
-		},
-		callback: function(r) {
-			if(!r.exc) {
-				cur_frm.cscript.back_order_list = r.message;
-			}
-		}
-	});
-}
-
-
-frappe.ui.form.on("Sales Order", "load_items_from_back_order", function(frm, cdt, cdn) {
-	if (cur_frm.cscript.back_order_list && cur_frm.cscript.back_order_list.length > 0) {
-		back_order = cur_frm.cscript.back_order_list[0];
-		frappe.prompt([{label:"Back Order", fieldtype:"Link", options:"Back Order", reqd: 1, default: back_order.name},
-			           {label:"Submit Back Order", fieldtype:"Check", default: 1}],
-			function(data) {
-				frappe.call({
-					freeze: true,
-					method:"opencart_api.sales_order.load_items_from_back_order",
-					args: {
-						sales_order: frm.doc.name,
-						back_order: data.back_order,
-						submit_back_order: data.submit_back_order
-					},
-					callback: function(r) {
-                        me.frm.reload_doc();
-					}
-				});
-			}
-		, __("Load Items from Back Order"), __("Load"));
-	} else {
-		show_alert("No Back Orders found", 2);
-	}
-});
-
 
 // cur_frm.cscript.validate = function(doc) {
 

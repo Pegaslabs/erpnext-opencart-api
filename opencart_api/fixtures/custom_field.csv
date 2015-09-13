@@ -89,11 +89,8 @@
 "","""Customer-oc_last_sync_to""","Customer","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-shipping_rule""","Customer","Link","Shipping Rule","territory","","Shipping Rule","","shipping_rule",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-load_items_from_back_order""","Sales Order","Button","Load Items from Back Order","items_section","","","","load_items_from_back_order",0,0,0,0,"","0",0,"",0,0,0,0,0,0
-"","""Sales Order-back_order_items_cb""","Sales Order","Column Break","","load_items_from_back_order","","","","back_order_items_cb",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-back_order_items""","Sales Order","Check","Back order items on save","back_order_items_cb","","","","back_order_items",0,0,0,0,"","1",0,"",0,0,0,0,0,0
-"","""Sales Order-back_order_items_sb""","Sales Order","Section Break","","back_order_items","","","","back_order_items_sb",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-warehouse""","Sales Order","Link","Default Delivery Warehouse","delivery_date","","Warehouse","","warehouse",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_settings""","Sales Order","Section Break","Opencart Settings","po_no","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_settings""","Sales Order","Section Break","Opencart Settings","packed_items","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_is_updating""","Sales Order","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_is_auto_processing""","Sales Order","Check","Is Updating","oc_is_updating","","","","oc_is_auto_processing",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_site""","Sales Order","Link","Opencart Site","oc_is_updating","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
@@ -181,5 +178,4 @@
 "","""Warehouse-country""","Warehouse","Link","Country","city","","Country","","country",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-sales_order""","Delivery Note","Link","Sales Order","po_no","","Sales Order","","sales_order",0,0,0,0,"","",1,"",0,0,0,0,0,0
-"","""Delivery Note-back_order_items""","Delivery Note","Check","Back order items on submit","conversion_rate","","","","back_order_items",0,0,0,0,"","0",0,"",0,0,0,0,0,0
 "","""Company-default_print_heading""","Company","Link","Print Heading","default_letter_head","","Print Heading","","default_print_heading",0,0,0,0,"","",0,"",1,0,1,0,0,0

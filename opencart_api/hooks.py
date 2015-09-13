@@ -37,11 +37,11 @@ doc_events = {
         "before_save": "opencart_api.orders.before_save",
         # "before_insert": "opencart_api.orders.before_insert",
         # "after_insert": "opencart_api.orders.after_insert",
-        "validate": "opencart_api.sales_order.validate",
+        # "validate": "opencart_api.sales_order.validate",
         # "before_submit": "opencart_api.orders.before_submit",
         # "before_cancel": "opencart_api.orders.before_cancel",
         # "before_update_after_submit": "opencart_api.orders.before_update_after_submit",
-        "on_update": "opencart_api.sales_order.on_update",
+        # "on_update": "opencart_api.sales_order.on_update",
         "on_submit": "opencart_api.orders.on_submit",
         # "on_cancel": "opencart_api.orders.on_cancel",
         # "on_update_after_submit": "opencart_api.orders.on_update_after_submit",
@@ -53,13 +53,10 @@ doc_events = {
     "Purchase Receipt": {
     },
     "Delivery Note": {
-        "validate": "opencart_api.delivery_note.validate",
-        "before_submit": "opencart_api.delivery_note.before_submit",
+        # "before_submit": "opencart_api.delivery_note.before_submit",
         "on_submit": "opencart_api.delivery_note.on_submit"
     },
     "Packing Slip": {
-        "validate": "opencart_api.packing_slip.validate",
-        "before_submit": "opencart_api.packing_slip.before_submit",
         "on_submit": "opencart_api.packing_slip.on_submit",
         "on_cancel": "opencart_api.packing_slip.on_cancel"
     },
@@ -75,7 +72,6 @@ doc_events = {
 
 
 doctype_js = {
-    "Customer": ["custom_scripts/customer.js"],
     "Journal Entry": ["custom_scripts/journal_entry.js"],
     "Purchase Order": ["custom_scripts/purchase_order.js"],
     "Supplier Quotation": ["custom_scripts/supplier_quotation.js"],
