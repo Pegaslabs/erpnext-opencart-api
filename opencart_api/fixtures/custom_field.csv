@@ -176,6 +176,5 @@
 "","""Warehouse-oc_sync_to""","Warehouse","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_last_sync_to""","Warehouse","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-country""","Warehouse","Link","Country","city","","Country","","country",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Delivery Note-oc_tracking_number""","Delivery Note","Data","Tracking Number","contact_email","","","","oc_tracking_number",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Delivery Note-sales_order""","Delivery Note","Link","Sales Order","po_no","","Sales Order","","sales_order",0,0,0,0,"","",1,"",0,0,0,0,0,0
 "","""Company-default_print_heading""","Company","Link","Print Heading","default_letter_head","","Print Heading","","default_print_heading",0,0,0,0,"","",0,"",1,0,1,0,0,0
