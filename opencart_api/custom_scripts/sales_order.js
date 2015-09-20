@@ -147,14 +147,12 @@ cur_frm.cscript.customer = function() {
 
 }
 
-
 cur_frm.cscript.make_sales_invoice = function() {
 	frappe.model.open_mapped_doc({
 		method: "opencart_api.sales_order.make_sales_invoice",
 		frm: cur_frm
 	})
 }
-
 
 cur_frm.cscript.setup_dashboard = function(doc) {
 	cur_frm.dashboard.reset(doc);
@@ -214,61 +212,3 @@ cur_frm.dashboard.add_badge = function(label, no, doctype, onclick) {
 
 		return badge.find(".alert-badge");
 }
-
-// cur_frm.cscript.validate = function(doc) {
-
-// }
-
-// cur_frm.cscript.refresh = function(doc, cdt, cdn) {
-
-
-    // cur_frm.set_df_property("oc_status", "options", "123\n345\n678");
-
-	// if(doc.abbr && !doc.__islocal) {
-	// 	cur_frm.set_df_property("abbr", "read_only", 1);
-	// }
-
-	// if(!doc.__islocal) {
-	// 	cur_frm.toggle_enable("default_currency", (cur_frm.doc.__onload &&
-	// 		!cur_frm.doc.__onload.transactions_exist));
-	// }
-
-	// erpnext.company.set_chart_of_accounts_options(doc);
-
-
-
-
-	// var dialog = new frappe.ui.Dialog({
-	// 	title: "Replace Abbr",
-	// 	fields: [
-	// 		{"fieldtype": "Data", "label": "New Abbreviation", "fieldname": "new_abbr",
-	// 			"reqd": 1 },
-	// 		{"fieldtype": "Button", "label": "Update", "fieldname": "update"},
-	// 	]
-	// });
-
-	// dialog.fields_dict.update.$input.click(function() {
-	// 	args = dialog.get_values();
-	// 	if(!args) return;
-	// 	return frappe.call({
-	// 		method: "erpnext.setup.doctype.company.company.replace_abbr",
-	// 		args: {
-	// 			"company": cur_frm.doc.name,
-	// 			"old": cur_frm.doc.abbr,
-	// 			"new": args.new_abbr
-	// 		},
-	// 		callback: function(r) {
-	// 			if(r.exc) {
-	// 				msgprint(__("There were errors."));
-	// 				return;
-	// 			} else {
-	// 				cur_frm.set_value("abbr", args.new_abbr);
-	// 			}
-	// 			dialog.hide();
-	// 			cur_frm.refresh();
-	// 		},
-	// 		btn: this
-	// 	})
-	// });
-// 	dialog.show();
-// }
