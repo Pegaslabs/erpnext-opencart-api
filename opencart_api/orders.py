@@ -1071,38 +1071,7 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
         'taxes_and_charges': template or '',
         'shipping_rule': shipping_rule or ''
     })
-
-    tax_item = None
-    shipping_item = None
-    taxes_len = len(doc_order.taxes)
-
     doc_order.set_taxes()
     doc_order.calculate_taxes_and_totals()
-    if len(doc_order.get('taxes')) > taxes_len:
-        tax_item = doc_order.get('taxes')[-1]
-
-    taxes_len = len(doc_order.taxes)
-    doc_order.apply_shipping_rule()
-    if len(doc_order.get('taxes')) > taxes_len:
-        shipping_item = doc_order.get('taxes')[-1]
-
-    if tax_item and shipping_item:
-        old_tax_item_idx = tax_item.get('idx')
-        old_shipping_item_idx = shipping_item.get('idx')
-        tax_item.update({
-            'idx': old_shipping_item_idx,
-        })
-        shipping_item.update({
-            'idx': old_tax_item_idx,
-            'oc_is_shipping_entry': 1
-        })
-        tax_item.update({
-            'charge_type': 'On Previous Row Total',
-            'row_id': shipping_item.get('idx')
-        })
-        doc_order.update({'oc_is_updating': 1})
-        doc_order.save()
-        doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
-        doc_order.calculate_taxes_and_totals()
     doc_order.update({'oc_is_updating': 1})
     doc_order.save()

@@ -29,57 +29,6 @@ cur_frm.cscript.oc_is_shipping_included_in_total = function() {
     me.shipping_rule();
 }
 
-cur_frm.cscript.shipping_rule = function() {
-		var me = this;
-		var initial_taxes_length = me.frm.doc.taxes.length;
-		if(this.frm.doc.shipping_rule) {
-			return this.frm.call({
-				doc: this.frm.doc,
-				method: "apply_shipping_rule",
-				callback: function(r) {
-					if(!r.exc) {
-						if(me.frm.doc.taxes.length - initial_taxes_length == 1) {
-                            me.frm.doc.taxes[me.frm.doc.taxes.length - 1].oc_is_shipping_entry = 1;
-                            me.frm.refresh_fields();
-						}
-                        if(me.frm.doc.taxes.length == 2) {
-                        	// detect tax_entry and shipping_entry
-	                        var tax_entry = undefined;
-	                        var shipping_entry = undefined;
-							$.each(me.frm.doc.taxes || [], function(i, entry) {
-	                            if(entry.oc_is_shipping_entry == 1) {
-	                            	shipping_entry = entry;
-	                            }
-	                            else {
-	                            	tax_entry = entry;
-	                            }
-							});
-                            // exchange tax_entry and shipping_entry
-                            if (tax_entry && shipping_entry) {
-		                        if(me.frm.doc.oc_is_shipping_included_in_total) {
-			                        tax_entry.idx = 2;
-			                        tax_entry.charge_type = "On Previous Row Total";
-				                    tax_entry.row_id = 1;
-
-			                        shipping_entry.idx = 1;
-			                    }
-			                    else {
-			                        shipping_entry.idx = 2;
-
-			                        tax_entry.idx = 1;
-			                        tax_entry.charge_type = "Actual";
-				                    tax_entry.row_id = "";
-			                    }
-			                    me.frm.refresh_fields();
-		                    }
-		                }
-	                    me.calculate_taxes_and_totals();
-					}
-				}
-			})
-		}
-}
-
 cur_frm.cscript.customer = function() {
     var me = this;
     erpnext.utils.get_party_details(this.frm, null, null, function(){me.apply_pricing_rule()});
