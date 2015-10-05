@@ -7,9 +7,9 @@ from frappe import _
 from frappe.model.mapper import get_mapped_doc, map_doc
 
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
+from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import resolve_mode_of_payment
 
 import territories
-from sales_invoice import resolve_mode_of_payment
 import mode_of_payments
 
 
@@ -130,13 +130,14 @@ def make_sales_invoice(source_name, target_doc=None):
         target.get_advances()
 
     def set_missing_values(source, target):
+        target.mode_of_payment = resolve_mode_of_payment(source.customer)
         target.cash_bank_account = get_cash_bank_account(source, mode_of_payment=target.mode_of_payment)
         target.is_pos = 0
 
         if is_oc_sales_order(source):
             target.is_pos = mode_of_payments.is_pos_payment_method(source.oc_pm_code)
             payment_territory = territories.get_by_country(source.oc_pa_country)
-            target.mode_of_payment = resolve_mode_of_payment(source.oc_pm_code, payment_territory)
+            target.mode_of_payment = resolve_mode_of_payment(source.customer, payment_method_code=source.oc_pm_code, country_territory=payment_territory)
 
             # payment method
             target.oc_pm_title = source.oc_pm_title
@@ -198,7 +199,7 @@ def get_cash_bank_account(doc, mode_of_payment=None):
     cash_bank_account = ''
     if mode_of_payment is None:
         payment_territory = territories.get_by_country(doc.oc_pa_country)
-        mode_of_payment = resolve_mode_of_payment(doc.oc_pm_code, payment_territory)
+        mode_of_payment = resolve_mode_of_payment(doc.customer, payment_method_code=doc.oc_pm_code, country_territory=payment_territory)
 
     if mode_of_payment:
         cash_bank_account = frappe.db.get_value('Mode of Payment Account', {'parent': mode_of_payment, 'parenttype': 'Mode of Payment', 'company': doc.company}, 'default_account')
