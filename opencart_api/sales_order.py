@@ -130,7 +130,6 @@ def make_sales_invoice(source_name, target_doc=None):
         target.get_advances()
 
     def set_missing_values(source, target):
-        target.mode_of_payment = resolve_mode_of_payment(source.customer)
         target.cash_bank_account = get_cash_bank_account(source, mode_of_payment=target.mode_of_payment)
         target.is_pos = 0
 
@@ -142,6 +141,8 @@ def make_sales_invoice(source_name, target_doc=None):
             # payment method
             target.oc_pm_title = source.oc_pm_title
             target.oc_pm_code = source.oc_pm_code
+        else:
+            target.mode_of_payment = resolve_mode_of_payment(source.customer)
 
         target.ignore_pricing_rule = 1
         target.run_method("set_missing_values")
@@ -198,8 +199,11 @@ def get_income_account(doc):
 def get_cash_bank_account(doc, mode_of_payment=None):
     cash_bank_account = ''
     if mode_of_payment is None:
-        payment_territory = territories.get_by_country(doc.oc_pa_country)
-        mode_of_payment = resolve_mode_of_payment(doc.customer, payment_method_code=doc.oc_pm_code, country_territory=payment_territory)
+        if doc.oc_pa_country:
+            payment_territory = territories.get_by_country(doc.oc_pa_country)
+            mode_of_payment = resolve_mode_of_payment(doc.customer, payment_method_code=doc.oc_pm_code, country_territory=payment_territory)
+        else:
+            mode_of_payment = resolve_mode_of_payment(doc.customer)
 
     if mode_of_payment:
         cash_bank_account = frappe.db.get_value('Mode of Payment Account', {'parent': mode_of_payment, 'parenttype': 'Mode of Payment', 'company': doc.company}, 'default_account')
