@@ -8,10 +8,9 @@ from frappe.model.mapper import get_mapped_doc, map_doc
 
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import resolve_mode_of_payment
+from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 
 import territories
-import mode_of_payments
-
 
 # def validate(doc, method=None):
 #     pass
@@ -134,7 +133,7 @@ def make_sales_invoice(source_name, target_doc=None):
         target.is_pos = 0
 
         if is_oc_sales_order(source):
-            target.is_pos = mode_of_payments.is_pos_payment_method(source.oc_pm_code)
+            target.is_pos = is_pos_payment_method(source.oc_pm_code)
             payment_territory = territories.get_by_country(source.oc_pa_country)
             target.mode_of_payment = resolve_mode_of_payment(source.customer, payment_method_code=source.oc_pm_code, country_territory=payment_territory)
 

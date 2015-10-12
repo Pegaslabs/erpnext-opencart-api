@@ -4,14 +4,10 @@ from frappe.utils import cint, cstr, flt
 from erpnext.accounts.party import get_party_account, get_due_date
 
 from frappe.model.mapper import get_mapped_doc
-
 import frappe
-
-# import gorilla
-
-from mode_of_payments import is_pos_payment_method
 from delivery_note import on_delivery_note_added
 
+from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
 
 

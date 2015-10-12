@@ -3,7 +3,7 @@ from datetime import datetime
 import re
 
 import frappe
-from frappe.utils import add_days, nowdate, getdate, cstr
+from frappe.utils import add_days, nowdate, getdate, cstr, flt
 from frappe.exceptions import ValidationError
 
 from erpnext.accounts.utils import get_fiscal_year
@@ -17,12 +17,12 @@ import oc_stores
 import items
 import territories
 import sales_taxes_and_charges_template
-from mode_of_payments import is_pos_payment_method
 import sales_invoice
 import sales_order
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
 from erpnext.selling.doctype.customer.customer import check_credit_limit
+from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
@@ -639,16 +639,16 @@ def pull_added_from(site_name, silent=False):
                         # 'base_price_list_rate': price_list_rate,
                         # 'price_list_rate': price_list_rate,
                         'warehouse': doc_order.get('warehouse') or site_doc.get('items_default_warehouse'),
-                        'qty': product.get('quantity'),
+                        'qty': flt(product.get('quantity')),
                         'currency': product.get('currency_code'),
                         'description': product.get('name')
                     }
                     if is_pos_payment_method(doc_order.get('oc_pm_code')):
                         so_item.update({
-                            'base_rate': product.get('price'),
-                            'base_amount': product.get('total'),
-                            'rate': product.get('price'),
-                            'amount': product.get('total'),
+                            'base_rate': flt(product.get('price')),
+                            'base_amount': flt(product.get('total')),
+                            'rate': flt(product.get('price')),
+                            'amount': flt(product.get('total')),
                         })
                     doc_order.append('items', so_item)
                     items_count += 1
@@ -1071,7 +1071,6 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
         'taxes_and_charges': template or '',
         'shipping_rule': shipping_rule or ''
     })
-    doc_order.set_taxes()
     doc_order.calculate_taxes_and_totals()
     doc_order.update({'oc_is_updating': 1})
     doc_order.save()
