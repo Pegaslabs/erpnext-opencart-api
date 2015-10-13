@@ -539,22 +539,6 @@ cur_frm.cscript.pull_orders_from_oc_site = function(doc, dt, dn) {
         freeze: true,
         type: "GET",
         args: {
-            cmd: "opencart_api.orders.pull_orders_from_oc",
-            site_name: doc.name
-        },
-        callback: function(data) {
-            if (data && data.message) {
-                print_sync_log_orders(data.message, true);
-            }
-        }
-    });
-}
-
-cur_frm.cscript.pull_orders_modified_from = function(doc, dt, dn) {
-    frappe.call({
-        freeze: true,
-        type: "GET",
-        args: {
             cmd: "opencart_api.orders.pull_added_from",
             site_name: doc.name
         },

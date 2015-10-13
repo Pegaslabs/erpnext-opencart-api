@@ -10,6 +10,7 @@ from erpnext.accounts.utils import get_fiscal_year
 
 from utils import sync_info
 from decorators import sync_to_opencart
+import addresses
 import oc_api
 import oc_site
 import customers
@@ -570,6 +571,7 @@ def pull_added_from(site_name, silent=False):
 
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
+                doc_shipping_address = addresses.get_from_oc_order(site_name, doc_customer.name, oc_order, address_type='Shipping')
 
                 # creating new Sales Order
                 params.update({
@@ -581,6 +583,7 @@ def pull_added_from(site_name, silent=False):
                     'customer': doc_customer.name,
                     'transaction_date': getdate(oc_order.get('date_added', '')),
                     'delivery_date': add_days(nowdate(), 7),
+                    'shipping_address_name': doc_shipping_address.name,
                     'oc_is_updating': 1,
                     'oc_is_auto_processing': 1,
                     'oc_site': site_name,
@@ -687,162 +690,6 @@ def pull_added_from(site_name, silent=False):
         modified_to = add_days(modified_to, default_days_interval)
         if modified_to > now_date:
             modified_to = add_days(now_date, 1)
-    results = {
-        'check_count': check_count,
-        'add_count': add_count,
-        'update_count': update_count,
-        'skip_count': skip_count,
-        'results': results_list,
-        'success': success,
-    }
-    return results
-
-
-# TO REMOVE THIS METHOD
-@frappe.whitelist()
-def pull_orders_from_oc(site_name, silent=False):
-    '''Sync orders from Opencart site'''
-    results = {}
-    results_list = []
-    check_count = 0
-    update_count = 0
-    add_count = 0
-    skip_count = 0
-    success = False
-
-    site_doc = frappe.get_doc('Opencart Site', site_name)
-    company = site_doc.get('company')
-
-    get_order_statuses_success, order_statuses = oc_api.get(site_name, use_pure_rest_api=True).get_order_statuses()
-    statuses_to_pull = [doc_status.get('status') for doc_status in site_doc.order_statuses_to_pull]
-    name_to_order_status_id_map = {}
-    order_status_id_to_name_map = {}
-    for order_status in order_statuses:
-        name_to_order_status_id_map[order_status.get('name')] = order_status.get('order_status_id')
-        order_status_id_to_name_map[order_status.get('order_status_id')] = order_status.get('name')
-
-    # check whether all statuses to pull are in Opencart site
-    for status_name_to_pull in statuses_to_pull:
-        if not name_to_order_status_id_map.get(status_name_to_pull):
-            sync_info([], 'Order Status "%s" cannot be found on this Opencart site' % status_name_to_pull, stop=True)
-
-    db_customers = frappe.db.sql('select oc_customer_id from `tabCustomer` where oc_site = \'%s\'' % site_name, as_dict=1)
-    for db_customer in db_customers:
-        for oc_order in oc_api.get(site_name).get_orders_by_customer(db_customer.get('oc_customer_id')):
-            check_count += 1
-            order_status_name = order_status_id_to_name_map.get(oc_order.order_status_id)
-            if order_status_name not in statuses_to_pull:
-                skip_count += 1
-                extras = (1, 'skipped', 'Skipped: Order Status - %s' % order_status_name)
-                results_list.append(('', oc_order.id, '', '') + extras)
-                continue
-            doc_order = get_order(site_name, oc_order.id)
-            doc_customer = customers.get_customer(site_name, oc_order.customer_id)
-            if doc_order:
-                # update existed Sales Order
-                params = {}
-                resolve_customer_group_rules(oc_order, doc_customer, params)
-
-                params.update({
-                    'currency': oc_order.currency_code,
-                    # 'conversion_rate': float(oc_order.currency_value),
-                    'base_net_total': oc_order.total,
-                    'total': oc_order.total,
-                    'company': company,
-                    'oc_is_updating': 1,
-                    'oc_status': order_status_name,
-                    'oc_last_sync_from': datetime.now(),
-                })
-                doc_order.update(params)
-                doc_order.save()
-                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
-                update_count += 1
-                extras = (1, 'updated', 'Updated')
-                results_list.append((doc_order.get('name'),
-                                     doc_order.get('oc_order_id'),
-                                     doc_order.get_formatted('oc_last_sync_from'),
-                                     doc_order.get('modified')) + extras)
-
-            else:
-                if not doc_customer:
-                    skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: missed customer')
-                    results_list.append(('', oc_order.id, '', '') + extras)
-                    continue
-
-                params = {}
-                resolve_customer_group_rules(oc_order, doc_customer, params)
-
-                # creating new Sales Order
-                params.update({
-                    'doctype': 'Sales Order',
-                    'currency': oc_order.currency_code,
-                    'base_net_total': oc_order.total,
-                    'total': oc_order.total,
-                    'company': company,
-                    'customer': doc_customer.name,
-                    'delivery_date': add_days(nowdate(), 7),
-                    'oc_is_updating': 1,
-                    'oc_site': site_name,
-                    'oc_order_id': oc_order.id,
-                    'oc_status': order_status_name,
-                    'oc_sync_from': True,
-                    'oc_last_sync_from': datetime.now(),
-                    'oc_sync_to': True,
-                    'oc_last_sync_to': datetime.now(),
-                })
-                doc_order = frappe.get_doc(params)
-                if not oc_order.products:
-                    skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: missed products')
-                    results_list.append(('', oc_order.id, '', '') + extras)
-                    continue
-
-                items_count = 0
-                for product in oc_order.products:
-                    doc_item = items.get_item(site_name, product.get('product_id'))
-                    if not doc_item:
-                        skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" cannot be found' % (product.get('name'), product.get('product_id')))
-                        results_list.append(('', oc_order.id, '', '') + extras)
-                        break
-                    if doc_item.get('has_variants'):
-                        skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: Item "%s", product id "%s" is a tempalte' % (product.get('name'), product.get('product_id')))
-                        results_list.append(('', oc_order.id, '', '') + extras)
-                        break
-
-                    # price_list_rate = frappe.db.get_value('Item Price', {'price_list': price_list_name, 'item_code': doc_item.get('item_code')}, 'price_list_rate') or 0
-                    doc_order.append('items', {
-                        'item_code': doc_item.get('item_code'),
-                        # 'base_price_list_rate': price_list_rate,
-                        # 'price_list_rate': price_list_rate,
-                        'warehouse': site_doc.get('items_default_warehouse'),
-                        'qty': product.get('quantity'),
-                        'base_rate': product.get('price'),
-                        'base_amount': product.get('total'),
-                        'rate': product.get('price'),
-                        'amount': product.get('total'),
-                        'currency': product.get('currency_code'),
-                        # 'discount_percentage': 10.0,
-                        'description': product.get('name')
-                    })
-                    items_count += 1
-                else:
-                    if not items_count:
-                        skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: no products')
-                        results_list.append(('', oc_order.id, '', '') + extras)
-                        continue
-
-                    doc_order.insert(ignore_permissions=True)
-                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
-                    add_count += 1
-                    extras = (1, 'added', 'Added')
-                    results_list.append((doc_order.get('name'),
-                                         doc_order.get('oc_order_id'),
-                                         doc_order.get_formatted('oc_last_sync_from'),
-                                         doc_order.get('modified')) + extras)
     results = {
         'check_count': check_count,
         'add_count': add_count,

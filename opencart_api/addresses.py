@@ -18,6 +18,56 @@ def get_address_by_customer(customer, address_type):
         return frappe.get_doc('Address', db_address.get('name'))
 
 
+def get_address_by_oc_order(customer, oc_order, address_type):
+    if address_type == 'Shipping':
+        address_filter = {
+            'customer': customer,
+            'address_type': address_type,
+            'phone': cstr(oc_order.get('telephone')),
+            'fax': cstr(oc_order.get('fax', '')),
+            'email_id': cstr(oc_order.get('email')),
+            'customer_name': cstr(oc_order.get('shipping_firstname')) + ' ' + cstr(oc_order.get('shipping_lastname')),
+            'pincode': cstr(oc_order.get('shipping_postcode')),
+            'country': cstr(oc_order.get('shipping_country')),
+            'state': cstr(oc_order.get('shipping_zone')),
+            'city': cstr(oc_order.get('shipping_city')),
+            'address_line1': cstr(oc_order.get('shipping_address_1')),
+            'address_line2': cstr(oc_order.get('shipping_address_2'))
+        }
+    elif address_type == 'Billing':
+        address_filter = {
+            'customer': customer,
+            'address_type': address_type,
+            'phone': cstr(oc_order.get('telephone')),
+            'fax': cstr(oc_order.get('fax', '')),
+            'email_id': cstr(oc_order.get('email')),
+            'customer_name': cstr(oc_order.get('payment_firstname')) + ' ' + cstr(oc_order.get('payment_lastname')),
+            'pincode': cstr(oc_order.get('payment_postcode')),
+            'country': cstr(oc_order.get('payment_country')),
+            'state': cstr(oc_order.get('payment_zone')),
+            'city': cstr(oc_order.get('payment_city')),
+            'address_line1': cstr(oc_order.get('payment_address_1')),
+            'address_line2': cstr(oc_order.get('payment_address_2'))
+        }
+    db_addresses = frappe.db.sql("""select name
+        from `tabAddress`
+        where ifnull(customer, '')=%(customer)s and
+        ifnull(address_type, '')=%(address_type)s and
+        ifnull(phone, '')=%(phone)s and
+        ifnull(fax, '')=%(fax)s and
+        ifnull(email_id, '')=%(email_id)s and
+        ifnull(customer_name, '')=%(customer_name)s and
+        ifnull(pincode, '')=%(pincode)s and
+        ifnull(country, '')=%(country)s and
+        ifnull(state, '')=%(state)s and
+        ifnull(city, '')=%(city)s and
+        ifnull(address_line1, '')=%(address_line1)s and
+        ifnull(address_line2, '')=%(address_line2)s""", address_filter, as_dict=1)
+
+    if db_addresses:
+        return frappe.get_doc('Address', db_addresses[0].get('name'))
+
+
 def create_or_update(site_name, oc_customer, doc_customer):
     oc_addresses = oc_customer.get('addresses', {})
     oc_address = {}
@@ -97,114 +147,91 @@ def create_or_update(site_name, oc_customer, doc_customer):
         doc_customer.save()
 
 
-def create_or_update_from_order(site_name, doc_customer, oc_order):
+def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
     # creating address from order payment
     # billing address
     countries.create_if_does_not_exist(oc_order.get('payment_country'))
-    doc_address = get_address_by_customer(doc_customer.get('name'), 'Billing')
-    if doc_address:
-        # update existed Address
-        billing_params = {
-            'address_type': 'Billing',
-            'is_primary_address': 1,
-            'is_shipping_address': 0,
-            'phone': oc_order.get('telephone', ''),
-            'fax': oc_order.get('fax', ''),
-            'email_id': oc_order.get('email', ''),
-            'customer_name': oc_order.get('payment_firstname', '') + ' ' + oc_order.get('payment_lastname', ''),
-            'pincode': oc_order.get('payment_postcode', ''),
-            'country': oc_order.get('payment_country', ''),
-            'state': oc_order.get('payment_zone'),
-            'city': oc_order.get('payment_city', ''),
-            'address_line1': oc_order.get('payment_address_1', ''),
-            'address_line2': oc_order.get('payment_address_2', '')
-        }
-        doc_address.update(billing_params)
-        doc_address.save()
-    else:
+    doc_address = get_address_by_oc_order(customer, oc_order, 'Billing')
+    ret_doc_address = None
+    if not doc_address:
         # create new Address (Billing)
         billing_params = {
             'doctype': 'Address',
             'address_type': 'Billing',
-            'is_primary_address': 1,
+            'allow_multiple_addresses': 1,
+            # 'is_primary_address': 1,
             'is_shipping_address': 0,
-            'customer': doc_customer.get('name'),
-            'phone': oc_order.get('telephone', ''),
-            'fax': oc_order.get('fax', ''),
-            'email_id': oc_order.get('email', ''),
-            'customer_name': oc_order.get('payment_firstname', '') + ' ' + oc_order.get('payment_lastname', ''),
-            'pincode': oc_order.get('payment_postcode', ''),
-            'country': oc_order.get('payment_country', ''),
-            'state': oc_order.get('payment_zone'),
-            'city': oc_order.get('payment_city', ''),
-            'address_line1': oc_order.get('payment_address_1', ''),
-            'address_line2': oc_order.get('payment_address_2', ''),
+            'customer': customer,
+            'phone': cstr(oc_order.get('telephone')),
+            'fax': cstr(oc_order.get('fax', '')),
+            'email_id': cstr(oc_order.get('email')),
+            'customer_name': cstr(oc_order.get('payment_firstname')) + ' ' + cstr(oc_order.get('payment_lastname')),
+            'pincode': cstr(oc_order.get('payment_postcode')),
+            'country': cstr(oc_order.get('payment_country')),
+            'state': cstr(oc_order.get('payment_zone')),
+            'city': cstr(oc_order.get('payment_city')),
+            'address_line1': cstr(oc_order.get('payment_address_1')),
+            'address_line2': cstr(oc_order.get('payment_address_2')),
             'oc_site': site_name,
         }
         doc_address = frappe.get_doc(billing_params)
         doc_address.autoname()
-        if frappe.db.get('Address', doc_address.get('name')):
-            doc_address = frappe.get_doc('Address', doc_address.get('name'))
-            doc_address.update(billing_params)
-            doc_address.save()
-        else:
-            doc_address.insert(ignore_permissions=True)
+        doc_address.insert(ignore_permissions=True)
+    if address_type == 'Billing':
+        ret_doc_address = doc_address
 
     # shipping address
     shipping_country = oc_order.get('shipping_country') or oc_order.get('payment_country')
     countries.create_if_does_not_exist(shipping_country)
-    doc_address = get_address_by_customer(doc_customer.get('name'), 'Shipping')
-    if (not oc_order.get('shipping_postcode') or not oc_order.get('shipping_country') or
-        not oc_order.get('shipping_zone') or not oc_order.get('shipping_city') or
-        not oc_order.get('shipping_address_1')):
-        shipping_params = {
-            'doctype': 'Address',
-            'address_type': 'Shipping',
-            'is_primary_address': 0,
-            'is_shipping_address': 1,
-            'customer': doc_customer.get('name'),
-            'phone': oc_order.get('telephone', ''),
-            'fax': oc_order.get('fax', ''),
-            'email_id': oc_order.get('email', ''),
-            'customer_name': oc_order.get('payment_firstname', '') + ' ' + oc_order.get('payment_lastname', ''),
-            'pincode': oc_order.get('payment_postcode', ''),
-            'country': oc_order.get('payment_country', ''),
-            'state': oc_order.get('payment_zone'),
-            'city': oc_order.get('payment_city', ''),
-            'address_line1': oc_order.get('payment_address_1', ''),
-            'address_line2': oc_order.get('payment_address_2', ''),
-            'oc_site': site_name,
-        }
-    else:
-        shipping_params = {
-            'doctype': 'Address',
-            'address_type': 'Shipping',
-            'is_primary_address': 0,
-            'is_shipping_address': 1,
-            'customer': doc_customer.get('name'),
-            'phone': oc_order.get('telephone', ''),
-            'fax': oc_order.get('fax', ''),
-            'email_id': oc_order.get('email', ''),
-            'customer_name': oc_order.get('shipping_firstname', '') + ' ' + oc_order.get('shipping_lastname', ''),
-            'pincode': oc_order.get('shipping_postcode', ''),
-            'country': oc_order.get('shipping_country', ''),
-            'state': oc_order.get('shipping_zone'),
-            'city': oc_order.get('shipping_city', ''),
-            'address_line1': oc_order.get('shipping_address_1', ''),
-            'address_line2': oc_order.get('shipping_address_2', ''),
-            'oc_site': site_name,
-        }
-    if doc_address:
-        # update existed Address
-        doc_address.update(shipping_params)
-        doc_address.save()
-    else:
+    doc_address = get_address_by_oc_order(customer, oc_order, 'Shipping')
+    if not doc_address:
+        if (not oc_order.get('shipping_postcode') or not oc_order.get('shipping_country') or
+            not oc_order.get('shipping_zone') or not oc_order.get('shipping_city') or
+            not oc_order.get('shipping_address_1')):
+            shipping_params = {
+                'doctype': 'Address',
+                'address_type': 'Shipping',
+                'allow_multiple_addresses': 1,
+                'is_primary_address': 0,
+                'is_shipping_address': 1,
+                'customer': customer,
+                'phone': cstr(oc_order.get('telephone')),
+                'fax': cstr(oc_order.get('fax')),
+                'email_id': cstr(oc_order.get('email')),
+                'customer_name': cstr(oc_order.get('payment_firstname')) + ' ' + cstr(oc_order.get('payment_lastname')),
+                'pincode': cstr(oc_order.get('payment_postcode')),
+                'country': cstr(oc_order.get('payment_country')),
+                'state': cstr(oc_order.get('payment_zone')),
+                'city': cstr(oc_order.get('payment_city')),
+                'address_line1': cstr(oc_order.get('payment_address_1')),
+                'address_line2': cstr(oc_order.get('payment_address_2')),
+                'oc_site': site_name,
+            }
+        else:
+            shipping_params = {
+                'doctype': 'Address',
+                'address_type': 'Shipping',
+                'allow_multiple_addresses': 1,
+                'is_primary_address': 0,
+                'is_shipping_address': 1,
+                'customer': customer,
+                'phone': cstr(oc_order.get('telephone')),
+                'fax': cstr(oc_order.get('fax')),
+                'email_id': cstr(oc_order.get('email')),
+                'customer_name': cstr(oc_order.get('shipping_firstname') + ' ' + oc_order.get('shipping_lastname')),
+                'pincode': cstr(oc_order.get('shipping_postcode')),
+                'country': cstr(oc_order.get('shipping_country')),
+                'state': cstr(oc_order.get('shipping_zone')),
+                'city': cstr(oc_order.get('shipping_city')),
+                'address_line1': cstr(oc_order.get('shipping_address_1')),
+                'address_line2': cstr(oc_order.get('shipping_address_2')),
+                'oc_site': site_name,
+            }
         # create new Address (Shipping)
         doc_address = frappe.get_doc(shipping_params)
         doc_address.autoname()
-        if frappe.db.get('Address', doc_address.get('name')):
-            doc_address = frappe.get_doc('Address', doc_address.get('name'))
-            doc_address.update(shipping_params)
-            doc_address.save()
-        else:
-            doc_address.insert(ignore_permissions=True)
+        doc_address.insert(ignore_permissions=True)
+    if address_type == 'Shipping':
+        ret_doc_address = doc_address
+
+    return ret_doc_address
