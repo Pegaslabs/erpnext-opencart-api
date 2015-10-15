@@ -203,7 +203,7 @@ def update_guest_from_order(doc_customer, oc_order):
             # create new Customer
             doc_customer.update({
                 'territory': territory_name,
-                'customer_name': make_full_name(oc_order.get('firstname'), oc_order.get('lastname')),
+                # 'customer_name': make_full_name(oc_order.get('firstname'), oc_order.get('lastname')),
                 'customer_group': doc_customer_group.get('name'),
                 'oc_is_updating': 1,
                 'oc_customer_id': oc_order.get('customer_id'),
