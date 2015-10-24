@@ -502,8 +502,8 @@ def pull_added_from(site_name, silent=False):
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
             if doc_order:
-                # update existed Sales Order with status "Draft"
-                if doc_order.get('status') != 'Draft':
+                # update existed Sales Order only with status "Draft"
+                if doc_order.docstatus != 0:
                     skip_count += 1
                     continue
                 params = {}
