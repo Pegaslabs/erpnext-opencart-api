@@ -19,7 +19,8 @@
 "Info:","","Valid DocType","One of: Button, Check, Code, Column Break, Currency, Data, Date, Datetime, Dynamic Link, Float, HTML, Image, Int, Link, Long Text, Password, Percent, Read Only, Section Break, Select, Small Text, Table, Text, Text Editor, Time","","","One of: 1, 2, 3, 4, 5, 6, 7, 8, 9","","","","Integer","0 or 1","0 or 1","0 or 1","","","0 or 1","","0 or 1","0 or 1","0 or 1","0 or 1","0 or 1","0 or 1"
 "Start entering data below this line"
 "","""Item-oc_settings""","Item","Section Break","Opencart Settings","description","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-oc_is_updating""","Item","Check","Is Updating","oc_settings","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
+"","""Item-oc_do_not_auto_submit_orders""","Item","Check","Sync from Opencart","oc_settings","","","","oc_do_not_auto_submit_orders",0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_is_updating""","Item","Check","Is Updating","oc_do_not_auto_submit_orders","","","","oc_is_updating",0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Item-oc_products""","Item","Table","Opencart Products","oc_is_updating","","Opencart Product","","oc_products",0,0,0,0,"","",0,"",0,1,0,0,0,0
 "","""Item-oc_settings2""","Item","Section Break","","oc_products","","","","oc_settings2",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_sync_from""","Item","Check","Sync from Opencart","oc_settings2","","","","oc_sync_from",0,0,0,0,"","",0,"",0,0,0,0,0,0
