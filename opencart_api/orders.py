@@ -408,10 +408,11 @@ def update_totals(doc_order, oc_order, tax_rate_names=[]):
 
 
 def on_sales_order_added(doc_sales_order):
+    if any(frappe.db.get_value("Item", i.item_code, "oc_do_not_auto_submit_orders") for i in doc_sales_order.items):
+        return
     try:
         check_oc_sales_order_totals(doc_sales_order)
-        if not any(frappe.db.get_value("Item", i.item_code, "oc_do_not_auto_submit_orders") for i in doc_sales_order.items):
-            doc_sales_order.submit()
+        doc_sales_order.submit()
     except ValidationError:
         frappe.db.set_value('Sales Order', doc_sales_order.get('name'), 'oc_is_auto_processing', 0)
     else:
