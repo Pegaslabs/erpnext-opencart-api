@@ -145,7 +145,6 @@
 "","""Sales Invoice-oc_payment_settings""","Sales Invoice","Section Break","Opencart Payment Method","ignore_pricing_rule","","","","oc_payment_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Invoice-oc_pm_title""","Sales Invoice","Small Text","Payment Method","oc_payment_settings","","","","oc_pm_title",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Invoice-oc_pm_code""","Sales Invoice","Small Text","Payment Method Code","oc_pm_title","","","","oc_pm_code",0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Invoice-sales_order""","Sales Invoice","Link","Sales Order","mode_of_payment","","Sales Order","","sales_order",0,0,0,0,"","",1,"",0,0,0,0,0,0
 "","""Address-oc_settings""","Address","Section Break","Opencart Settings","is_shipping_address","","","","oc_settings",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_site""","Address","Link","Site","oc_settings","","Opencart Site","","oc_site",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Address-oc_address_id""","Address","Data","Opencart Address ID","oc_site","","Opencart Address ID","","oc_address_id",0,0,1,0,"","",0,"",0,0,0,0,0,0
@@ -173,5 +172,4 @@
 "","""Warehouse-oc_sync_to""","Warehouse","Check","Sync to Opencart","oc_last_sync_from","","","","oc_sync_to",0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_last_sync_to""","Warehouse","Datetime","Last sync","oc_sync_to","","","","oc_last_sync_to",0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-country""","Warehouse","Link","Country","city","","Country","","country",0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Delivery Note-sales_order""","Delivery Note","Link","Sales Order","po_no","","Sales Order","","sales_order",0,0,0,0,"","",1,"",0,0,0,0,0,0
 "","""Company-default_print_heading""","Company","Link","Print Heading","default_letter_head","","Print Heading","","default_print_heading",0,0,0,0,"","",0,"",1,0,1,0,0,0
