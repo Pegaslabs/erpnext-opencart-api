@@ -324,7 +324,7 @@ def push_image(doc):
     if not doc.image:
         return
     site_name = doc.get('oc_site')
-    image_file_data = frappe.get_doc('File Data', {
+    image_file_data = frappe.get_doc('File', {
         'file_url': doc.image,
         'attached_to_doctype': 'Item',
         'attached_to_name': doc.get('name')

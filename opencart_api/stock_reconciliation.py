@@ -6,9 +6,9 @@ from frappe.utils.csvutils import read_csv_content_from_attached_file
 
 @frappe.whitelist()
 def clear_file_data(site_name):
-    all_file_data = frappe.get_all('File Data', filters={'attached_to_doctype': 'Stock Reconciliation'})
+    all_file_data = frappe.get_all('File', filters={'attached_to_doctype': 'Stock Reconciliation'})
     for file_data in all_file_data:
-        frappe.get_doc('File Data', file_data.get('name')).delete()
+        frappe.get_doc('File', file_data.get('name')).delete()
 
 
 @frappe.whitelist()

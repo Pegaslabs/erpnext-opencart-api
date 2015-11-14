@@ -80,9 +80,9 @@ def pull(site_name, silent=False):
 
 @frappe.whitelist()
 def clear_file_data(name):
-    all_file_data = frappe.get_all('File Data', filters={'attached_to_doctype': 'Warehouse', 'attached_to_name': name})
+    all_file_data = frappe.get_all('File', filters={'attached_to_doctype': 'Warehouse', 'attached_to_name': name})
     for file_data in all_file_data:
-        frappe.get_doc('File Data', file_data.get('name')).delete()
+        frappe.get_doc('File', file_data.get('name')).delete()
 
 
 @frappe.whitelist()
