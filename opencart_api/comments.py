@@ -7,6 +7,8 @@ COMMENT_ADDED_FROM_TEMPLATE = '''<br><small class="text-muted"><span>comment fro
 
 
 def before_save(doc, method=None):
+    if not (doc and doc.comment_doctype and doc.comment_docname):
+        return
     doc_comment = frappe.get_doc(_(doc.comment_doctype), doc.comment_docname)
     comment = doc.comment + COMMENT_ADDED_FROM_TEMPLATE % doc.comment_docname
     if doc.comment_doctype == 'Sales Order' and doc.is_origin_comment:
