@@ -438,6 +438,16 @@ def on_sales_order_added(doc_sales_order):
 
 @frappe.whitelist()
 def pull_added_from(site_name, silent=False):
+    try:
+        ret = _pull_added_from(site_name, silent=silent)
+    except:
+        raise
+    else:
+        frappe.db.commit()
+        return ret
+
+
+def _pull_added_from(site_name, silent=False):
     '''Sync orders from Opencart site'''
     results = {}
     results_list = []
