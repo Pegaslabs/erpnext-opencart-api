@@ -29,7 +29,7 @@ def pull(site_name, silent=False):
     skip_count = 0
     success = True
 
-    oc_warehouse_success, oc_warehouses = oc_api.get(site_name, use_pure_rest_api=True).get_warehouse_json()
+    oc_warehouse_success, oc_warehouses = oc_api.get(site_name, use_pure_rest_api=False).get_warehouses()
     for oc_warehouse in oc_warehouses:
         check_count += 1
         doc_oc_warehouse = get(site_name, oc_warehouse.get('warehouse_id'))

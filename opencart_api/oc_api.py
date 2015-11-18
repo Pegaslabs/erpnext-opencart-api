@@ -291,3 +291,7 @@ class OpencartApi(object):
             page += 1
             for c in resp.get('data', []):
                 yield c
+
+    def get_warehouses(self):
+        success, resp = oc_request(self.url + '/warehouses', headers=self.headers)
+        return (success, resp.get('data', []) if success else [])
