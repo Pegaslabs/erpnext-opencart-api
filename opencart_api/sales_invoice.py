@@ -15,6 +15,8 @@ def on_sales_invoice_added(doc_sales_invoice):
     try:
         if is_pos_payment_method(doc_sales_invoice.oc_pm_code):
             doc_sales_invoice.submit()
+        else:
+            return
     except Exception as ex:
         frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (doc_sales_invoice.get('name'), str(ex)))
     else:
