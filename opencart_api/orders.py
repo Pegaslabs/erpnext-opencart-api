@@ -838,12 +838,12 @@ def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_
                 return
         for doc_oc_shipping_rule in doc_oc_store.get('oc_shipping_rules'):
             doc_shipping_rule = frappe.get_doc('Shipping Rule', doc_oc_shipping_rule.get('shipping_rule'))
-            # frappe.msgprint('doc_shipping_rule=' + str(doc_shipping_rule.get('name')))
+            if doc_shipping_rule.worldwide_shipping:
+                return doc_shipping_rule.name
             for doc_shipping_rule_country in doc_shipping_rule.get('countries'):
-                # frappe.msgprint('doc_shipping_rule_country.country=' + str(doc_shipping_rule_country.country))
                 customer_country = frappe.db.get_value("Territory", obj_customer.get('territory'), "country")
                 if customer_country and doc_shipping_rule_country.country == customer_country:
-                    return doc_shipping_rule.get('name')
+                    return doc_shipping_rule.name
     else:
         # resolve shipping rule for ERPNext customer
         shipping_rules = frappe.get_all('Shipping Rule', filters={'customer_group': customer_group})
