@@ -414,6 +414,7 @@
   {
    "fieldname": "oc_item_prices", 
    "fieldtype": "Section Break", 
+   "hidden": 1, 
    "label": "OC Item Prices", 
    "permlevel": 0, 
    "precision": ""
@@ -422,6 +423,7 @@
    "description": "Press this button to sync manually Item Prices of linked Price Lists from Opencart site. ", 
    "fieldname": "pull_item_prices_from_oc_site", 
    "fieldtype": "Button", 
+   "hidden": 1, 
    "label": "Pull Item Prices from OC site",
    "permlevel": 0, 
    "precision": ""
@@ -430,6 +432,7 @@
    "description": "Store Sync Log", 
    "fieldname": "item_price_sync_log", 
    "fieldtype": "HTML", 
+   "hidden": 1, 
    "label": "Item Price Sync Log", 
    "permlevel": 0, 
    "precision": "", 

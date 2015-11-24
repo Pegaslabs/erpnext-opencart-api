@@ -91,6 +91,7 @@ def oc_requests(server_base_url, headers, api_map, api_name, url_params=None, fi
 
 def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False, error=False, logs=[]):
     try:
+        response = None
         if data is not None:
             data = json.dumps(data)
         if method.upper() == 'GET':
@@ -111,7 +112,7 @@ def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False
         return (False, {})
         # sync_info(logs, 'JSON error: %s' % str(url), stop=stop, silent=silent, error=error)
     except Exception as e:
-        if response.status_code != requests.codes.ok:
+        if response and response.status_code != requests.codes.ok:
             sync_info(logs, 'Error occurred while requesting Opencart site. Status code: %s\n%s' % (str(response.status_code), str(url)), stop=stop, silent=silent, error=True)
         else:
             sync_info(logs, 'Unknown error: %s' % str(url), stop=stop, silent=silent, error=error)
