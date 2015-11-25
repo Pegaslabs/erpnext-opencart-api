@@ -3,7 +3,7 @@ from datetime import datetime
 import frappe
 from frappe import _
 from frappe.utils import get_files_path
-from frappe.utils import cstr
+from frappe.utils import cstr, flt, getdate
 from frappe.utils.dateutils import parse_date
 from frappe.utils.csvutils import read_csv_content_from_attached_file
 
@@ -32,15 +32,15 @@ def get_oc_product_price(oc_product, currency):
     if oc_product.get('prices'):
         for product_price in oc_product.get('prices'):
             if product_price.get('code') == currency:
-                return float(product_price.get('price', 0))
+                return flt(product_price.get('price'))
         else:
             frappe.throw('Could not get price from discount for currency %s' % currency)
     else:
-        return float(oc_product.get('price', 0))
+        return flt(oc_product.get('price'))
 
 
 def update_oc_product_price(doc_oc_product, price, currency):
-    if doc_oc_product.get('multi_currency_price'):
+    if doc_oc_product.multi_currency_price:
         doc_oc_product.update({get_price_field_name(currency): price})
     else:
         doc_oc_product.update({'price': price})
@@ -57,13 +57,103 @@ def get_oc_discount_price(oc_discount, currency):
         return float(oc_discount.get('price', 0))
 
 
-def push_item_to_oc(doc_item, site_name=None):
+def check_readiness_to_sync_product_to_oc(doc_oc_product, oc_product):
+    check_map = (
+        ('oc_model', 'model'),
+        ('oc_sku', 'sku'),
+        ('oc_tax_class_id', 'tax_class_id'),
+        ('oc_manufacturer_id', 'manufacturer_id'),
+        ('oc_status', 'status')
+    )
+    for check_item in check_map:
+        if cstr(doc_oc_product.get(check_item[0])) != cstr(oc_product.get(check_item[1])):
+            frappe.throw("Value of \"{}\" field is out of sync with the field of Opencart product on {} site".format(doc_oc_product.meta.get_label(check_item[0]), doc_oc_product))
+
+    if cstr(doc_oc_product.get('oc_stock_status_id')) != oc_site.get_stock_status_id_by_name(doc_oc_product.oc_site, oc_product.get('stock_status')):
+        frappe.throw("Value of \"{}\" field is out of sync with the field of Opencart product on {} site".format(doc_oc_product.meta.get_label('oc_stock_status_id'), doc_oc_product))
+
+    if bool(doc_oc_product.multi_currency_price) != bool(oc_product.get('prices')):
+        frappe.throw("Multi currency price inconsistence for Item {}".format(doc_oc_product.oc_model))
+
+    # check multi currency prices
+    if oc_product.get('prices'):
+        for product_price in oc_product.get('prices'):
+            if product_price.get('code') and get_price_field_name(product_price.get('code')):
+                price_field_name = get_price_field_name(product_price.get('code'))
+                if cstr(flt(doc_oc_product.get(price_field_name))) != cstr(flt(product_price.get('price'))):
+                    frappe.throw("Value of \"{}\" field is out of sync with the field of Opencart product on {} site".format(doc_oc_product.meta.get_label('price'), doc_oc_product))
+                break
+        else:
+            frappe.throw('Could not get price from oc product for currency {}'.format(product_price.get('code')))
+    else:
+        if cstr(flt(doc_oc_product.price)) != cstr(flt(oc_product.get('price'))):
+            frappe.throw("Value of \"{}\" field is out of sync with the field of Opencart product on {} site".format(doc_oc_product.meta.get_label('price'), doc_oc_product))
+
+    # # specials
+    # product_special = []
+    # for doc_oc_special in doc_item.oc_specials:
+    #     if cur_site_name != doc_oc_special.get('oc_site'):
+    #         continue
+    #     doc_customer_group = frappe.get_doc('Customer Group', doc_oc_special.get('customer_group'))
+    #     customer_group_id = doc_customer_group.get('oc_customer_group_id')
+    #     if not customer_group_id:
+    #         continue
+    #     if cur_site_name != doc_customer_group.get('oc_site'):
+    #         frappe.throw('Customer Group "%s" does not exist in Opencart site "%s"' % (doc_customer_group.get('name'), cur_site_name))
+    #     product_special.append({
+    #         'customer_group_id': customer_group_id,
+    #         'price': doc_oc_special.price,
+    #         'priority': doc_oc_special.priority,
+    #         'date_start': doc_oc_special.date_start.strftime("%Y-%m-%d") if doc_oc_special.date_start else '',
+    #         'date_end': doc_oc_special.date_end.strftime("%Y-%m-%d") if doc_oc_special.date_end else '',
+    #     })
+    # data['product_special'] = product_special
+
+    # # discounts
+    # product_discount = []
+    # for doc_oc_discount in doc_item.oc_discounts:
+    #     if cur_site_name != doc_oc_discount.get('oc_site'):
+    #         continue
+    #     doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
+    #     customer_group_id = doc_customer_group.get('oc_customer_group_id')
+    #     if not customer_group_id:
+    #         continue
+    #     if cur_site_name != doc_customer_group.get('oc_site'):
+    #         frappe.throw('Customer Group "%s" does not exist in Opencart site "%s"' % (doc_customer_group.get('name'), cur_site_name))
+    #     product_discount_json = {
+    #         'customer_group_id': customer_group_id,
+    #         'price': doc_oc_discount.price,
+    #         'priority': doc_oc_discount.priority,
+    #         'quantity': doc_oc_discount.quantity,
+    #         'date_start': doc_oc_discount.date_start.strftime("%Y-%m-%d") if doc_oc_discount.date_start else '',
+    #         'date_end': doc_oc_discount.date_end.strftime("%Y-%m-%d") if doc_oc_discount.date_end else '',
+    #     }
+    #     # update multi currency prices for discount
+    #     if doc_oc_discount.multi_currency_price:
+    #         prices = []
+    #         for currency_code, price_field_name in CURRENCY_TO_PRICE_FIELD_MAP.items():
+    #             prices.append({
+    #                 'price': str(doc_oc_discount.get(price_field_name)) if doc_oc_discount.get(price_field_name) is not None else '',
+    #                 'code': currency_code,
+    #             })
+    #         product_discount_json.update({
+    #             'prices': prices
+    #         })
+    #     product_discount.append(product_discount_json)
+
+
+def sync_item_to_oc(item_code, doc_item=None, site_name=None):
+    if not doc_item:
+        doc_item = frappe.get_doc("Item", {"item_code": item_code})
     for doc_oc_product in doc_item.get('oc_products'):
         if not doc_oc_product.get('oc_sync_to'):
             continue
         cur_site_name = doc_oc_product.get('oc_site')
-        if site_name is not None and cur_site_name != site_name:
+        if site_name and cur_site_name != site_name:
             continue
+        oc_product_id = doc_oc_product.get('oc_product_id')
+        get_product_success, oc_product = oc_api.get(cur_site_name).get_product(oc_product_id)
+        check_readiness_to_sync_product_to_oc(doc_oc_product, oc_product)
         data = {
             'model': doc_oc_product.get('oc_model') or doc_item.get('name'),  # mandatory
             'sku': doc_oc_product.get('oc_sku') or doc_oc_product.get('oc_model'),  # mandatory
@@ -211,7 +301,7 @@ def push_item_to_oc(doc_item, site_name=None):
         }
 
         # update multi currency prices
-        if doc_oc_product.get('multi_currency_price'):
+        if doc_oc_product.multi_currency_price:
             prices = []
             for currency_code, price_field_name in CURRENCY_TO_PRICE_FIELD_MAP.items():
                 prices.append({
@@ -237,8 +327,8 @@ def push_item_to_oc(doc_item, site_name=None):
                 'customer_group_id': customer_group_id,
                 'price': doc_oc_special.price,
                 'priority': doc_oc_special.priority,
-                'date_start': doc_oc_special.date_start,
-                'date_end': doc_oc_special.date_end,
+                'date_start': getdate(doc_oc_special.date_start).strftime("%Y-%m-%d") if doc_oc_special.date_start else '',
+                'date_end': getdate(doc_oc_special.date_end).strftime("%Y-%m-%d") if doc_oc_special.date_end else '',
             })
         data['product_special'] = product_special
 
@@ -258,11 +348,11 @@ def push_item_to_oc(doc_item, site_name=None):
                 'price': doc_oc_discount.price,
                 'priority': doc_oc_discount.priority,
                 'quantity': doc_oc_discount.quantity,
-                'date_start': doc_oc_discount.date_start,
-                'date_end': doc_oc_discount.date_end,
+                'date_start': getdate(doc_oc_discount.date_start).strftime("%Y-%m-%d") if doc_oc_discount.date_start else '',
+                'date_end': getdate(doc_oc_discount.date_end).strftime("%Y-%m-%d") if doc_oc_discount.date_end else '',
             }
             # update multi currency prices for discount
-            if doc_oc_discount.get('multi_currency_price'):
+            if doc_oc_discount.multi_currency_price:
                 prices = []
                 for currency_code, price_field_name in CURRENCY_TO_PRICE_FIELD_MAP.items():
                     prices.append({
@@ -277,8 +367,6 @@ def push_item_to_oc(doc_item, site_name=None):
         data['product_discount'] = product_discount
 
         # updating or creating product
-        oc_product_id = doc_oc_product.get('oc_product_id')
-        get_product_success, oc_product = oc_api.get(cur_site_name).get_product(oc_product_id)
         if oc_product_id and get_product_success:
             # update existed product on Opencart site
             success = oc_api.get(cur_site_name).update_product(oc_product_id, data)
@@ -301,13 +389,15 @@ def push_item_to_oc(doc_item, site_name=None):
 
 
 @sync_item_to_opencart
-def oc_validate(doc, method=None):
-    push_item_to_oc(doc)
+def oc_validate(self, method=None):
+    if self.get("__islocal"):
+        return
+    sync_item_to_oc(self.item_code, self)
 
 
 @sync_item_to_opencart
-def oc_delete(doc, method=None):
-    for doc_oc_product in doc.get('oc_products'):
+def oc_delete(self, method=None):
+    for doc_oc_product in self.get('oc_products'):
         if not doc_oc_product.get('oc_sync_to'):
             continue
         site_name = doc_oc_product.get('oc_site')
@@ -379,7 +469,6 @@ def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False,
         'date_end': parse_date(str(oc_discount.get('date_end'))) if oc_discount.get('date_end') else ''
     })
     oc_discount_hash = disc_template.format(**oc_discount_copy)
-    # frappe.msgprint('items::update_or_create_item_discount')
     for doc_oc_discount in doc_item.get('oc_discounts'):
         if site_name != doc_oc_discount.get('oc_site'):
             continue
@@ -639,14 +728,9 @@ def pull_from_inventory_spreadsheet(site_name, silent=False):
     return results
 
 
-@frappe.whitelist()
-def pull_product_from_oc(site_name, item_name, doc_item=None, silent=False):
-    results = {}
-    success = True
-    status = None
-
-    if doc_item is None:
-        doc_item = frappe.get_doc('Item', item_name)
+def pull_product_from_oc(site_name, item_code, doc_item=None):
+    if not doc_item:
+        doc_item = frappe.get_doc('Item', {"item_code": item_code})
 
     site_doc = frappe.get_doc('Opencart Site', site_name)
     items_default_warehouse = site_doc.get('items_default_warehouse')
@@ -654,20 +738,10 @@ def pull_product_from_oc(site_name, item_name, doc_item=None, silent=False):
     success, oc_product = oc_api.get(site_name).get_product(doc_oc_product.get('oc_product_id'))
 
     if not success:
-        results = {
-            'success': success,
-            'status': 'Cannot get product from Opencart site'
-        }
-        return results
+        frappe.throw('Cannot get product from Opencart site')
 
     if doc_item:
         update_item(site_name, doc_item, oc_product)
-        extras = (1, 'updated', 'Updated')
-        status = (doc_item.get('name'),
-                  '',  # doc_item_group.get('name'),
-                  doc_item.get('oc_product_id'),
-                  doc_item.get_formatted('oc_last_sync_from'),
-                  doc_item.get('modified')) + extras
     else:
         params = {
             'doctype': 'Item',
@@ -732,17 +806,6 @@ def pull_product_from_oc(site_name, item_name, doc_item=None, silent=False):
             })
         doc_item.update({'oc_is_updating': 1})
         doc_item.save()
-        extras = (1, 'added', 'Added')
-        status = (doc_item.get('name'),
-                  '',  # doc_item_group.get('name'),
-                  doc_item.get('oc_product_id'),
-                  doc_item.get_formatted('oc_last_sync_from'),
-                  doc_item.get('modified')) + extras
-    results = {
-        'success': success,
-        'status': status
-    }
-    return results
 
 
 @frappe.whitelist()
@@ -882,3 +945,12 @@ def pull_products_from_oc(site_name, silent=False):
         'success': success,
     }
     return results
+
+
+@frappe.whitelist()
+def sync_item_from_oc(item_code):
+    doc_item = frappe.get_doc("Item", {"item_code": item_code})
+    if not doc_item.oc_sync_from:
+        frappe.throw("Please enable \"{}\" option in Item settings and try again.".format(doc_item.meta.get_label("oc_sync_from")))
+    for doc_oc_product in doc_item.oc_products:
+        pull_product_from_oc(doc_oc_product.oc_site, item_code)

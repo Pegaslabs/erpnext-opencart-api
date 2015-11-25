@@ -113,9 +113,9 @@ def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False
         # sync_info(logs, 'JSON error: %s' % str(url), stop=stop, silent=silent, error=error)
     except Exception as e:
         if response and response.status_code != requests.codes.ok:
-            sync_info(logs, 'Error occurred while requesting Opencart site. Status code: %s\n%s' % (str(response.status_code), str(url)), stop=stop, silent=silent, error=True)
+            frappe.throw('Error occurred while requesting Opencart site url: {}, status code: {}, method: {}, data:\n {}'.format(cstr(url), cstr(response.status_code), method, cstr(data)))
         else:
-            sync_info(logs, 'Unknown error: %s' % str(url), stop=stop, silent=silent, error=error)
+            frappe.throw('Unknown error while requesting Opencart site url: {}, method: {}, data:\n {}'.format(cstr(url), method, cstr(data)))
 
 
 def oc_upload_file(url, file_path, headers={}, data=None):

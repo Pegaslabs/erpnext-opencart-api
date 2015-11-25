@@ -1,6 +1,6 @@
 
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
-    if (!doc.__islocal) {
+    if(!doc.__islocal) {
         frappe.call({
             method:"opencart_api.bins.get_warehouses",
             args: {
@@ -12,6 +12,7 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
                 }
             }
         });
+        this.frm.add_custom_button(__('Sync from Opencart'), this.sync_item_from_opencart).addClass("btn-primary");
     }
 }
 
@@ -34,4 +35,17 @@ print_warehouses = function(message, update) {
     $panel.append($table);
     var msg = $('<div>').append($panel).html();
     $(cur_frm.fields_dict['warehouses'].wrapper).html(msg);
+}
+
+cur_frm.cscript.sync_item_from_opencart = function(label, status){
+    var doc = cur_frm.doc;
+    frappe.call({
+        freeze: true,
+        freeze_message: __("Syncing"),
+        method: "opencart_api.items.sync_item_from_oc",
+        args: {item_code: doc.item_code},
+        callback: function(r){
+            cur_frm.reload_doc();
+        }
+    });
 }

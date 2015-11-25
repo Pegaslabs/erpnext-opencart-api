@@ -57,18 +57,18 @@ def update_item(doc_item, doc_item_price):
                 'price': doc_item_price.get('price_list_rate')
             }]
         }, save=True, is_updating=True)
-        frappe.msgprint(str({
-            'customer_group_id': customer_group_id,
-            'price': doc_item_price.get('price_list_rate'),
-            'priority': '0',
-            'quantity': '1',
-            'date_start': '',
-            'date_end': '',
-            'prices': [{
-                'code': doc_item_price.get('currency'),
-                'price': doc_item_price.get('price_list_rate')
-            }]
-        }))
+        # frappe.msgprint(str({
+        #     'customer_group_id': customer_group_id,
+        #     'price': doc_item_price.get('price_list_rate'),
+        #     'priority': '0',
+        #     'quantity': '1',
+        #     'date_start': '',
+        #     'date_end': '',
+        #     'prices': [{
+        #         'code': doc_item_price.get('currency'),
+        #         'price': doc_item_price.get('price_list_rate')
+        #     }]
+        # }))
 
 
 def oc_validate(doc, method=None):
@@ -84,7 +84,7 @@ def oc_validate(doc, method=None):
     # push Item to Opencart site
     site_name = resolve_site_from_item_price(doc)
     doc_item = frappe.get_doc('Item', doc_item.get('name'))
-    items.push_item_to_oc(doc_item, site_name)
+    items.sync_item_to_oc(doc_item.item_code, doc_item, site_name=site_name)
 
 
 @frappe.whitelist()
@@ -196,7 +196,7 @@ def pull(site_name, item_code=None, silent=False):
                 update_item(doc_item, doc_item_price)
         # get again updated Item and pushing it to Opencart site
         doc_item = frappe.get_doc('Item', doc_item.get('name'))
-        items.push_item_to_oc(doc_item, site_name)
+        items.sync_item_to_oc(doc_item.item_code, doc_item, site_name=site_name)
 
     results = {
         'check_count': check_count,
