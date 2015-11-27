@@ -18,8 +18,8 @@ import oc_stores
 import items
 import territories
 import sales_taxes_and_charges_template
-import sales_invoice
 import sales_order
+from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
 from erpnext.selling.doctype.customer.customer import check_credit_limit
@@ -74,32 +74,32 @@ def on_submit(doc, method=None):
             if is_pos_payment_method(doc.get('oc_pm_code')):
                 # submitting orders manually
                 # create sales invoice
-                si = sales_order.make_sales_invoice(doc.get('name'))
+                si = sales_order.make_sales_invoice(doc.name)
                 si.insert()
-                frappe.msgprint('Sales Invoice %s was created automatically' % si.get('name'))
+                frappe.msgprint('Sales Invoice %s was created automatically' % si.name)
 
             # create delivery note
-            dn = erpnext_sales_order.make_delivery_note(doc.get('name'))
+            dn = erpnext_sales_order.make_delivery_note(doc.name)
             dn.insert()
-            frappe.msgprint('Delivery Note %s was created automatically' % dn.get('name'))
+            frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
 
             # create packing slip
-            ps = make_packing_slip(dn.get('name'))
+            ps = make_packing_slip(dn.name)
             ps.get_items()
             ps.insert()
-            frappe.msgprint('Packing Slip %s was created automatically' % ps.get('name'))
+            frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
 
     else:
         # create delivery note
-        dn = erpnext_sales_order.make_delivery_note(doc.get('name'))
+        dn = erpnext_sales_order.make_delivery_note(doc.name)
         dn.insert()
-        frappe.msgprint('Delivery Note %s was created automatically' % dn.get('name'))
+        frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
 
         # create packing slip
-        ps = make_packing_slip(dn.get('name'))
+        ps = make_packing_slip(dn.name)
         ps.get_items()
         ps.insert()
-        frappe.msgprint('Packing Slip %s was created automatically' % ps.get('name'))
+        frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
 
     # # update Opencart status
     # if doc_order.get('status') is None or doc_order.get('status') == 'Draft':
@@ -132,9 +132,9 @@ def check_oc_sales_order_totals(doc):
             oc_total = get_rate_from_total_str(doc.get('oc_total') or '')
 
             if not are_totals_equal(doc.get('total'), oc_sub_total):
-                frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('total')), str(oc_sub_total)))
+                frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.name, str(doc.get('total')), str(oc_sub_total)))
             if not are_totals_equal(doc.get('grand_total'), oc_total):
-                frappe.throw('%s: Order\'s Grand Total ($%s) does not equal to Total ($%s) from Opencart site' % (doc.get('name'), str(doc.get('grand_total')), str(oc_total)))
+                frappe.throw('%s: Order\'s Grand Total ($%s) does not equal to Total ($%s) from Opencart site' % (doc.name, str(doc.get('grand_total')), str(oc_total)))
 
 
 @sync_to_opencart
@@ -414,24 +414,37 @@ def on_sales_order_added(doc_sales_order):
         check_oc_sales_order_totals(doc_sales_order)
         doc_sales_order.submit()
     except ValidationError:
-        frappe.db.set_value('Sales Order', doc_sales_order.get('name'), 'oc_is_auto_processing', 0)
+        frappe.db.set_value('Sales Order', doc_sales_order.name, 'oc_is_auto_processing', 0)
     else:
         # update sales order status in Opencart site
         if doc_sales_order.get('oc_status') == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
             sync_order_status_to_opencart(doc_sales_order, new_order_status=OC_ORDER_STATUS_PROCESSING)
 
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
-            si = sales_order.make_sales_invoice(doc_sales_order.get('name'))
+            si = sales_order.make_sales_invoice(doc_sales_order.name)
             si.insert()
-            si = frappe.get_doc('Sales Invoice', si.get('name'))
-            sales_invoice.on_sales_invoice_added(si)
+            si = frappe.get_doc('Sales Invoice', si.name)
+            try:
+                if is_pos_payment_method(si.oc_pm_code):
+                    si.submit()
+                else:
+                    return
+            except Exception as ex:
+                frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (si.name, str(ex)))
+            else:
+                dn = erpnext_sales_invoice.make_delivery_note(si.name)
+                dn.insert()
+                frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
+
+                ps = make_packing_slip(dn.name)
+                ps.get_items()
+                ps.insert()
+                frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
         else:
             is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company)
             if is_credit_ok:
-                si = sales_order.make_sales_invoice(doc_sales_order.get('name'))
+                si = sales_order.make_sales_invoice(doc_sales_order.name)
                 si.insert()
-                si = frappe.get_doc('Sales Invoice', si.get('name'))
-                sales_invoice.on_sales_invoice_added(si)
             else:
                 doc_sales_order.stop_sales_order()
 

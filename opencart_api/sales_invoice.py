@@ -5,24 +5,6 @@ from erpnext.accounts.party import get_party_account, get_due_date
 
 from frappe.model.mapper import get_mapped_doc
 import frappe
-from delivery_note import on_delivery_note_added
-
-from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
-from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
-
-
-def on_sales_invoice_added(doc_sales_invoice):
-    try:
-        if is_pos_payment_method(doc_sales_invoice.oc_pm_code):
-            doc_sales_invoice.submit()
-        else:
-            return
-    except Exception as ex:
-        frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (doc_sales_invoice.get('name'), str(ex)))
-    else:
-        dn = erpnext_sales_invoice.make_delivery_note(doc_sales_invoice.get('name'))
-        dn.insert()
-        on_delivery_note_added(dn.get('name'))
 
 
 @frappe.whitelist()
