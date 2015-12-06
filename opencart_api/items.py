@@ -454,8 +454,11 @@ def update_discount_price(doc_oc_discount, currency, price):
 
 
 def update_discount_prices(doc_oc_discount, oc_discount):
+    doc_oc_discount.update({'price': oc_discount.get('price')})
     if oc_discount.get('prices'):
-        doc_oc_discount.update({'multi_currency_price': 1})
+        if not oc_discount.get('multi_currency_price_unknown'):
+            # update multi_currency_price flag only in the case oc_discount is from Opencart
+            doc_oc_discount.update({'multi_currency_price': 1})
         for prouct_price in oc_discount.get('prices'):
             update_discount_price(doc_oc_discount, prouct_price.get('code'), float(prouct_price.get('price', 0)))
 
@@ -487,7 +490,6 @@ def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False,
             'date_end': parse_date(str(doc_oc_discount.get('date_end'))) if doc_oc_discount.get('date_end') else '',
         })
         if oc_discount_hash == doc_discount_hash:
-            doc_oc_discount.update({'price': oc_discount.get('price')})
             update_discount_prices(doc_oc_discount, oc_discount)
             doc_oc_discount.save()
             break

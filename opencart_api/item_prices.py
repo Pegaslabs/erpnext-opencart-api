@@ -52,6 +52,7 @@ def update_item(doc_item, doc_item_price):
             'quantity': '1',
             'date_start': '',
             'date_end': '',
+            'multi_currency_price_unknown': True,
             'prices': [{
                 'code': doc_item_price.get('currency'),
                 'price': doc_item_price.get('price_list_rate')
