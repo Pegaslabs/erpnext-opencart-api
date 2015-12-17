@@ -56,10 +56,6 @@ doc_events = {
         # "before_submit": "opencart_api.delivery_note.before_submit",
         "on_submit": "opencart_api.delivery_note.on_submit"
     },
-    "Packing Slip": {
-        "on_submit": "opencart_api.packing_slip.on_submit",
-        "on_cancel": "opencart_api.packing_slip.on_cancel"
-    },
     "Stock Entry": {
     },
     "Comment": {
