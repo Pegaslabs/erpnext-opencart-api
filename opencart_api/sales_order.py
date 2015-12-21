@@ -62,6 +62,7 @@ def make_sales_invoice(source_name, target_doc=None):
         target.base_amount = target.amount * flt(source_parent.conversion_rate)
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
         target.income_account = get_income_account(source_parent)
+        target.bo_qty = 0.0
 
     if erpnext_sales_order.has_active_si(source_name):
         frappe.throw('Cannot make new Sales Invoice: Sales Invoice is already created and its docstatus is not canceled.')
