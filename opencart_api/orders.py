@@ -412,9 +412,10 @@ def on_sales_order_added(doc_sales_order):
         return
     try:
         check_oc_sales_order_totals(doc_sales_order)
-        doc_sales_order.submit()
-    except ValidationError:
-        frappe.db.set_value('Sales Order', doc_sales_order.name, 'oc_is_auto_processing', 0)
+        if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
+            doc_sales_order.submit()
+    except Exception:
+        pass
     else:
         # update sales order status in Opencart site
         if doc_sales_order.get('oc_status') == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
@@ -443,10 +444,13 @@ def on_sales_order_added(doc_sales_order):
         else:
             is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company)
             if is_credit_ok:
-                si = sales_order.make_sales_invoice(doc_sales_order.name)
-                si.insert()
+                pass
+                # si = sales_order.make_sales_invoice(doc_sales_order.name)
+                # si.insert()
             else:
                 doc_sales_order.stop_sales_order()
+    finally:
+        frappe.db.set_value('Sales Order', doc_sales_order.name, 'oc_is_auto_processing', 0)
 
 
 @frappe.whitelist()
