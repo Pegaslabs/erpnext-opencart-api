@@ -140,7 +140,7 @@
 "","""Item Group-oc_category_id""","Item Group","Data","Opencart Category ID","oc_site","",0,"","","","oc_category_id",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Item Group-oc_site""","Item Group","Link","Site","oc_is_updating","",0,"","Opencart Site","","oc_site",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Group-oc_is_updating""","Item Group","Check","Is Updating","oc_settings","",0,"","","","oc_is_updating",0,0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Item Group-oc_settings""","Item Group","Section Break","Opencart Settings","default_cost_center","",0,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item Group-oc_settings""","Item Group","Section Break","Opencart Settings","currency_accounts","",0,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute Value-oc_settings_cb""","Item Attribute Value","Column Break","","oc_thumb","",0,"","","","oc_settings_cb",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute Value-oc_thumb""","Item Attribute Value","Data","Image thumb","oc_image","",0,"","","","oc_thumb",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute Value-oc_image""","Item Attribute Value","Data","Image","oc_option_value_id","",0,"","","","oc_image",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
