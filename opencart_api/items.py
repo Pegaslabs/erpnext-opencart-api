@@ -956,3 +956,61 @@ def sync_item_from_oc(item_code):
         frappe.throw("Please enable \"{}\" option in Item settings and try again.".format(doc_item.meta.get_label("oc_sync_from")))
     for doc_oc_product in doc_item.oc_products:
         pull_product_from_oc(doc_oc_product.oc_site, item_code)
+
+
+@frappe.whitelist()
+def get_manufacturer_names(site_name, filter_name):
+    manufacturer_names = [manufacturer.get("name") for manufacturer in oc_site.get_manufacturers(site_name)]
+    if filter_name:
+        return filter(lambda name: name.upper().startswith(filter_name.upper()), manufacturer_names) or []
+    return manufacturer_names
+
+
+@frappe.whitelist()
+def get_manufacturer_id(site_name, name):
+    manufacturers = oc_site.get_manufacturers(site_name)
+    return next((manufacturer.get("manufacturer_id") for manufacturer in manufacturers if manufacturer.get("name").upper() == name.upper()), None)
+
+
+@frappe.whitelist()
+def get_category_names(site_name, filter_name):
+    category_names = [category.name for category in list(oc_api.get(site_name).get_all_categories())]
+    if filter_name:
+        return filter(lambda name: name.upper().startswith(filter_name.upper()), category_names) or []
+    return category_names
+
+
+@frappe.whitelist()
+def get_category_id(site_name, name):
+    categories = oc_api.get(site_name).get_all_categories()
+    return next((category.category_id for category in categories if category.name.upper() == name.upper()), None)
+
+
+@frappe.whitelist()
+def get_stock_status_names(site_name, filter_name):
+    stock_status_names = [stock_status.get("name") for stock_status in oc_site.get_oc_init(site_name).get("stock_statuses", [])]
+    if filter_name:
+        return filter(lambda name: name.upper().startswith(filter_name.upper()), stock_status_names) or []
+    return stock_status_names
+
+
+@frappe.whitelist()
+def get_stock_status_id(site_name, name):
+    stock_statuses = oc_site.get_oc_init(site_name).get("stock_statuses", [])
+    return next((stock_status.get("stock_status_id") for stock_status in stock_statuses if stock_status.get("name").upper() == name.upper()), None)
+
+
+@frappe.whitelist()
+def get_tax_class_names(site_name, filter_name):
+    oc_items = frappe.get_all("Opencart Product", fields=["name", "parent", "oc_tax_class_name","oc_tax_class_id"], filters={"oc_site": site_name})
+    tax_classes = {oc_item.oc_tax_class_id: oc_item for oc_item in oc_items}.values()
+    tax_class_names = [oc_item.oc_tax_class_name for oc_item in tax_classes if oc_item.oc_tax_class_name]
+    if filter_name:
+        return filter(lambda name: name.upper().startswith(filter_name.upper()), tax_class_names) or []
+    return tax_class_names
+
+
+@frappe.whitelist()
+def get_tax_class_id(site_name, name):
+    oc_items = frappe.get_all("Opencart Product", fields=["name", "parent", "oc_tax_class_name","oc_tax_class_id"], filters={"oc_site": site_name})
+    return next((oc_item.oc_tax_class_id for oc_item in oc_items if oc_item.oc_tax_class_name.upper() == name.upper()), None)

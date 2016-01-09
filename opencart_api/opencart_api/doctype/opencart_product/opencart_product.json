@@ -29,13 +29,32 @@
   }, 
   {
    "description": "", 
+   "fieldname": "oc_category_name", 
+   "fieldtype": "Data", 
+   "in_list_view": 0, 
+   "label": "Opencart Category Name", 
+   "permlevel": 0, 
+   "reqd": 0
+  },
+  {
+   "description": "", 
    "fieldname": "oc_category_id", 
    "fieldtype": "Data", 
    "in_list_view": 0, 
    "label": "Opencart Category ID", 
    "permlevel": 0, 
+   "read_only": 1, 
    "reqd": 0
   }, 
+  {
+   "description": "", 
+   "fieldname": "oc_manufacturer_name", 
+   "fieldtype": "Data", 
+   "in_list_view": 0, 
+   "label": "Opencart Manufacturer Name", 
+   "permlevel": 0, 
+   "reqd": 0
+  },
   {
    "description": "", 
    "fieldname": "oc_manufacturer_id", 
@@ -43,6 +62,17 @@
    "in_list_view": 0, 
    "label": "Opencart Manufacturer ID", 
    "permlevel": 0, 
+   "read_only": 1, 
+   "reqd": 0
+  }, 
+  {
+   "description": "", 
+   "fieldname": "oc_tax_class_name", 
+   "fieldtype": "Data", 
+   "in_list_view": 0, 
+   "label": "Opencart Tax Class Name", 
+   "permlevel": 0, 
+   "unique": 0, 
    "reqd": 0
   }, 
   {
@@ -52,7 +82,17 @@
    "in_list_view": 0, 
    "label": "Opencart Tax Class ID", 
    "permlevel": 0, 
+   "read_only": 1, 
    "reqd": 1
+  }, 
+  {
+   "description": "", 
+   "fieldname": "oc_stock_status_name", 
+   "fieldtype": "Data", 
+   "in_list_view": 0, 
+   "label": "Opencart Stock Status Name", 
+   "permlevel": 0, 
+   "reqd": 0
   }, 
   {
    "description": "", 
@@ -61,6 +101,7 @@
    "in_list_view": 0, 
    "label": "Opencart Stock Status ID", 
    "permlevel": 0, 
+   "read_only": 1, 
    "reqd": 1
   }, 
   {
