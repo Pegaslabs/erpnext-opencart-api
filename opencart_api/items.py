@@ -974,7 +974,7 @@ def get_manufacturer_id(site_name, name):
 
 @frappe.whitelist()
 def get_category_names(site_name, filter_name):
-    category_names = [category.name for category in list(oc_api.get(site_name).get_all_categories())]
+    category_names = [category.name for category in list(oc_api.get(site_name).get_categories_by_level())]
     if filter_name:
         return filter(lambda name: name.upper().startswith(filter_name.upper()), category_names) or []
     return category_names
@@ -982,7 +982,7 @@ def get_category_names(site_name, filter_name):
 
 @frappe.whitelist()
 def get_category_id(site_name, name):
-    categories = oc_api.get(site_name).get_all_categories()
+    categories = oc_api.get(site_name).get_categories_by_level()
     return next((category.category_id for category in categories if category.name.upper() == name.upper()), None)
 
 
