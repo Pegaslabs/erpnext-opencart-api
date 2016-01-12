@@ -52,12 +52,12 @@ cur_frm.cscript.sync_item_from_opencart = function(label, status){
 
 frappe.ui.form.on("Item", {
     onload: function(frm) {
-        $.each(frm.doc.oc_products, function(i, oc_product) {
+        if(!frm.doc.__islocal) {
             frappe.set_autocomplete_field("Opencart Product", "manufacturer", frm);
             frappe.set_autocomplete_field("Opencart Product", "category", frm);
             frappe.set_autocomplete_field("Opencart Product", "stock_status", frm);
             frappe.set_autocomplete_field("Opencart Product", "tax_class", frm);
-        });
+        }
     }
 });
 
