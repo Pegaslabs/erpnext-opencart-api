@@ -272,7 +272,7 @@ ISO_CODE3_TO_TERRITORY_MAP = {
         "PE": {"name": "Prince Edward Island"},
         "QC": {"name": "Quebec"},
         "SK": {"name": "Saskatchewan"},
-        "YT": {"name": "Yukon Territory"}
+        "YT": {"name": "Yukon"}
     }},
     "ALA": {"name": "Aaland Islands"},
     "AFG": {"name": "Afghanistan"},
