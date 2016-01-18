@@ -738,7 +738,7 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
     doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
     rules = doc_customer_group.get('oc_customer_group_rule')
     for rule in rules:
-        if rule.get('condition') == 'If Territory of Customer is':
+        if rule.get('rule_condition') == 'If Territory of Customer is':
             parent_territory = rule.get('condition_territory')
             territory_to_price_list_map[parent_territory] = rule.get('action_price_list')
             territory_to_warehouse_map[parent_territory] = rule.get('action_warehouse')
@@ -786,7 +786,7 @@ def resolve_price_list_and_warehouse(customer, doc_customer=None):
     doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
     rules = doc_customer_group.get('oc_customer_group_rule')
     for rule in rules:
-        if rule.get('condition') == 'If Territory of Customer is':
+        if rule.get('rule_condition') == 'If Territory of Customer is':
             parent_territory = rule.get('condition_territory')
             territory_to_price_list_map[parent_territory] = rule.get('action_price_list')
             territory_to_warehouse_map[parent_territory] = rule.get('action_warehouse')
