@@ -44,7 +44,7 @@
    "label": "Opencart Category ID", 
    "permlevel": 0, 
    "read_only": 1, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -63,7 +63,7 @@
    "label": "Opencart Manufacturer ID", 
    "permlevel": 0, 
    "read_only": 1, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -83,7 +83,7 @@
    "label": "Opencart Tax Class ID", 
    "permlevel": 0, 
    "read_only": 1, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -102,7 +102,7 @@
    "label": "Opencart Stock Status ID", 
    "permlevel": 0, 
    "read_only": 1, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 

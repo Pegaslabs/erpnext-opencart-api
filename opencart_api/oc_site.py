@@ -1,14 +1,19 @@
 from __future__ import unicode_literals
+from frappe.utils import now_datetime
 import json
 
 import frappe
-
+import datetime
 import oc_api
 
 
 OPENCART_INIT_CACHE = {}
 
 OPENCART_MANUFACTURERS_CACHE = {}
+
+OPENCART_CATEGORIES_CACHE = {}
+
+OC_CATEGORIES_CACHE_LAST_MODIFIED = None
 
 
 def get_oc_init(site_name):
@@ -203,3 +208,27 @@ def get_manufacturer_name(site_name, manufacturer_id):
     if res is None:
         frappe.throw('Error. Cannot get manufacturer name by manufacturer id "%s" for Opencart Site "%s"' % (manufacturer_id, site_name))
     return res
+
+
+def get_all_categories():
+    global OPENCART_CATEGORIES_CACHE, OC_CATEGORIES_CACHE_LAST_MODIFIED
+    site_names = frappe.db.get_all("Opencart Site", fields=["name"])
+    modified_date = OC_CATEGORIES_CACHE_LAST_MODIFIED or now_datetime()
+    now_date = now_datetime()
+    categories = OPENCART_CATEGORIES_CACHE
+    if not categories or now_date >= modified_date + datetime.timedelta(minutes=5):
+        for site_name in site_names:
+            categories = [category for category in list(oc_api.get(site_name).get_all_categories())]
+            OPENCART_CATEGORIES_CACHE[site_name.name] = categories
+            OC_CATEGORIES_CACHE_LAST_MODIFIED = now_datetime()
+        categories = OPENCART_CATEGORIES_CACHE
+    return categories
+
+
+@frappe.whitelist()
+def get_category_names():
+    categories = get_all_categories()
+    category_names = {}
+    for i in categories:
+        category_names[i] = [category.name for category in categories[i]]
+    return category_names
