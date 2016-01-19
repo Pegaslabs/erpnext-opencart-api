@@ -9,7 +9,7 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 
 cur_frm.cscript.setup_dashboard = function(doc) {
 	cur_frm.dashboard.reset(doc);
-	if (doc.sales_order) {
+	if(doc.sales_order) {
 		frappe.call({
 			type: "GET",
 			method: "opencart_api.sales_invoice.get_sales_statistic",
@@ -21,24 +21,37 @@ cur_frm.cscript.setup_dashboard = function(doc) {
 					cur_frm.dashboard.add_doctype_badge("Sales Order", doc.sales_order);
 				}
 				if (Object.keys(r.message.delivery_note).length >= 1) {
-					cur_frm.dashboard.add_doctype_badge("Delivery Note",  r.message.delivery_note, "sales_order");
+					cur_frm.dashboard.add_doctype_badge("Delivery Note",  r.message.delivery_note, "sales_order", "sales_order");
 				}
 				if (Object.keys(r.message.packing_slip).length >= 1) {
-					cur_frm.dashboard.add_doctype_badge("Packing Slip", r.message.packing_slip, "sales_order");
+					cur_frm.dashboard.add_doctype_badge("Packing Slip", r.message.packing_slip, "sales_order", "sales_order");
+				}
+			}
+		});
+	} else {
+		frappe.call({
+			type: "GET",
+			method: "opencart_api.sales_invoice.get_inventory_exchange_entry",
+			args: {
+				sales_invoice: doc.name
+			},
+			callback: function(r) {
+				if(!r.exc && r.message) {
+					cur_frm.dashboard.add_doctype_badge("Inventory Exchange Entry", r.message, "sales_invoice", "name");
 				}
 			}
 		});
 	}
 }
 
-cur_frm.dashboard.add_doctype_badge = function(doctype, no, fieldname) {
+cur_frm.dashboard.add_doctype_badge = function(doctype, no, fieldname, filter_fieldname) {
 	if(frappe.model.can_read(doctype)) {
 		this.add_badge(__(doctype), no, doctype, function() {
 			frappe.route_options = {};
-			if (fieldname) {
-				frappe.route_options[fieldname] = cur_frm.doc.sales_order;
+			if(filter_fieldname) {
+				frappe.route_options[fieldname] = cur_frm.doc[filter_fieldname];
 			}
-			if ((no != cur_frm.doc.sales_order) && (no.length > 1)) {
+			if ($.isArray(no) && (no.length > 1)) {
 				frappe.set_route("List", doctype);
 			} else {
 			 	frappe.set_route("Form", doctype, no);

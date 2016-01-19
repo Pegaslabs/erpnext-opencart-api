@@ -1,9 +1,5 @@
 from __future__ import unicode_literals
-from frappe import _, msgprint, throw
-from frappe.utils import cint, cstr, flt
-from erpnext.accounts.party import get_party_account, get_due_date
 
-from frappe.model.mapper import get_mapped_doc
 import frappe
 
 
@@ -19,3 +15,8 @@ def get_sales_statistic(sales_order):
         'sales_invoice': sales_invoice_no,
         'packing_slip': packing_slip_no
     }
+
+
+@frappe.whitelist()
+def get_inventory_exchange_entry(sales_invoice):
+    return frappe.db.get_values('Inventory Exchange Entry', {'sales_invoice': sales_invoice}, 'name')
