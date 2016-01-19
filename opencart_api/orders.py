@@ -20,7 +20,7 @@ import territories
 import sales_taxes_and_charges_template
 import sales_order
 from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
-from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
+from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order, stop_or_unstop_sales_orders
 from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
 from erpnext.selling.doctype.customer.customer import check_credit_limit
 from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
@@ -448,7 +448,7 @@ def on_sales_order_added(doc_sales_order):
                 # si = sales_order.make_sales_invoice(doc_sales_order.name)
                 # si.insert()
             else:
-                doc_sales_order.stop_sales_order()
+                stop_or_unstop_sales_orders([doc_sales_order.name], "Stopped")
     finally:
         frappe.db.set_value('Sales Order', doc_sales_order.name, 'oc_is_auto_processing', 0)
 
