@@ -448,7 +448,8 @@ def on_sales_order_added(doc_sales_order):
                 # si = sales_order.make_sales_invoice(doc_sales_order.name)
                 # si.insert()
             else:
-                erpnext_sales_order.stop_or_unstop_sales_orders([doc_sales_order.name], "Stopped")
+                so_names = '["' + doc_sales_order.name + '"]'
+                erpnext_sales_order.stop_or_unstop_sales_orders(so_names, "Stopped")
     finally:
         frappe.db.set_value('Sales Order', doc_sales_order.name, 'oc_is_auto_processing', 0)
 
