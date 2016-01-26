@@ -660,8 +660,11 @@ def _pull_added_from(site_name, silent=False):
                     product_id = product.get('product_id')
                     product_model = product.get('model', '').strip().upper()
                     doc_item = items.get_item_by_item_code(product_model)
-                    if doc_item.default_variant:
+
+                    # fetching default variant from item
+                    if doc_item and doc_item.default_variant:
                         doc_item = frappe.get_doc("Item", doc_item.default_variant)
+
                     if not doc_item:
                         skip_count += 1
                         extras = (1, 'skipped', 'Skipped: Item "%s" cannot be found for Opencart product with product id "%s"' % (product_model, product_id))
