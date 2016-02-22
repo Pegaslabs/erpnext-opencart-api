@@ -829,6 +829,7 @@ def pull_products_from_oc(site_name, silent=False):
     for oc_category in opencart_api.get_all_categories():
         doc_item_group = item_groups.get_item_group(site_name, oc_category.id)
         for oc_product in opencart_api.get_products_by_category(oc_category.id):
+            print("processing oc product: %s" % str(oc_product.get('model')))
             check_count += 1
             item_code = oc_product.get('model', '').upper()
             doc_item = get_item_by_item_code(item_code)
