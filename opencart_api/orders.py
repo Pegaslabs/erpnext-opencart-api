@@ -26,6 +26,7 @@ from erpnext.selling.doctype.customer.customer import check_credit_limit
 from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 
 
+
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
 OC_ORDER_STATUS_PROCESSING = 'Processing'
 OC_ORDER_STATUS_SHIPPED = 'Shipped'
@@ -37,6 +38,7 @@ OC_CURRENCY_REGEX = re.compile("([A-Z]{3})")
 OC_TOTAL_REGEX = re.compile("([-+]?[\d,.]+)")
 
 TOTALS_PRECISION = 0.02
+OC_ORDER_TYPE_LUSTCOBOX = "lustcobox"
 
 
 def get_currency_from_total_str(total_str):
@@ -68,9 +70,40 @@ def before_save(doc, method=None):
 
 
 def on_submit(doc, method=None):
-    check_oc_sales_order_totals(doc)
     if sales_order.is_oc_sales_order(doc):
-        if not doc.get('oc_is_auto_processing'):
+        if doc.oc_order_type == OC_ORDER_TYPE_LUSTCOBOX:
+            from erpnext.selling.doctype.sales_subscription.sales_subscription import make_sales_subscription
+            subscription_doc = make_sales_subscription(doc.name, doc)
+
+            # check_oc_sales_order_totals(doc)
+            si = sales_order.make_sales_invoice(doc.name)
+            si.update({
+                "reference_type": "Sales Subscription",
+                "reference_name": subscription_doc.name
+            })
+            si.insert()
+            si.submit()
+            frappe.msgprint('Sales Invoice %s was created and submitted automatically' % si.name)
+
+            dn = erpnext_sales_invoice.make_delivery_note(si.name)
+            dn.update({
+                "reference_type": "Sales Subscription",
+                "reference_name": subscription_doc.name
+            })
+            dn.insert()
+            frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
+
+            ps = make_packing_slip(dn.name)
+            ps.update({
+                "reference_type": "Sales Subscription",
+                "reference_name": subscription_doc.name
+            })
+            ps.get_items()
+            ps.insert()
+            frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
+
+        elif not doc.get('oc_is_auto_processing'):
+            check_oc_sales_order_totals(doc)
             if is_pos_payment_method(doc.get('oc_pm_code')):
                 # submitting orders manually
                 # create sales invoice
@@ -407,8 +440,13 @@ def update_totals(doc_order, oc_order, tax_rate_names=[]):
         })
 
 
-def on_sales_order_added(doc_sales_order):
-    if any(frappe.db.get_value("Item", i.item_code, "oc_do_not_auto_submit_orders") for i in doc_sales_order.items):
+def on_lustcobox_order_added(doc_sales_order, oc_order):
+    doc_sales_order.submit()
+
+
+def on_sales_order_added(doc_sales_order, oc_order):
+    if doc_sales_order.oc_order_type == OC_ORDER_TYPE_LUSTCOBOX:
+        on_lustcobox_order_added(doc_sales_order, oc_order)
         return
     try:
         check_oc_sales_order_totals(doc_sales_order)
@@ -531,6 +569,9 @@ def _pull_added_from(site_name, silent=False):
                         extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), str(ex)))
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
+
+            oc_order_type = oc_order.get('order_type')
+            is_lustcobox_order = oc_order_type == OC_ORDER_TYPE_LUSTCOBOX
             if doc_order:
                 # update existed Sales Order only with status "Draft"
                 if doc_order.docstatus != 0:
@@ -539,6 +580,7 @@ def _pull_added_from(site_name, silent=False):
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
                 params.update({
+                    'oc_order_type': oc_order_type,
                     'currency': oc_order.get('currency_code'),
                     # 'conversion_rate': float(oc_order.currency_value),
                     'base_net_total': oc_order.get('total'),
@@ -606,6 +648,7 @@ def _pull_added_from(site_name, silent=False):
                 # creating new Sales Order
                 params.update({
                     'doctype': 'Sales Order',
+                    'oc_order_type': oc_order_type,
                     'currency': oc_order.get('currency_code'),
                     'base_net_total': oc_order.get('total'),
                     'total': oc_order.get('total'),
@@ -681,7 +724,7 @@ def _pull_added_from(site_name, silent=False):
                         'currency': product.get('currency_code'),
                         'description': product.get('name')
                     }
-                    if is_pos_payment_method(doc_order.get('oc_pm_code')):
+                    if is_pos_payment_method(doc_order.get('oc_pm_code')) or is_lustcobox_order:
                         so_item.update({
                             'base_rate': flt(product.get('price')),
                             'base_amount': flt(product.get('total')),
@@ -717,7 +760,7 @@ def _pull_added_from(site_name, silent=False):
 
                     # business logic on adding new order from Opencart site
                     doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
-                    on_sales_order_added(doc_order)
+                    on_sales_order_added(doc_order, oc_order)
 
         if modified_to > now_date:
             break
