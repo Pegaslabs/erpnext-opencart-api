@@ -11,6 +11,9 @@ from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_paym
 import territories
 
 
+OC_ORDER_TYPE_LUSTCOBOX = "lustcobox"
+
+
 def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
     back_order_item_map = {i.item_code: i for i in doc_back_order.items}
     sales_order_item_map = {i.item_code: i for i in doc_sales_order.items}
@@ -29,6 +32,14 @@ def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
 
 def is_oc_sales_order(doc):
     return bool(doc.get('oc_site'))
+
+
+def is_oc_lustcobox_order(doc):
+    return doc.oc_order_type == OC_ORDER_TYPE_LUSTCOBOX
+
+
+def is_oc_lustcobox_order_type(oc_order_type):
+    return oc_order_type == OC_ORDER_TYPE_LUSTCOBOX
 
 
 @frappe.whitelist()
@@ -58,13 +69,14 @@ def make_sales_invoice(source_name, target_doc=None):
         target.run_method("calculate_taxes_and_totals")
 
     def update_item(source, target, source_parent):
-        target.amount = flt(source.amount) - flt(source.billed_amt)
+        target.amount = flt(source.amount)  # - flt(source.billed_amt)
         target.base_amount = target.amount * flt(source_parent.conversion_rate)
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
         target.income_account = get_income_account(source_parent)
         target.bo_qty = 0.0
 
-    if erpnext_sales_order.has_active_si(source_name):
+    oc_order_type = frappe.db.get_value("Sales Order", source_name, "oc_order_type")
+    if not is_oc_lustcobox_order_type(oc_order_type) and erpnext_sales_order.has_active_si(source_name):
         frappe.throw('Cannot make new Sales Invoice: Sales Invoice is already created and its docstatus is not canceled.')
 
     doclist = get_mapped_doc("Sales Order", source_name, {
@@ -84,7 +96,7 @@ def make_sales_invoice(source_name, target_doc=None):
                 "parent": "sales_order",
             },
             "postprocess": update_item,
-            "condition": lambda doc: doc.base_amount == 0 or doc.billed_amt < doc.amount
+            # "condition": lambda doc: doc.base_amount == 0 or doc.billed_amt < doc.amount
         },
         "Sales Taxes and Charges": {
             "doctype": "Sales Taxes and Charges",

@@ -3,7 +3,7 @@ from datetime import datetime
 import re
 
 import frappe
-from frappe.utils import add_days, nowdate, getdate, cstr, flt
+from frappe.utils import add_days, nowdate, getdate, cstr, flt, cint
 from frappe.exceptions import ValidationError
 
 from erpnext.accounts.utils import get_fiscal_year
@@ -26,7 +26,6 @@ from erpnext.selling.doctype.customer.customer import check_credit_limit
 from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 
 
-
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
 OC_ORDER_STATUS_PROCESSING = 'Processing'
 OC_ORDER_STATUS_SHIPPED = 'Shipped'
@@ -38,7 +37,6 @@ OC_CURRENCY_REGEX = re.compile("([A-Z]{3})")
 OC_TOTAL_REGEX = re.compile("([-+]?[\d,.]+)")
 
 TOTALS_PRECISION = 0.02
-OC_ORDER_TYPE_LUSTCOBOX = "lustcobox"
 
 
 def get_currency_from_total_str(total_str):
@@ -71,11 +69,11 @@ def before_save(doc, method=None):
 
 def on_submit(doc, method=None):
     if sales_order.is_oc_sales_order(doc):
-        if doc.oc_order_type == OC_ORDER_TYPE_LUSTCOBOX:
-            from erpnext.selling.doctype.sales_subscription.sales_subscription import make_sales_subscription
-            subscription_doc = make_sales_subscription(doc.name, doc)
+        if sales_order.is_oc_lustcobox_order(doc):
+            subscription_doc = frappe.get_doc("Sales Subscription", frappe.db.get_value("Sales Subscription", {"sales_order": doc.name}, "name"))
+            subscription_doc.activate()
+            check_oc_sales_order_totals(doc)
 
-            # check_oc_sales_order_totals(doc)
             si = sales_order.make_sales_invoice(doc.name)
             si.update({
                 "reference_type": "Sales Subscription",
@@ -83,24 +81,56 @@ def on_submit(doc, method=None):
             })
             si.insert()
             si.submit()
-            frappe.msgprint('Sales Invoice %s was created and submitted automatically' % si.name)
 
-            dn = erpnext_sales_invoice.make_delivery_note(si.name)
-            dn.update({
-                "reference_type": "Sales Subscription",
-                "reference_name": subscription_doc.name
-            })
-            dn.insert()
-            frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
+            from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice
+            je = frappe.get_doc(get_cc_payment_entry_against_invoice(
+                si.doctype,
+                si.name,
+                transaction_args=subscription_doc.as_dict(),
+                transaction_id=subscription_doc.initial_transaction_id
+            ))
+            je.insert()
+            je.submit()
 
-            ps = make_packing_slip(dn.name)
-            ps.update({
-                "reference_type": "Sales Subscription",
-                "reference_name": subscription_doc.name
-            })
-            ps.get_items()
-            ps.insert()
-            frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
+            if subscription_doc.have_first_box:
+                dn = erpnext_sales_invoice.make_delivery_note(si.name)
+                dn.update({
+                    "reference_type": "Sales Subscription",
+                    "reference_name": subscription_doc.name
+                })
+                dn.insert()
+
+                ps = make_packing_slip(dn.name)
+                ps.update({
+                    "reference_type": "Sales Subscription",
+                    "reference_name": subscription_doc.name
+                })
+                ps.get_items()
+                ps.insert()
+                for ps_item in ps.items:
+                    ps_item.qty = ps_item.ordered_qty
+                    ps_item.bo_qty = 0
+                ps.oc_tracking_number = "Box was given on hands"
+                ps.save()
+                ps.start_picking()
+                ps.stop_picking()
+                frappe.get_doc("Packing Slip", ps.name).submit()
+                frappe.get_doc("Delivery Note", dn.name).submit()
+            else:
+                dn = erpnext_sales_invoice.make_delivery_note(si.name)
+                dn.update({
+                    "reference_type": "Sales Subscription",
+                    "reference_name": subscription_doc.name
+                })
+                dn.insert()
+
+                ps = make_packing_slip(dn.name)
+                ps.update({
+                    "reference_type": "Sales Subscription",
+                    "reference_name": subscription_doc.name
+                })
+                ps.get_items()
+                ps.insert()
 
         elif not doc.get('oc_is_auto_processing'):
             check_oc_sales_order_totals(doc)
@@ -445,7 +475,40 @@ def on_lustcobox_order_added(doc_sales_order, oc_order):
 
 
 def on_sales_order_added(doc_sales_order, oc_order):
-    if doc_sales_order.oc_order_type == OC_ORDER_TYPE_LUSTCOBOX:
+    if sales_order.is_oc_lustcobox_order(doc_sales_order):
+        if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX):
+            frappe.throw("Section {} is missed in Sales Order".format(sales_order.OC_ORDER_TYPE_LUSTCOBOX))
+        if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {}).get("conv_tr_id"):
+            frappe.throw("Lustcobox Sales Orders should have initial transaction id")
+        lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
+        from erpnext.selling.doctype.sales_subscription.sales_subscription import make_sales_subscription
+        sales_subscription_doc = make_sales_subscription(doc_sales_order)
+        sales_subscription_doc.update({
+            "cc_token_id": lustcobox.get("cc_token"),
+            "initial_transaction_id": lustcobox.get("conv_tr_id"),
+            "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
+            "month_free": lustcobox.get("second_month_free"),
+
+            "payment_firstname": oc_order.get("payment_firstname"),
+            "payment_lastname": oc_order.get("payment_lastname"),
+            "payment_address_1": oc_order.get("payment_address_1"),
+            "payment_address_2": oc_order.get("payment_address_2"),
+            "payment_city": oc_order.get("payment_city"),
+            "payment_postcode": oc_order.get("payment_postcode"),
+            "payment_country": oc_order.get("payment_country"),
+            "payment_zone": oc_order.get("payment_zone"),
+
+
+            "shipping_firstname": lustcobox.get("shipping_firstname"),
+            "shipping_lastname": lustcobox.get("shipping_lastname"),
+            "shipping_address_1": lustcobox.get("shipping_address_1"),
+            "shipping_address_2": lustcobox.get("shipping_address_2"),
+            "shipping_city": lustcobox.get("shipping_city"),
+            "shipping_postcode": lustcobox.get("shipping_postcode"),
+            "shipping_country": lustcobox.get("shipping_country"),
+            "shipping_zone": lustcobox.get("shipping_zone")
+        })
+        sales_subscription_doc.insert(ignore_permissions=True)
         on_lustcobox_order_added(doc_sales_order, oc_order)
         return
     try:
@@ -504,7 +567,6 @@ def pull_added_from(site_name, silent=False):
 
 
 def _pull_added_from(site_name, silent=False):
-    '''Sync orders from Opencart site'''
     results = {}
     results_list = []
     check_count = 0
@@ -571,7 +633,6 @@ def _pull_added_from(site_name, silent=False):
                         continue
 
             oc_order_type = oc_order.get('order_type')
-            is_lustcobox_order = oc_order_type == OC_ORDER_TYPE_LUSTCOBOX
             if doc_order:
                 # update existed Sales Order only with status "Draft"
                 if doc_order.docstatus != 0:
@@ -724,7 +785,7 @@ def _pull_added_from(site_name, silent=False):
                         'currency': product.get('currency_code'),
                         'description': product.get('name')
                     }
-                    if is_pos_payment_method(doc_order.get('oc_pm_code')) or is_lustcobox_order:
+                    if is_pos_payment_method(doc_order.get('oc_pm_code')) or sales_order.is_oc_lustcobox_order_type(oc_order_type):
                         so_item.update({
                             'base_rate': flt(product.get('price')),
                             'base_amount': flt(product.get('total')),
