@@ -34,6 +34,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         'fax': cstr(oc_order.get('fax')),
         'email_id': cstr(oc_order.get('email')),
         'customer_name': get_payment_customer_name(oc_order),
+        'firstname': oc_order.get('payment_firstname'),
+        'lastname': oc_order.get('payment_lastname'),
         'pincode': cstr(oc_order.get('payment_postcode')),
         'country': cstr(oc_order.get('payment_country')),
         'state': cstr(oc_order.get('payment_zone')),
@@ -52,6 +54,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
                 'fax': cstr(oc_order.get('fax')),
                 'email_id': cstr(oc_order.get('email')),
                 'customer_name': get_shipping_customer_name(oc_order),
+                'firstname': oc_order.get('shipping_firstname'),
+                'lastname': oc_order.get('shipping_lastname'),
                 'pincode': cstr(oc_order.get('shipping_postcode')),
                 'country': cstr(oc_order.get('shipping_country')),
                 'state': cstr(oc_order.get('shipping_zone')),
@@ -67,6 +71,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         ifnull(fax, '')=%(fax)s and
         ifnull(email_id, '')=%(email_id)s and
         ifnull(customer_name, '') like %(customer_name)s and
+        ifnull(firstname, '')=%(firstname)s and
+        ifnull(lastname, '')=%(lastname)s and
         ifnull(pincode, '')=%(pincode)s and
         ifnull(country, '')=%(country)s and
         ifnull(state, '')=%(state)s and
@@ -124,6 +130,8 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
             'customer_name': customer_name,
+            'firstname': firstname,
+            'lastname': lastname,
             'pincode': oc_address.get('postcode', ''),
             'country': oc_address.get('country', ''),
             'state': oc_address.get('zone'),
@@ -144,6 +152,8 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
             'customer_name': customer_name,
+            'firstname': firstname,
+            'lastname': lastname,
             'pincode': oc_address.get('postcode', ''),
             'country': oc_address.get('country', ''),
             'state': oc_address.get('zone'),
@@ -185,6 +195,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
             'fax': cstr(oc_order.get('fax')),
             'email_id': cstr(oc_order.get('email')),
             'customer_name': get_payment_customer_name(oc_order),
+            'firstname': oc_order.get('payment_firstname'),
+            'lastname': oc_order.get('payment_lastname'),,
             'pincode': cstr(oc_order.get('payment_postcode')),
             'country': cstr(oc_order.get('payment_country')),
             'state': cstr(oc_order.get('payment_zone')),
@@ -217,6 +229,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
                 'fax': cstr(oc_order.get('fax')),
                 'email_id': cstr(oc_order.get('email')),
                 'customer_name': get_payment_customer_name(oc_order),
+                'firstname': oc_order.get('payment_firstname'),
+                'lastname': oc_order.get('payment_lastname'),
                 'pincode': cstr(oc_order.get('payment_postcode')),
                 'country': cstr(oc_order.get('payment_country')),
                 'state': cstr(oc_order.get('payment_zone')),
@@ -237,6 +251,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
                 'fax': cstr(oc_order.get('fax')),
                 'email_id': cstr(oc_order.get('email')),
                 'customer_name': get_shipping_customer_name(oc_order),
+                'firstname': oc_order.get('shipping_firstname'),
+                'lastname': oc_order.get('shipping_lastname'),
                 'pincode': cstr(oc_order.get('shipping_postcode')),
                 'country': cstr(oc_order.get('shipping_country')),
                 'state': cstr(oc_order.get('shipping_zone')),
