@@ -34,6 +34,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         'fax': cstr(oc_order.get('fax')),
         'email_id': cstr(oc_order.get('email')),
         'customer_name': get_payment_customer_name(oc_order),
+        'first_name': oc_order.get('payment_firstname'),
+        'last_name': oc_order.get('payment_lastname'),
         'pincode': cstr(oc_order.get('payment_postcode')),
         'country': cstr(oc_order.get('payment_country')),
         'state': cstr(oc_order.get('payment_zone')),
@@ -52,6 +54,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
                 'fax': cstr(oc_order.get('fax')),
                 'email_id': cstr(oc_order.get('email')),
                 'customer_name': get_shipping_customer_name(oc_order),
+                'first_name': oc_order.get('shipping_firstname'),
+                'last_name': oc_order.get('shipping_lastname'),
                 'pincode': cstr(oc_order.get('shipping_postcode')),
                 'country': cstr(oc_order.get('shipping_country')),
                 'state': cstr(oc_order.get('shipping_zone')),
@@ -67,6 +71,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         ifnull(fax, '')=%(fax)s and
         ifnull(email_id, '')=%(email_id)s and
         ifnull(customer_name, '') like %(customer_name)s and
+        ifnull(first_name, '')=%(first_name)s and
+        ifnull(last_name, '')=%(last_name)s and
         ifnull(pincode, '')=%(pincode)s and
         ifnull(country, '')=%(country)s and
         ifnull(state, '')=%(state)s and
@@ -108,9 +114,9 @@ def create_or_update(site_name, oc_customer, doc_customer):
         return
 
     countries.create_if_does_not_exist(oc_address.get('country'))
-    firstname = oc_address.get('firstname') or oc_customer.get('firstname') or ''
-    lastname = oc_address.get('lastname') or oc_customer.get('lastname') or ''
-    customer_name = firstname + ' ' + lastname
+    first_name = oc_address.get('firstname') or oc_customer.get('firstname') or ''
+    last_name = oc_address.get('lastname') or oc_customer.get('lastname') or ''
+    customer_name = first_name + ' ' + last_name
     oc_address_id = oc_address.get('address_id')
     # doc_address = get_address(site_name, oc_address_id)
     address_type = 'Office' if oc_address.get('company') else 'Personal'
@@ -124,6 +130,8 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
             'customer_name': customer_name,
+            'first_name': first_name,
+            'last_name': last_name,
             'pincode': oc_address.get('postcode', ''),
             'country': oc_address.get('country', ''),
             'state': oc_address.get('zone'),
@@ -144,6 +152,8 @@ def create_or_update(site_name, oc_customer, doc_customer):
             'fax': oc_customer.get('fax', ''),
             'email_id': oc_customer.get('email', ''),
             'customer_name': customer_name,
+            'first_name': first_name,
+            'last_name': last_name,
             'pincode': oc_address.get('postcode', ''),
             'country': oc_address.get('country', ''),
             'state': oc_address.get('zone'),
@@ -185,6 +195,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
             'fax': cstr(oc_order.get('fax')),
             'email_id': cstr(oc_order.get('email')),
             'customer_name': get_payment_customer_name(oc_order),
+            'first_name': oc_order.get('payment_firstname'),
+            'last_name': oc_order.get('payment_lastname'),,
             'pincode': cstr(oc_order.get('payment_postcode')),
             'country': cstr(oc_order.get('payment_country')),
             'state': cstr(oc_order.get('payment_zone')),
@@ -217,6 +229,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
                 'fax': cstr(oc_order.get('fax')),
                 'email_id': cstr(oc_order.get('email')),
                 'customer_name': get_payment_customer_name(oc_order),
+                'first_name': oc_order.get('payment_firstname'),
+                'last_name': oc_order.get('payment_lastname'),
                 'pincode': cstr(oc_order.get('payment_postcode')),
                 'country': cstr(oc_order.get('payment_country')),
                 'state': cstr(oc_order.get('payment_zone')),
@@ -237,6 +251,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
                 'fax': cstr(oc_order.get('fax')),
                 'email_id': cstr(oc_order.get('email')),
                 'customer_name': get_shipping_customer_name(oc_order),
+                'first_name': oc_order.get('shipping_firstname'),
+                'last_name': oc_order.get('shipping_lastname'),
                 'pincode': cstr(oc_order.get('shipping_postcode')),
                 'country': cstr(oc_order.get('shipping_country')),
                 'state': cstr(oc_order.get('shipping_zone')),
