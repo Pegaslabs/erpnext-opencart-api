@@ -70,14 +70,14 @@ def before_save(doc, method=None):
 def on_submit(doc, method=None):
     if sales_order.is_oc_sales_order(doc):
         if sales_order.is_oc_lustcobox_order(doc):
-            subscription_doc = frappe.get_doc("Sales Subscription", frappe.db.get_value("Sales Subscription", {"sales_order": doc.name}, "name"))
-            subscription_doc.activate()
+            recurring_profile_doc = frappe.get_doc("Recurring Profile", frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name"))
+            recurring_profile_doc.activate()
             check_oc_sales_order_totals(doc)
 
             si = sales_order.make_sales_invoice(doc.name)
             si.update({
-                "reference_type": "Sales Subscription",
-                "reference_name": subscription_doc.name
+                "reference_type": "Recurring Profile",
+                "reference_name": recurring_profile_doc.name
             })
             si.insert()
             si.submit()
@@ -86,24 +86,24 @@ def on_submit(doc, method=None):
             je = frappe.get_doc(get_cc_payment_entry_against_invoice(
                 si.doctype,
                 si.name,
-                transaction_args=subscription_doc.as_dict(),
-                transaction_id=subscription_doc.initial_transaction_id
+                transaction_args=recurring_profile_doc.as_dict(),
+                transaction_id=recurring_profile_doc.initial_transaction_id
             ))
             je.insert()
             je.submit()
 
-            if subscription_doc.have_first_box:
+            if recurring_profile_doc.have_first_box:
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
                 dn.update({
-                    "reference_type": "Sales Subscription",
-                    "reference_name": subscription_doc.name
+                    "reference_type": "Recurring Profile",
+                    "reference_name": recurring_profile_doc.name
                 })
                 dn.insert()
 
                 ps = make_packing_slip(dn.name)
                 ps.update({
-                    "reference_type": "Sales Subscription",
-                    "reference_name": subscription_doc.name
+                    "reference_type": "Recurring Profile",
+                    "reference_name": recurring_profile_doc.name
                 })
                 ps.get_items()
                 ps.insert()
@@ -119,15 +119,15 @@ def on_submit(doc, method=None):
             else:
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
                 dn.update({
-                    "reference_type": "Sales Subscription",
-                    "reference_name": subscription_doc.name
+                    "reference_type": "Recurring Profile",
+                    "reference_name": recurring_profile_doc.name
                 })
                 dn.insert()
 
                 ps = make_packing_slip(dn.name)
                 ps.update({
-                    "reference_type": "Sales Subscription",
-                    "reference_name": subscription_doc.name
+                    "reference_type": "Recurring Profile",
+                    "reference_name": recurring_profile_doc.name
                 })
                 ps.get_items()
                 ps.insert()
@@ -481,9 +481,9 @@ def on_sales_order_added(doc_sales_order, oc_order):
         if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {}).get("conv_tr_id"):
             frappe.throw("Lustcobox Sales Orders should have initial transaction id")
         lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
-        from erpnext.selling.doctype.sales_subscription.sales_subscription import make_sales_subscription
-        sales_subscription_doc = make_sales_subscription(doc_sales_order)
-        sales_subscription_doc.update({
+        from erpnext.selling.doctype.recurring_profile.recurring_profile import make_recurring_profile
+        recurring_profile_doc = make_recurring_profile(doc_sales_order)
+        recurring_profile_doc.update({
             "cc_token_id": lustcobox.get("cc_token"),
             "initial_transaction_id": lustcobox.get("conv_tr_id"),
             "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
@@ -508,7 +508,7 @@ def on_sales_order_added(doc_sales_order, oc_order):
             "shipping_country": lustcobox.get("shipping_country"),
             "shipping_zone": lustcobox.get("shipping_zone")
         })
-        sales_subscription_doc.insert(ignore_permissions=True)
+        recurring_profile_doc.insert(ignore_permissions=True)
         on_lustcobox_order_added(doc_sales_order, oc_order)
         return
     try:
