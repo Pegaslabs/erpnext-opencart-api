@@ -196,7 +196,7 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
             'email_id': cstr(oc_order.get('email')),
             'customer_name': get_payment_customer_name(oc_order),
             'first_name': oc_order.get('payment_firstname'),
-            'last_name': oc_order.get('payment_lastname'),,
+            'last_name': oc_order.get('payment_lastname'),
             'pincode': cstr(oc_order.get('payment_postcode')),
             'country': cstr(oc_order.get('payment_country')),
             'state': cstr(oc_order.get('payment_zone')),
