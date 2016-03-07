@@ -71,8 +71,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         ifnull(fax, '')=%(fax)s and
         ifnull(email_id, '')=%(email_id)s and
         ifnull(customer_name, '') like %(customer_name)s and
-        ifnull(first_name, '')=%(first_name)s and
-        ifnull(last_name, '')=%(last_name)s and
+        (ifnull(first_name, '')='' or ifnull(first_name, '')=%(first_name)s) and
+        (ifnull(last_name, '')='' or ifnull(last_name, '')=%(last_name)s) and
         ifnull(pincode, '')=%(pincode)s and
         ifnull(country, '')=%(country)s and
         ifnull(state, '')=%(state)s and
@@ -82,15 +82,6 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
 
     if db_addresses:
         return frappe.get_doc('Address', db_addresses[0].get('name'))
-    # elif customer == "CUST-02419" and address_type == 'Shipping':
-    #     frappe.msgprint(customer + "=========\n" + str(oc_order))
-    #     frappe.msgprint(customer + "=========\n" + str(address_filter))
-
-    #     aa = frappe.get_doc("Address", "CUST-02419-Shipping-4")
-    #     res = ""
-    #     for i in address_filter.keys():
-    #         res += i + "===" + str(bool(address_filter.get(i) == aa.get(i))) + str(address_filter.get(i)) + "---" + str(aa.get(i)) + "\n"
-    #     frappe.throw(customer + "=========\n" + str(res))
 
 
 def create_or_update(site_name, oc_customer, doc_customer):
@@ -210,6 +201,10 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
         doc_address.insert(ignore_permissions=True)
     if address_type == 'Billing':
         ret_doc_address = doc_address
+        if not ret_doc_address.first_name or not ret_doc_address.last_name:
+            ret_doc_address.first_name = oc_order.get('payment_firstname')
+            ret_doc_address.last_name = oc_order.get('payment_lastname')
+            ret_doc_address.save()
 
     # shipping address
     shipping_country = oc_order.get('shipping_country') or oc_order.get('payment_country')
@@ -267,5 +262,9 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
         doc_address.insert(ignore_permissions=True)
     if address_type == 'Shipping':
         ret_doc_address = doc_address
+        if not ret_doc_address.first_name or not ret_doc_address.last_name:
+            ret_doc_address.first_name = oc_order.get('shipping_firstname')
+            ret_doc_address.last_name = oc_order.get('shipping_lastname')
+            ret_doc_address.save()
 
     return ret_doc_address

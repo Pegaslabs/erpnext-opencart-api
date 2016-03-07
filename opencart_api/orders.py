@@ -1,11 +1,15 @@
 from __future__ import unicode_literals
 from datetime import datetime
 import re
+import copy
 
 import frappe
 from frappe.utils import add_days, nowdate, getdate, cstr, flt, cint
-from frappe.exceptions import ValidationError
-
+from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
+from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
+from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
+from erpnext.selling.doctype.customer.customer import check_credit_limit
+from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 from erpnext.accounts.utils import get_fiscal_year
 
 from utils import sync_info
@@ -19,11 +23,6 @@ import items
 import territories
 import sales_taxes_and_charges_template
 import sales_order
-from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
-from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
-from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
-from erpnext.selling.doctype.customer.customer import check_credit_limit
-from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
@@ -483,30 +482,42 @@ def on_sales_order_added(doc_sales_order, oc_order):
         lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
         from erpnext.selling.doctype.recurring_profile.recurring_profile import make_recurring_profile
         recurring_profile_doc = make_recurring_profile(doc_sales_order)
+
+        doc_billing_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order, address_type='Billing')
+        oc_order_copy = copy.deepcopy(oc_order)
+        for k, v in lustcobox.items():
+            if k.startswith("shipping_"):
+                oc_order_copy.update({k: v})
+        doc_shipping_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order_copy, address_type='Shipping')
         recurring_profile_doc.update({
             "cc_token_id": lustcobox.get("cc_token"),
             "initial_transaction_id": lustcobox.get("conv_tr_id"),
             "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
             "month_free": lustcobox.get("second_month_free"),
 
-            "payment_firstname": oc_order.get("payment_firstname"),
-            "payment_lastname": oc_order.get("payment_lastname"),
-            "payment_address_1": oc_order.get("payment_address_1"),
-            "payment_address_2": oc_order.get("payment_address_2"),
-            "payment_city": oc_order.get("payment_city"),
-            "payment_postcode": oc_order.get("payment_postcode"),
-            "payment_country": oc_order.get("payment_country"),
-            "payment_zone": oc_order.get("payment_zone"),
+            "payment_address": doc_billing_address.name,
+            "payment_email": doc_billing_address.email_id,
+            "payment_phone": doc_billing_address.phone,
+            "payment_first_name": doc_billing_address.first_name,
+            "payment_last_name": doc_billing_address.last_name,
+            "payment_address_1": doc_billing_address.address_line1,
+            "payment_address_2": doc_billing_address.address_line2,
+            "payment_city": doc_billing_address.city,
+            "payment_postcode": doc_billing_address.pincode,
+            "payment_country": doc_billing_address.country,
+            "payment_zone": doc_billing_address.state,
 
-
-            "shipping_firstname": lustcobox.get("shipping_firstname"),
-            "shipping_lastname": lustcobox.get("shipping_lastname"),
-            "shipping_address_1": lustcobox.get("shipping_address_1"),
-            "shipping_address_2": lustcobox.get("shipping_address_2"),
-            "shipping_city": lustcobox.get("shipping_city"),
-            "shipping_postcode": lustcobox.get("shipping_postcode"),
-            "shipping_country": lustcobox.get("shipping_country"),
-            "shipping_zone": lustcobox.get("shipping_zone")
+            "shipping_address": doc_shipping_address.name,
+            "shipping_email": doc_shipping_address.email_id,
+            "shipping_phone": doc_shipping_address.phone,
+            "shipping_first_name": doc_shipping_address.first_name,
+            "shipping_last_name": doc_shipping_address.last_name,
+            "shipping_address_1": doc_shipping_address.address_line1,
+            "shipping_address_2": doc_shipping_address.address_line2,
+            "shipping_city": doc_shipping_address.city,
+            "shipping_postcode": doc_shipping_address.pincode,
+            "shipping_country": doc_shipping_address.country,
+            "shipping_zone": doc_shipping_address.state,
         })
         recurring_profile_doc.insert(ignore_permissions=True)
         on_lustcobox_order_added(doc_sales_order, oc_order)
