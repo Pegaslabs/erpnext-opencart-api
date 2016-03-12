@@ -81,14 +81,18 @@ def on_submit(doc, method=None):
             si.insert()
             si.submit()
 
-            from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice
+            from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, add_converge_transaction
             je = frappe.get_doc(get_cc_payment_entry_against_invoice(
                 si.doctype,
-                si.name,
-                transaction_args=recurring_profile_doc.as_dict(),
-                transaction_id=recurring_profile_doc.initial_transaction_id
+                si.name
             ))
             je.insert()
+            frappe.db.set_value("Recurring Profile", recurring_profile_doc.name, "current_journal_entry", je.name)
+            frappe.db.commit()
+            tr = add_converge_transaction(je.name, si, transaction_args=recurring_profile_doc.as_dict(), transaction_id=recurring_profile_doc.initial_transaction_id)
+            frappe.db.commit()
+
+            tr.submit()
             je.submit()
 
             if recurring_profile_doc.have_first_box:
