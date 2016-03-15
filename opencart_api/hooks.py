@@ -37,7 +37,7 @@ doc_events = {
         "before_save": "opencart_api.orders.before_save",
         # "before_insert": "opencart_api.orders.before_insert",
         # "after_insert": "opencart_api.orders.after_insert",
-        # "validate": "opencart_api.sales_order.validate",
+        "validate": "opencart_api.orders.validate",
         # "before_submit": "opencart_api.orders.before_submit",
         # "before_cancel": "opencart_api.orders.before_cancel",
         # "before_update_after_submit": "opencart_api.orders.before_update_after_submit",

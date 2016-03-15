@@ -34,8 +34,12 @@ def is_oc_sales_order(doc):
     return bool(doc.get('oc_site'))
 
 
-def is_oc_lustcobox_order(doc):
-    return doc.oc_order_type == OC_ORDER_TYPE_LUSTCOBOX
+def is_oc_lustcobox_order_doc(sales_order_doc):
+    return is_oc_lustcobox_order_type(sales_order_doc.oc_order_type)
+
+
+def is_oc_lustcobox_order(sales_order):
+    return is_oc_lustcobox_order_type(frappe.db.get_value("Sales Order", sales_order, "oc_order_type"))
 
 
 def is_oc_lustcobox_order_type(oc_order_type):

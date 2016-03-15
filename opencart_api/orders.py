@@ -66,12 +66,24 @@ def before_save(doc, method=None):
     sync_order_to_opencart(doc)
 
 
+def validate(doc, method=None):
+    if doc.oc_cc_token_id and not frappe.db.get("Credit Card", {"card_token": doc.oc_cc_token_id}):
+        frappe.throw("Cannot find Credit Card with token id {}".format(doc.oc_cc_token_id))
+
+
 def on_submit(doc, method=None):
     if sales_order.is_oc_sales_order(doc):
-        if sales_order.is_oc_lustcobox_order(doc):
-            recurring_profile_doc = frappe.get_doc("Recurring Profile", frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name"))
-            recurring_profile_doc.activate()
+        if sales_order.is_oc_lustcobox_order_doc(doc):
             check_oc_sales_order_totals(doc)
+
+            recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
+            if not recurring_profile:
+                add_lustcobox_order_part(doc, oc_order=None)
+                recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
+            if not doc.oc_cc_token_id:
+                frappe.throw("You cannot submit Sales Order {} due to CC Token Id is not set".format(doc.name))
+            recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
+            recurring_profile_doc.activate()
 
             si = sales_order.make_sales_invoice(doc.name)
             si.update({
@@ -477,53 +489,69 @@ def on_lustcobox_order_added(doc_sales_order, oc_order):
     doc_sales_order.submit()
 
 
+def add_lustcobox_order_part(doc_sales_order, oc_order=None):
+    is_later_add = False
+    if oc_order is None:
+        is_later_add = True
+    if not oc_order:
+        get_order_success, oc_order = oc_api.get(doc_sales_order.oc_site).get_order_json(doc_sales_order.oc_order_id)
+
+    lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
+    lustcobox.update({
+        "cc_token": doc_sales_order.oc_cc_token_id,
+        "conv_tr_id": doc_sales_order.oc_initial_transaction_id,
+        "have_first_box": doc_sales_order.oc_have_first_box
+    })
+    if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX):
+        frappe.throw("Section {} is missed in Sales Order".format(sales_order.OC_ORDER_TYPE_LUSTCOBOX))
+    if not is_later_add and not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {}).get("conv_tr_id"):
+        frappe.throw("Lustcobox Sales Orders should have initial transaction id")
+
+    from erpnext.selling.doctype.recurring_profile.recurring_profile import make_recurring_profile
+    recurring_profile_doc = make_recurring_profile(doc_sales_order)
+
+    doc_billing_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order, address_type='Billing')
+    oc_order_copy = copy.deepcopy(oc_order)
+    for k, v in lustcobox.items():
+        if k.startswith("shipping_"):
+            oc_order_copy.update({k: v})
+    doc_shipping_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order_copy, address_type='Shipping')
+    recurring_profile_doc.update({
+        "cc_token_id": lustcobox.get("cc_token"),
+        "initial_transaction_id": lustcobox.get("conv_tr_id"),
+        "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
+        "month_free": lustcobox.get("second_month_free"),
+
+        "payment_address": doc_billing_address.name,
+        "payment_email": doc_billing_address.email_id,
+        "payment_phone": doc_billing_address.phone,
+        "payment_first_name": doc_billing_address.first_name,
+        "payment_last_name": doc_billing_address.last_name,
+        "payment_address_1": doc_billing_address.address_line1,
+        "payment_address_2": doc_billing_address.address_line2,
+        "payment_city": doc_billing_address.city,
+        "payment_postcode": doc_billing_address.pincode,
+        "payment_country": doc_billing_address.country,
+        "payment_zone": doc_billing_address.state,
+
+        "shipping_address": doc_shipping_address.name,
+        "shipping_email": doc_shipping_address.email_id,
+        "shipping_phone": doc_shipping_address.phone,
+        "shipping_first_name": doc_shipping_address.first_name,
+        "shipping_last_name": doc_shipping_address.last_name,
+        "shipping_address_1": doc_shipping_address.address_line1,
+        "shipping_address_2": doc_shipping_address.address_line2,
+        "shipping_city": doc_shipping_address.city,
+        "shipping_postcode": doc_shipping_address.pincode,
+        "shipping_country": doc_shipping_address.country,
+        "shipping_zone": doc_shipping_address.state,
+    })
+    recurring_profile_doc.insert(ignore_permissions=True)
+
+
 def on_sales_order_added(doc_sales_order, oc_order):
-    if sales_order.is_oc_lustcobox_order(doc_sales_order):
-        if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX):
-            frappe.throw("Section {} is missed in Sales Order".format(sales_order.OC_ORDER_TYPE_LUSTCOBOX))
-        if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {}).get("conv_tr_id"):
-            frappe.throw("Lustcobox Sales Orders should have initial transaction id")
-        lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
-        from erpnext.selling.doctype.recurring_profile.recurring_profile import make_recurring_profile
-        recurring_profile_doc = make_recurring_profile(doc_sales_order)
-
-        doc_billing_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order, address_type='Billing')
-        oc_order_copy = copy.deepcopy(oc_order)
-        for k, v in lustcobox.items():
-            if k.startswith("shipping_"):
-                oc_order_copy.update({k: v})
-        doc_shipping_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order_copy, address_type='Shipping')
-        recurring_profile_doc.update({
-            "cc_token_id": lustcobox.get("cc_token"),
-            "initial_transaction_id": lustcobox.get("conv_tr_id"),
-            "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
-            "month_free": lustcobox.get("second_month_free"),
-
-            "payment_address": doc_billing_address.name,
-            "payment_email": doc_billing_address.email_id,
-            "payment_phone": doc_billing_address.phone,
-            "payment_first_name": doc_billing_address.first_name,
-            "payment_last_name": doc_billing_address.last_name,
-            "payment_address_1": doc_billing_address.address_line1,
-            "payment_address_2": doc_billing_address.address_line2,
-            "payment_city": doc_billing_address.city,
-            "payment_postcode": doc_billing_address.pincode,
-            "payment_country": doc_billing_address.country,
-            "payment_zone": doc_billing_address.state,
-
-            "shipping_address": doc_shipping_address.name,
-            "shipping_email": doc_shipping_address.email_id,
-            "shipping_phone": doc_shipping_address.phone,
-            "shipping_first_name": doc_shipping_address.first_name,
-            "shipping_last_name": doc_shipping_address.last_name,
-            "shipping_address_1": doc_shipping_address.address_line1,
-            "shipping_address_2": doc_shipping_address.address_line2,
-            "shipping_city": doc_shipping_address.city,
-            "shipping_postcode": doc_shipping_address.pincode,
-            "shipping_country": doc_shipping_address.country,
-            "shipping_zone": doc_shipping_address.state,
-        })
-        recurring_profile_doc.insert(ignore_permissions=True)
+    if sales_order.is_oc_lustcobox_order_doc(doc_sales_order):
+        add_lustcobox_order_part(doc_sales_order, oc_order)
         on_lustcobox_order_added(doc_sales_order, oc_order)
         return
     try:
@@ -816,6 +844,13 @@ def _pull_added_from(site_name, silent=False):
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
                     update_totals(doc_order, oc_order, tax_rate_names)
+                    if sales_order.is_oc_lustcobox_order_type(oc_order_type):
+                        lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
+                        doc_order.update({
+                            "oc_cc_token_id": lustcobox.get("cc_token"),
+                            "oc_initial_transaction_id": lustcobox.get("conv_tr_id"),
+                            "oc_have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0
+                        })
                     doc_order.insert(ignore_permissions=True)
                     try:
                         resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
@@ -859,7 +894,7 @@ def resolve_customer_group_rules(oc_order, doc_customer, params):
     territory_to_price_list_map = {}
     territory_to_warehouse_map = {}
     doc_customer_group = frappe.get_doc('Customer Group', doc_customer.get('customer_group'))
-    rules = doc_customer_group.get('oc_customer_group_rule')
+    rules = doc_customer_group.get('oc_customer_group_rule') or []
     for rule in rules:
         if rule.get('rule_condition') == 'If Territory of Customer is':
             parent_territory = rule.get('condition_territory')

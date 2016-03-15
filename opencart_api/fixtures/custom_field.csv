@@ -95,7 +95,10 @@
 "","""Sales Order-oc_bundle_discount_total""","Sales Order","Data","Bundle Discount","oc_sub_total","",0,"","","","oc_bundle_discount_total",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sub_total""","Sales Order","Data","Sub Total","oc_comment","",0,"","","","oc_sub_total",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_comment""","Sales Order","Long Text","Comment","oc_status","",0,"","Comment","","oc_comment",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_status""","Sales Order","Data","Order Status","oc_order_id","",0,"","","","oc_status",0,0,0,1,0,"","Awaiting Fulfillment",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_cc_token_id""","Sales Order","Data","CC Token Id","oc_order_id","",0,"","CC Token Id","","oc_cc_token_id",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_initial_transaction_id""","Sales Order","Data","Initial Transaction Id","oc_cc_token_id","",0,"","Initial Transaction Id","","oc_initial_transaction_id",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_have_first_box""","Sales Order","Check","Have First Box","oc_initial_transaction_id","",0,"","","","oc_have_first_box",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_status""","Sales Order","Data","Order Status","oc_have_first_box","",0,"","","","oc_status",0,0,0,1,0,"","Awaiting Fulfillment",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_order_id""","Sales Order","Data","Opencart Order ID","oc_site","",0,"","Opencart Order ID","","oc_order_id",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_site""","Sales Order","Link","Opencart Site","oc_is_updating","",0,"","Opencart Site","","oc_site",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_is_auto_processing""","Sales Order","Check","Is Updating","oc_is_updating","",0,"","","","oc_is_auto_processing",0,0,0,1,0,"","",1,"",0,0,0,0,0,0
