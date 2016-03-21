@@ -68,7 +68,7 @@ def before_save(doc, method=None):
 
 def validate(doc, method=None):
     if doc.oc_cc_token_id and not frappe.db.get("Credit Card", {"card_token": doc.oc_cc_token_id}):
-        frappe.throw("Cannot find Credit Card with token id {}".format(doc.oc_cc_token_id))
+        frappe.throw("Cannot find Credit Card with token id {}, Sales Order {}, OC Order ID {}".format(doc.oc_cc_token_id, doc.name, doc.oc_order_id))
 
 
 def on_submit(doc, method=None):
