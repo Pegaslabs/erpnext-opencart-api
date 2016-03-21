@@ -119,7 +119,6 @@
   {
    "fieldname": "cb", 
    "fieldtype": "Column Break", 
-   "label": "cb", 
    "permlevel": 0, 
    "precision": ""
   }, 
@@ -163,7 +162,6 @@
   {
    "fieldname": "cb2", 
    "fieldtype": "Column Break", 
-   "label": "cb2", 
    "permlevel": 0, 
    "precision": ""
   }, 
@@ -231,7 +229,6 @@
   {
    "fieldname": "cb3", 
    "fieldtype": "Column Break", 
-   "label": "cb3", 
    "permlevel": 0, 
    "precision": ""
   }, 
@@ -269,7 +266,6 @@
   {
    "fieldname": "cb3", 
    "fieldtype": "Column Break", 
-   "label": "cb3", 
    "permlevel": 0, 
    "precision": ""
   }, 

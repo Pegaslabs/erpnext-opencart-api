@@ -117,7 +117,6 @@
   {
    "fieldname": "cb", 
    "fieldtype": "Column Break", 
-   "label": "cb", 
    "permlevel": 0, 
    "precision": ""
   }, 
