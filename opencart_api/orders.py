@@ -8,7 +8,7 @@ from frappe.utils import add_days, nowdate, getdate, cstr, flt, cint
 from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sales_invoice
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
-from erpnext.selling.doctype.customer.customer import check_credit_limit
+from erpnext.selling.doctype.customer.customer import check_credit_limit, add_existed_credit_card
 from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
 from erpnext.accounts.utils import get_fiscal_year
 
@@ -851,6 +851,8 @@ def _pull_added_from(site_name, silent=False):
                             "oc_initial_transaction_id": lustcobox.get("conv_tr_id"),
                             "oc_have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0
                         })
+                        if not frappe.db.get("Credit Card", {"card_token": doc_order.oc_cc_token_id}):
+                            add_existed_credit_card({"customer": doc_order.customer, "card_token": doc_order.oc_cc_token_id})
                     doc_order.insert(ignore_permissions=True)
                     try:
                         resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
