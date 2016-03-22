@@ -153,7 +153,7 @@ def sync_item_to_oc(item_code, doc_item=None, site_name=None):
             continue
         oc_product_id = doc_oc_product.get('oc_product_id')
         get_product_success, oc_product = oc_api.get(cur_site_name).get_product(oc_product_id)
-        check_readiness_to_sync_product_to_oc(doc_oc_product, oc_product)
+        # check_readiness_to_sync_product_to_oc(doc_oc_product, oc_product)
         data = {
             'model': doc_oc_product.get('oc_model') or doc_item.get('name'),  # mandatory
             'sku': doc_oc_product.get('oc_sku') or doc_oc_product.get('oc_model'),  # mandatory
