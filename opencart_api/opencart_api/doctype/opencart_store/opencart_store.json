@@ -1,7 +1,7 @@
 {
  "allow_copy": 0, 
  "allow_import": 1, 
- "allow_rename": 0, 
+ "allow_rename": 1, 
  "creation": "2015-06-11 12:18:05.504552", 
  "custom": 0, 
  "docstatus": 0, 

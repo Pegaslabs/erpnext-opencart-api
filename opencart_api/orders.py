@@ -241,6 +241,9 @@ def sync_order_status_to_opencart(doc_order, new_order_status=None, new_order_st
 
 @sync_to_opencart
 def sync_order_to_opencart(doc_order):
+    if sales_order.is_oc_lustcobox_order_doc(doc_order):
+        return
+
     site_name = doc_order.get('oc_site')
     # validating customer
     customer_name = doc_order.get('customer')
@@ -520,7 +523,7 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
         "cc_token_id": lustcobox.get("cc_token"),
         "initial_transaction_id": lustcobox.get("conv_tr_id"),
         "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
-        "month_free": lustcobox.get("second_month_free"),
+        "month_free": cint(lustcobox.get("second_month_free")),
 
         "payment_address": doc_billing_address.name,
         "payment_email": doc_billing_address.email_id,
@@ -551,9 +554,13 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
 
 def on_sales_order_added(doc_sales_order, oc_order):
     if sales_order.is_oc_lustcobox_order_doc(doc_sales_order):
-        add_lustcobox_order_part(doc_sales_order, oc_order)
-        on_lustcobox_order_added(doc_sales_order, oc_order)
-        return
+        try:
+            check_oc_sales_order_totals(doc_sales_order)
+            add_lustcobox_order_part(doc_sales_order, oc_order)
+            on_lustcobox_order_added(doc_sales_order, oc_order)
+            return
+        except Exception:
+            pass
     try:
         check_oc_sales_order_totals(doc_sales_order)
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
@@ -1059,6 +1066,8 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
 
     # shipping related part
     doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
+    if not doc_oc_store:
+        frappe.throw('Cannot resolve Opencart Store for site "{}" and with store id "{}"'.format(site_name, oc_order.get('store_id')))
     shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
     if not shipping_rule:
         frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))

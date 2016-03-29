@@ -293,7 +293,7 @@ def create_from_oc(site_name, customer_id, oc_order=None):
     success, oc_customer = oc_api.get(site_name).get_customer(customer_id)
 
     if not success:
-        frappe.throw('Cannot get Customer from Opencart site. Error: %s' % oc_customer.get('error') or 'Unknown')
+        frappe.throw("Cannot get Customer from Opencart site {}. Error: {}".format(site_name, oc_customer.get("error") or "Unknown"))
 
     customer_group_id = oc_customer.get('customer_group_id', '')
     doc_customer_group = customer_groups.get(site_name, customer_group_id)
