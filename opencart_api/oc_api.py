@@ -123,7 +123,7 @@ class OpencartApi(object):
                 product['category_id'] = category_id
                 break
 
-        for i, first_description in product.get('product_description').items():
+        for i, first_description in product.get('product_description', {}).items():
             if isinstance(first_description, list):
                 for k, val in first_description[0].items():
                     product[k] = val
