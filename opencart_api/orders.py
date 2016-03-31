@@ -505,8 +505,8 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
         "conv_tr_id": doc_sales_order.oc_initial_transaction_id,
         "have_first_box": doc_sales_order.oc_have_first_box
     })
-    if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX):
-        frappe.throw("Section {} is missed in Sales Order".format(sales_order.OC_ORDER_TYPE_LUSTCOBOX))
+    # if not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX):
+    #     frappe.throw("Section {} is missed in Sales Order".format(sales_order.OC_ORDER_TYPE_LUSTCOBOX))
     if not is_later_add and not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {}).get("conv_tr_id"):
         frappe.throw("Lustcobox Sales Orders should have initial transaction id")
 
