@@ -82,9 +82,13 @@ def on_submit(doc, method=None):
                 recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
             if sales_order.is_converge_sales_order_doc(doc) and not doc.oc_cc_token_id:
                 frappe.throw("You cannot submit Sales Order {} due to CC Token Id is not set".format(doc.name))
+            if sales_order.is_stripe_sales_order_doc(doc) and not doc.cheque_no and not doc.cheque_date:
+                frappe.throw("You cannot submit Sales Order {} due to either Cheque No or Cheque Date is not ser".format(doc.name))
+
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
             recurring_profile_doc.activate()
 
+            is_stripe = sales_order.is_stripe_sales_order_doc(doc)
             si = sales_order.make_sales_invoice(doc.name)
             si.update({
                 "reference_type": "Recurring Profile",
@@ -93,19 +97,24 @@ def on_submit(doc, method=None):
             si.insert()
             si.submit()
 
-            from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, add_converge_transaction
-            je = frappe.get_doc(get_cc_payment_entry_against_invoice(
-                si.doctype,
-                si.name
-            ))
+            from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, get_payment_entry_against_invoice, add_converge_transaction
+            if is_stripe:
+                je = frappe.get_doc(get_payment_entry_against_invoice(si.doctype, si.name))
+                cheque_date = doc.cheque_date
+                if cheque_date:
+                    cheque_date = getdate(cheque_date)
+                je.cheque_no = doc.cheque_no
+                je.cheque_date = cheque_date
+            else:
+                je = frappe.get_doc(get_cc_payment_entry_against_invoice(si.doctype, si.name))
+            je.posting_date = doc.transaction_date
             je.insert()
-            frappe.db.set_value("Recurring Profile", recurring_profile_doc.name, "current_journal_entry", je.name)
-            frappe.db.commit()
-            tr = add_converge_transaction(je.name, si, transaction_args=recurring_profile_doc.as_dict(), transaction_id=recurring_profile_doc.initial_transaction_id)
-            frappe.db.commit()
+            frappe.db.set_value("Recurring Profile", recurring_profile, "current_sales_invoice", si.name)
+            frappe.db.set_value("Recurring Profile", recurring_profile, "current_journal_entry", je.name)
 
-            tr.submit()
-            je.submit()
+            if not is_stripe:
+                tr = add_converge_transaction(je.name, si, transaction_args=recurring_profile_doc.as_dict(), transaction_id=recurring_profile_doc.initial_transaction_id)
+                tr.submit()
 
             if recurring_profile_doc.have_first_box:
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
