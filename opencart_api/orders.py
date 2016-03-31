@@ -80,7 +80,7 @@ def on_submit(doc, method=None):
             if not recurring_profile:
                 add_lustcobox_order_part(doc, oc_order=None)
                 recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
-            if not doc.oc_cc_token_id:
+            if sales_order.is_converge_sales_order_doc(doc) and not doc.oc_cc_token_id:
                 frappe.throw("You cannot submit Sales Order {} due to CC Token Id is not set".format(doc.name))
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
             recurring_profile_doc.activate()

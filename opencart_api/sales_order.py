@@ -30,6 +30,22 @@ def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
     return updated_items
 
 
+def is_stripe_sales_order(sales_order):
+    return frappe.db.get_value("Sales Order", sales_order, "oc_pm_code") == "stripe"
+
+
+def is_stripe_sales_order_doc(sales_order_doc):
+    return sales_order_doc.oc_pm_code == "stripe"
+
+
+def is_converge_sales_order(sales_order):
+    return frappe.db.get_value("Sales Order", sales_order, "oc_pm_code") == "virtualmerchant"
+
+
+def is_converge_sales_order_doc(sales_order_doc):
+    return sales_order_doc.oc_pm_code == "virtualmerchant"
+
+
 def is_oc_sales_order(doc):
     return bool(doc.get('oc_site'))
 
