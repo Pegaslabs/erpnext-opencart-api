@@ -30,6 +30,8 @@ def update_item(doc_item, doc_item_price):
     db_oc_store = frappe.db.get(db_oc_price_list.get('parenttype'), db_oc_price_list.get('parent'))
     site_name = db_oc_store.get('oc_site')
     doc_oc_product = items.get_opencart_product(site_name, doc_item.get('name'))
+    if not doc_oc_product:
+        frappe.msgprint("There are no Opencart Products created for Item {}. This Item Price will not be synced on any Opencart site.".format(doc_item.item_code))
     if not db_oc_store.get('oc_store_front_url'):
         frappe.msgprint('Warning. Store front url is not set it Opencart Store "%s"' % db_oc_store.get('name'))
 
