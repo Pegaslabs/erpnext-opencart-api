@@ -111,11 +111,12 @@ def on_submit(doc, method=None):
             je.posting_date = doc.transaction_date
             je.insert()
             frappe.db.set_value("Recurring Profile", recurring_profile, "current_sales_invoice", si.name)
-            frappe.db.set_value("Recurring Profile", recurring_profile, "current_journal_entry", je.name)
 
             if not is_stripe:
                 tr = add_converge_transaction(je.name, si, transaction_args=recurring_profile_doc.as_dict(), transaction_id=recurring_profile_doc.initial_transaction_id)
                 tr.submit()
+
+            je.submit()
 
             if recurring_profile_doc.have_first_box:
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
