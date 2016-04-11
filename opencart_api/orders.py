@@ -89,7 +89,7 @@ def on_submit(doc, method=None):
             recurring_profile_doc.activate()
 
             is_stripe = sales_order.is_stripe_sales_order_doc(doc)
-            si = sales_order.make_sales_invoice(doc.name)
+            si = sales_order.make_sales_invoice(doc.name, is_recurring=True)
             si.update({
                 "reference_type": "Recurring Profile",
                 "reference_name": recurring_profile_doc.name,
@@ -125,7 +125,7 @@ def on_submit(doc, method=None):
                     "reference_name": recurring_profile_doc.name,
                     "posting_date": doc.transaction_date
                 })
-                dn.insert()
+                dn.insert(ignore_permissions=True)
 
                 ps = make_packing_slip(dn.name)
                 ps.update({
@@ -133,7 +133,7 @@ def on_submit(doc, method=None):
                     "reference_name": recurring_profile_doc.name
                 })
                 ps.get_items()
-                ps.insert()
+                ps.insert(ignore_permissions=True)
                 ps.receive_all_items()
                 ps.oc_tracking_number = "Box was given on hands"
 
@@ -150,7 +150,7 @@ def on_submit(doc, method=None):
                     "reference_name": recurring_profile_doc.name,
                     "posting_date": doc.transaction_date
                 })
-                dn.insert()
+                dn.insert(ignore_permissions=True)
 
                 ps = make_packing_slip(dn.name)
                 ps.update({
@@ -158,7 +158,7 @@ def on_submit(doc, method=None):
                     "reference_name": recurring_profile_doc.name
                 })
                 ps.get_items()
-                ps.insert()
+                ps.insert(ignore_permissions=True)
 
         elif not doc.get('oc_is_auto_processing'):
             check_oc_sales_order_totals(doc)

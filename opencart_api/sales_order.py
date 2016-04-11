@@ -63,7 +63,7 @@ def is_oc_lustcobox_order_type(oc_order_type):
 
 
 @frappe.whitelist()
-def make_sales_invoice(source_name, target_doc=None):
+def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
     def postprocess(source, target):
         set_missing_values(source, target)
         #  Get the advance paid Journal Entries in Sales Invoice Advance
@@ -89,9 +89,14 @@ def make_sales_invoice(source_name, target_doc=None):
         target.run_method("calculate_taxes_and_totals")
 
     def update_item(source, target, source_parent):
-        target.amount = flt(source.amount)  # - flt(source.billed_amt)
+        if is_recurring:
+            target.amount = flt(source.amount)
+        else:
+            target.amount = flt(source.amount) - flt(source.billed_amt)
         target.base_amount = target.amount * flt(source_parent.conversion_rate)
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
+        if is_recurring:
+            target.qty = source.qty
         target.income_account = get_income_account(source_parent)
         target.bo_qty = 0.0
 
@@ -116,7 +121,7 @@ def make_sales_invoice(source_name, target_doc=None):
                 "parent": "sales_order",
             },
             "postprocess": update_item,
-            # "condition": lambda doc: doc.base_amount == 0 or doc.billed_amt < doc.amount
+            # "condition": lambda doc: doc.qty and (doc.base_amount == 0 or doc.billed_amt < doc.amount)
         },
         "Sales Taxes and Charges": {
             "doctype": "Sales Taxes and Charges",
