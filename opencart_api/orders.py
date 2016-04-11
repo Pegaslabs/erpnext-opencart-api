@@ -100,14 +100,14 @@ def on_submit(doc, method=None):
 
             from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, get_payment_entry_against_invoice, add_converge_transaction
             if is_stripe:
-                je = frappe.get_doc(get_payment_entry_against_invoice(si.doctype, si.name))
+                je = frappe.get_doc(get_payment_entry_against_invoice(si.doctype, si.name, is_recurring=True))
                 cheque_date = doc.oc_cheque_date
                 if cheque_date:
                     cheque_date = getdate(cheque_date)
                 je.cheque_no = doc.oc_cheque_no
                 je.cheque_date = cheque_date
             else:
-                je = frappe.get_doc(get_cc_payment_entry_against_invoice(si.doctype, si.name))
+                je = frappe.get_doc(get_cc_payment_entry_against_invoice(si.doctype, si.name, is_recurring=True))
             je.posting_date = doc.transaction_date
             je.insert()
             frappe.db.set_value("Recurring Profile", recurring_profile, "current_sales_invoice", si.name)
