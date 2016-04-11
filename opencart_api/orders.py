@@ -82,7 +82,7 @@ def on_submit(doc, method=None):
                 recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
             if sales_order.is_converge_sales_order_doc(doc) and not doc.oc_cc_token_id:
                 frappe.throw("You cannot submit Sales Order {} due to CC Token Id is not set".format(doc.name))
-            if sales_order.is_stripe_sales_order_doc(doc) and not doc.cheque_no and not doc.cheque_date:
+            if sales_order.is_stripe_sales_order_doc(doc) and not doc.oc_cheque_no and not doc.oc_cheque_date:
                 frappe.throw("You cannot submit Sales Order {} due to either Cheque No or Cheque Date is not ser".format(doc.name))
 
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
@@ -92,7 +92,8 @@ def on_submit(doc, method=None):
             si = sales_order.make_sales_invoice(doc.name)
             si.update({
                 "reference_type": "Recurring Profile",
-                "reference_name": recurring_profile_doc.name
+                "reference_name": recurring_profile_doc.name,
+                "posting_date": doc.transaction_date
             })
             si.insert()
             si.submit()
@@ -100,10 +101,10 @@ def on_submit(doc, method=None):
             from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, get_payment_entry_against_invoice, add_converge_transaction
             if is_stripe:
                 je = frappe.get_doc(get_payment_entry_against_invoice(si.doctype, si.name))
-                cheque_date = doc.cheque_date
+                cheque_date = doc.oc_cheque_date
                 if cheque_date:
                     cheque_date = getdate(cheque_date)
-                je.cheque_no = doc.cheque_no
+                je.cheque_no = doc.oc_cheque_no
                 je.cheque_date = cheque_date
             else:
                 je = frappe.get_doc(get_cc_payment_entry_against_invoice(si.doctype, si.name))
@@ -120,7 +121,8 @@ def on_submit(doc, method=None):
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
                 dn.update({
                     "reference_type": "Recurring Profile",
-                    "reference_name": recurring_profile_doc.name
+                    "reference_name": recurring_profile_doc.name,
+                    "posting_date": doc.transaction_date
                 })
                 dn.insert()
 
@@ -131,20 +133,21 @@ def on_submit(doc, method=None):
                 })
                 ps.get_items()
                 ps.insert()
-                for ps_item in ps.items:
-                    ps_item.qty = ps_item.ordered_qty
-                    ps_item.bo_qty = 0
+                ps.receive_all_items()
                 ps.oc_tracking_number = "Box was given on hands"
+
                 ps.save()
                 ps.start_picking()
                 ps.stop_picking()
+
                 frappe.get_doc("Packing Slip", ps.name).submit()
                 frappe.get_doc("Delivery Note", dn.name).submit()
             else:
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
                 dn.update({
                     "reference_type": "Recurring Profile",
-                    "reference_name": recurring_profile_doc.name
+                    "reference_name": recurring_profile_doc.name,
+                    "posting_date": doc.transaction_date
                 })
                 dn.insert()
 
