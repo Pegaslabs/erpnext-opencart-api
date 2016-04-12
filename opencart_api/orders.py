@@ -83,7 +83,7 @@ def on_submit(doc, method=None):
             if sales_order.is_converge_sales_order_doc(doc) and not doc.oc_cc_token_id:
                 frappe.throw("You cannot submit Sales Order {} due to CC Token Id is not set".format(doc.name))
             if sales_order.is_stripe_sales_order_doc(doc) and not doc.oc_cheque_no and not doc.oc_cheque_date:
-                frappe.throw("You cannot submit Sales Order {} due to either Cheque No or Cheque Date is not ser".format(doc.name))
+                frappe.throw("You cannot submit Sales Order {} due to either Cheque No or Cheque Date is not set".format(doc.name))
 
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
             recurring_profile_doc.activate()
