@@ -158,10 +158,16 @@ class OpencartApi(object):
         if not success:
             return
         stores = resp.get('data')
-        yield OpencartStore(self, stores)
-        for i in stores:
-            if i.isdigit():
-                yield OpencartStore(self, stores.get(i))
+        if isinstance(stores, dict):
+            yield OpencartStore(self, stores)
+            for i in stores:
+                if i.isdigit():
+                    yield OpencartStore(self, stores.get(i))
+        elif isinstance(stores, list):
+            for i in stores:
+                yield OpencartStore(self, i)
+        else:
+            return
 
     def get_customer_groups(self, limit=100, page=1):
         while True:
