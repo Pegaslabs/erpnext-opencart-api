@@ -381,7 +381,7 @@ cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_warehouses_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.warehouses.pull",
             site_name: doc.name
@@ -397,7 +397,7 @@ cur_frm.cscript.pull_warehouses_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.oc_stores.pull",
             site_name: doc.name
