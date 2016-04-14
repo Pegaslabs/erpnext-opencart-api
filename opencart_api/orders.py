@@ -912,6 +912,264 @@ def _pull_added_from(site_name, silent=False):
     return results
 
 
+def _pull_by_order_ids(site_name, oc_order_ids):
+    results = {}
+    results_list = []
+    check_count = 0
+    update_count = 0
+    add_count = 0
+    skip_count = 0
+    success = False
+
+    get_order_statuses_success, order_statuses = oc_api.get(site_name, use_pure_rest_api=True).get_order_statuses()
+    name_to_order_status_id_map = {}
+    order_status_id_to_name_map = {}
+    for order_status in order_statuses:
+        name_to_order_status_id_map[order_status.get('name')] = order_status.get('order_status_id')
+        order_status_id_to_name_map[order_status.get('order_status_id')] = order_status.get('name')
+
+    site_doc = frappe.get_doc('Opencart Site', site_name)
+    company = site_doc.get('company')
+    tax_rate_names = oc_site.get_tax_rate_names(site_name)
+
+    for oc_order_id in oc_order_ids:
+        get_order_success, oc_order = oc_api.get(site_name).get_order_json(oc_order_id)
+        order_status_name = order_status_id_to_name_map.get(oc_order.get('order_status_id'))
+        check_count += 1
+        doc_order = get_order(site_name, oc_order.get('order_id'))
+        if oc_order.get('customer_id') == '0':
+            # trying to get guest customer
+            doc_customer = customers.get_guest_customer(site_name, oc_order.get('email'), oc_order.get('firstname'), oc_order.get('lastname'))
+            if doc_customer:
+                # update guest customer
+                customers.update_guest_from_order(doc_customer, oc_order)
+            else:
+                # create new guest customer
+                doc_customer = customers.create_guest_from_order(site_name, oc_order)
+        else:
+            doc_customer = customers.get_customer(site_name, oc_order.get('customer_id'))
+            if doc_customer:
+                # update customer
+                customers.update_from_oc_order(doc_customer, oc_order)
+            else:
+                try:
+                    doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
+                except Exception as ex:
+                    skip_count += 1
+                    extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), str(ex)))
+                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                    continue
+
+        oc_order_type = oc_order.get('order_type')
+        if doc_order:
+            # update existed Sales Order only with status "Draft"
+            if doc_order.docstatus != 0:
+                skip_count += 1
+                continue
+            params = {}
+            resolve_customer_group_rules(oc_order, doc_customer, params)
+            params.update({
+                'oc_order_type': oc_order_type,
+                'currency': oc_order.get('currency_code'),
+                # 'conversion_rate': float(oc_order.currency_value),
+                'base_net_total': oc_order.get('total'),
+                'total': oc_order.get('total'),
+                'company': company,
+                'transaction_date': getdate(oc_order.get('date_added', '')),
+                'oc_is_updating': 1,
+                'oc_status': order_status_name,
+                # payment method
+                'oc_pm_title': oc_order.get('payment_method'),
+                'oc_pm_code': oc_order.get('payment_code'),
+                'oc_pa_firstname': oc_order.get('payment_firstname'),
+                'oc_pa_lastname': oc_order.get('payment_lastname'),
+                'oc_pa_company': oc_order.get('payment_company'),
+                'oc_pa_country_id': oc_order.get('payment_country_id'),
+                'oc_pa_country': oc_order.get('payment_country'),
+                # shipping method
+                'oc_sm_title': oc_order.get('shipping_method'),
+                'oc_sm_code': oc_order.get('shipping_code'),
+                'oc_sa_firstname': oc_order.get('shipping_firstname'),
+                'oc_sa_lastname': oc_order.get('shipping_lastname'),
+                'oc_sa_company': oc_order.get('shipping_company'),
+                'oc_sa_country_id': oc_order.get('shipping_country_id'),
+                'oc_sa_country': oc_order.get('shipping_country'),
+                #
+                'oc_last_sync_from': datetime.now(),
+            })
+
+            # updating fiscal year
+            fiscal_year = get_fiscal_year(date=getdate(oc_order.get('date_added', '')), company=company)
+            if fiscal_year:
+                params.update({'fiscal_year': fiscal_year[0]})
+
+            doc_order.update(params)
+            update_totals(doc_order, oc_order, tax_rate_names)
+            doc_order.save()
+            try:
+                resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
+            except Exception as ex:
+                update_count += 1
+                extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % str(ex))
+                results_list.append((doc_order.get('name'),
+                                     doc_order.get('oc_order_id'),
+                                     doc_order.get_formatted('oc_last_sync_from'),
+                                     doc_order.get('modified')) + extras)
+                continue
+            update_count += 1
+            extras = (1, 'updated', 'Updated')
+            results_list.append((doc_order.get('name'),
+                                 doc_order.get('oc_order_id'),
+                                 doc_order.get_formatted('oc_last_sync_from'),
+                                 doc_order.get('modified')) + extras)
+
+        else:
+            if not doc_customer:
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: missed customer customer_id "%s"' % oc_order.get('customer_id', ''))
+                results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                continue
+
+            params = {}
+            resolve_customer_group_rules(oc_order, doc_customer, params)
+            doc_shipping_address = addresses.get_from_oc_order(site_name, doc_customer.name, oc_order, address_type='Shipping')
+
+            # creating new Sales Order
+            params.update({
+                'doctype': 'Sales Order',
+                'oc_order_type': oc_order_type,
+                'currency': oc_order.get('currency_code'),
+                'base_net_total': oc_order.get('total'),
+                'total': oc_order.get('total'),
+                'company': company,
+                'customer': doc_customer.name,
+                'transaction_date': getdate(oc_order.get('date_added', '')),
+                'delivery_date': add_days(nowdate(), 7),
+                'shipping_address_name': doc_shipping_address.name,
+                'oc_is_updating': 1,
+                'oc_is_auto_processing': 1,
+                'oc_site': site_name,
+                'oc_order_id': oc_order.get('order_id'),
+                'oc_status': order_status_name,
+                # payment method
+                'oc_pm_title': oc_order.get('payment_method'),
+                'oc_pm_code': oc_order.get('payment_code'),
+                'oc_pa_firstname': oc_order.get('payment_firstname'),
+                'oc_pa_lastname': oc_order.get('payment_lastname'),
+                'oc_pa_company': oc_order.get('payment_company'),
+                'oc_pa_country_id': oc_order.get('payment_country_id'),
+                'oc_pa_country': oc_order.get('payment_country'),
+                # shipping method
+                'oc_sm_title': oc_order.get('shipping_method'),
+                'oc_sm_code': oc_order.get('shipping_code'),
+                'oc_sa_firstname': oc_order.get('shipping_firstname'),
+                'oc_sa_lastname': oc_order.get('shipping_lastname'),
+                'oc_sa_company': oc_order.get('shipping_company'),
+                'oc_sa_country_id': oc_order.get('shipping_country_id'),
+                'oc_sa_country': oc_order.get('shipping_country'),
+                #
+                'oc_sync_from': True,
+                'oc_last_sync_from': datetime.now(),
+                'oc_sync_to': True,
+                'oc_last_sync_to': datetime.now(),
+            })
+
+            # updating fiscal year
+            fiscal_year = get_fiscal_year(date=getdate(oc_order.get('date_added', '')), company=company)
+            if fiscal_year:
+                params.update({'fiscal_year': fiscal_year[0]})
+
+            doc_order = frappe.get_doc(params)
+            if not oc_order.get('products'):
+                skip_count += 1
+                extras = (1, 'skipped', 'Skipped: missed products')
+                results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                continue
+
+            items_count = 0
+            for product in oc_order.get('products'):
+                # doc_item = items.get_item(site_name, product.get('product_id'))
+                product_id = product.get('product_id')
+                product_model = product.get('model', '').strip().upper()
+                doc_item = items.get_item_by_item_code(product_model)
+
+                # fetching default variant from item
+                if doc_item and doc_item.default_variant:
+                    doc_item = frappe.get_doc("Item", doc_item.default_variant)
+
+                if not doc_item:
+                    skip_count += 1
+                    extras = (1, 'skipped', 'Skipped: Item "%s" cannot be found for Opencart product with product id "%s"' % (product_model, product_id))
+                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                    break
+
+                # price_list_rate = frappe.db.get_value('Item Price', {'price_list': price_list_name, 'item_code': doc_item.get('item_code')}, 'price_list_rate') or 0
+                so_item = {
+                    'item_code': doc_item.get('item_code'),
+                    # 'base_price_list_rate': price_list_rate,
+                    # 'price_list_rate': price_list_rate,
+                    'warehouse': doc_order.get('warehouse') or site_doc.get('items_default_warehouse'),
+                    'qty': flt(product.get('quantity')),
+                    'currency': product.get('currency_code'),
+                    'description': product.get('name')
+                }
+                if is_pos_payment_method(doc_order.get('oc_pm_code')) or sales_order.is_oc_lustcobox_order_type(oc_order_type):
+                    so_item.update({
+                        'base_rate': flt(product.get('price')),
+                        'base_amount': flt(product.get('total')),
+                        'rate': flt(product.get('price')),
+                        'amount': flt(product.get('total')),
+                    })
+                doc_order.append('items', so_item)
+                items_count += 1
+            else:
+                if not items_count:
+                    skip_count += 1
+                    extras = (1, 'skipped', 'Skipped: no products')
+                    results_list.append(('', oc_order.get('order_id'), '', '') + extras)
+                    continue
+                update_totals(doc_order, oc_order, tax_rate_names)
+                if sales_order.is_oc_lustcobox_order_type(oc_order_type):
+                    lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
+                    doc_order.update({
+                        "oc_cc_token_id": lustcobox.get("cc_token"),
+                        "oc_initial_transaction_id": lustcobox.get("conv_tr_id"),
+                        "oc_have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0
+                    })
+                    if not frappe.db.get("Credit Card", {"card_token": doc_order.oc_cc_token_id}):
+                        add_existed_credit_card({"customer": doc_order.customer, "card_token": doc_order.oc_cc_token_id})
+                doc_order.insert(ignore_permissions=True)
+                try:
+                    resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
+                except Exception as ex:
+                    add_count += 1
+                    extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(ex))
+                    results_list.append((doc_order.get('name'),
+                                         doc_order.get('oc_order_id'),
+                                         doc_order.get_formatted('oc_last_sync_from'),
+                                         doc_order.get('modified')) + extras)
+                    continue
+                add_count += 1
+                extras = (1, 'added', 'Added')
+                results_list.append((doc_order.get('name'),
+                                     doc_order.get('oc_order_id'),
+                                     doc_order.get_formatted('oc_last_sync_from'),
+                                     doc_order.get('modified')) + extras)
+
+                # business logic on adding new order from Opencart site
+                doc_order = frappe.get_doc('Sales Order', doc_order.get('name'))
+                on_sales_order_added(doc_order, oc_order)
+    results = {
+        'check_count': check_count,
+        'add_count': add_count,
+        'update_count': update_count,
+        'skip_count': skip_count,
+        'results': results_list,
+        'success': success,
+    }
+    return results
+
+
 def resolve_customer_group_rules(oc_order, doc_customer, params):
     territory_to_price_list_map = {}
     territory_to_warehouse_map = {}
