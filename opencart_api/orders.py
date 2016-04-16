@@ -86,7 +86,7 @@ def on_submit(doc, method=None):
                 frappe.throw("You cannot submit Sales Order {} due to either Cheque No or Cheque Date is not set".format(doc.name))
 
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
-            recurring_profile_doc.activate()
+            recurring_profile_doc.activate(send_email_notifications=doc.oc_send_welcome_email)
 
             is_stripe = sales_order.is_stripe_sales_order_doc(doc)
             si = sales_order.make_sales_invoice(doc.name, is_recurring=True)
