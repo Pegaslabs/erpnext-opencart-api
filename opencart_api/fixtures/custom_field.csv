@@ -98,7 +98,7 @@
 "","""Sales Order-oc_cc_token_id""","Sales Order","Data","CC Token Id","oc_order_id","",0,"","CC Token Id","","oc_cc_token_id",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_initial_transaction_id""","Sales Order","Data","Initial Transaction Id","oc_cc_token_id","",0,"","Initial Transaction Id","","oc_initial_transaction_id",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_have_first_box""","Sales Order","Check","Have First Box","oc_initial_transaction_id","",0,"","","","oc_have_first_box",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_send_welcome_email""","Sales Order","Check","Send Welcome Email","oc_have_first_box","",0,"","","","oc_send_welcome_email",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_send_welcome_email""","Sales Order","Check","Send Welcome Email","oc_have_first_box","",0,"","","","oc_send_welcome_email",0,0,0,0,0,"","1",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_cheque_no""","Sales Order","Data","Cheque No","oc_send_welcome_email","",0,"","Cheque No","","oc_cheque_no",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_cheque_date""","Sales Order","Date","Cheque Date","oc_cheque_no","",0,"","Cheque Date","","oc_cheque_date",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_status""","Sales Order","Data","Order Status","oc_cheque_date","",0,"","","","oc_status",0,0,0,1,0,"","Awaiting Fulfillment",0,"",0,0,0,0,0,0
