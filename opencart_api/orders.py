@@ -1136,7 +1136,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                         "oc_initial_transaction_id": lustcobox.get("conv_tr_id"),
                         "oc_have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0
                     })
-                    if not frappe.db.get("Credit Card", {"card_token": doc_order.oc_cc_token_id}):
+                    if doc_order.oc_cc_token_id and not frappe.db.get("Credit Card", {"card_token": doc_order.oc_cc_token_id}):
                         add_existed_credit_card({"customer": doc_order.customer, "card_token": doc_order.oc_cc_token_id})
                 doc_order.insert(ignore_permissions=True)
                 try:
