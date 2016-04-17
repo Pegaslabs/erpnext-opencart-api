@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import frappe
 import frappe.utils
-from frappe.utils import flt
+from frappe.utils import cstr, flt
 from frappe.model.mapper import get_mapped_doc
 
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
@@ -30,20 +30,28 @@ def update_sales_order_from_back_order(doc_sales_order, doc_back_order):
     return updated_items
 
 
+def is_paypal_sales_order(sales_order):
+    return cstr(frappe.db.get_value("Sales Order", sales_order, "oc_pm_code")).strip() in ("pp_express", "pp_pro")
+
+
+def is_paypal_sales_order_doc(sales_order_doc):
+    return cstr(sales_order_doc.oc_pm_code).strip() in ("pp_express", "pp_pro")
+
+
 def is_stripe_sales_order(sales_order):
-    return frappe.db.get_value("Sales Order", sales_order, "oc_pm_code") == "stripe"
+    return cstr(frappe.db.get_value("Sales Order", sales_order, "oc_pm_code")).strip() == "stripe"
 
 
 def is_stripe_sales_order_doc(sales_order_doc):
-    return sales_order_doc.oc_pm_code == "stripe"
+    return cstr(sales_order_doc.oc_pm_code).strip() == "stripe"
 
 
 def is_converge_sales_order(sales_order):
-    return frappe.db.get_value("Sales Order", sales_order, "oc_pm_code") == "virtualmerchant"
+    return cstr(frappe.db.get_value("Sales Order", sales_order, "oc_pm_code")).strip() == "virtualmerchant"
 
 
 def is_converge_sales_order_doc(sales_order_doc):
-    return sales_order_doc.oc_pm_code == "virtualmerchant"
+    return cstr(sales_order_doc.oc_pm_code).strip() == "virtualmerchant"
 
 
 def is_oc_sales_order(doc):

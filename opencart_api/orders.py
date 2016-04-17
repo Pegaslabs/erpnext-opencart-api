@@ -82,13 +82,14 @@ def on_submit(doc, method=None):
                 recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
             if sales_order.is_converge_sales_order_doc(doc) and not doc.oc_cc_token_id:
                 frappe.throw("You cannot submit Sales Order {} due to CC Token Id is not set".format(doc.name))
-            if sales_order.is_stripe_sales_order_doc(doc) and not doc.oc_cheque_no and not doc.oc_cheque_date:
+            if (sales_order.is_stripe_sales_order_doc(doc) or sales_order.is_paypal_sales_order_doc(doc))and not doc.oc_cheque_no and not doc.oc_cheque_date:
                 frappe.throw("You cannot submit Sales Order {} due to either Cheque No or Cheque Date is not set".format(doc.name))
 
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
             recurring_profile_doc.activate(send_email_notifications=doc.oc_send_welcome_email)
 
             is_stripe = sales_order.is_stripe_sales_order_doc(doc)
+            is_paypal = sales_order.is_paypal_sales_order_doc(doc)
             si = sales_order.make_sales_invoice(doc.name, is_recurring=True)
             si.update({
                 "reference_type": "Recurring Profile",
@@ -99,7 +100,7 @@ def on_submit(doc, method=None):
             si.submit()
 
             from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, get_payment_entry_against_invoice, add_converge_transaction
-            if is_stripe:
+            if is_stripe or is_paypal:
                 je = frappe.get_doc(get_payment_entry_against_invoice(si.doctype, si.name, is_recurring=True))
                 cheque_date = doc.oc_cheque_date
                 if cheque_date:
@@ -112,7 +113,7 @@ def on_submit(doc, method=None):
             je.insert()
             frappe.db.set_value("Recurring Profile", recurring_profile, "current_sales_invoice", si.name)
 
-            if not is_stripe:
+            if not is_stripe and not is_paypal:
                 tr = add_converge_transaction(je.name, si, transaction_args=recurring_profile_doc.as_dict(), transaction_id=recurring_profile_doc.initial_transaction_id)
                 tr.submit()
 
