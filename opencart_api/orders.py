@@ -566,9 +566,9 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
     recurring_profile_doc.insert(ignore_permissions=True)
 
 
-def add_lustcobox_order_part_to_profile(recurring_profile, sales_order):
+def add_lustcobox_order_part_to_profile(recurring_profile, so):
     recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
-    doc_sales_order = frappe.get_doc("Sales Order", sales_order)
+    doc_sales_order = frappe.get_doc("Sales Order", so)
     get_order_success, oc_order = oc_api.get(doc_sales_order.oc_site).get_order_json(doc_sales_order.oc_order_id)
 
     lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
