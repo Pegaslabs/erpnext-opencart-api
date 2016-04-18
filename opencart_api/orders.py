@@ -1222,8 +1222,8 @@ def _pull_by_order_ids(site_name, oc_order_ids):
     return results
 
 
-def sync_payment_method_from_oc(sales_order):
-    doc_order = frappe.get_doc("Sales Order", sales_order)
+def sync_payment_method_from_oc(so):
+    doc_order = frappe.get_doc("Sales Order", so)
     get_order_success, oc_order = oc_api.get(doc_order.oc_site).get_order_json(doc_order.oc_order_id)
     if not get_order_success:
         frappe.throw("Cannot get Sales Order with order id {} from Opencart Site {}".format(doc_order.oc_order_id, doc_order.oc_site))
