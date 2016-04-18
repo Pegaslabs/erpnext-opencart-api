@@ -1227,8 +1227,8 @@ def sync_payment_method_from_oc(so):
     get_order_success, oc_order = oc_api.get(doc_order.oc_site).get_order_json(doc_order.oc_order_id)
     if not get_order_success:
         frappe.throw("Cannot get Sales Order with order id {} from Opencart Site {}".format(doc_order.oc_order_id, doc_order.oc_site))
-        oc_order_type = oc_order.get('order_type')
 
+    oc_order_type = oc_order.get('order_type')
     # payment method
     frappe.db.set_value("Sales Order", doc_order.name, "oc_pm_title", oc_order.get('payment_method'))
     frappe.db.set_value("Sales Order", doc_order.name, "oc_pm_code", oc_order.get('payment_code'))
