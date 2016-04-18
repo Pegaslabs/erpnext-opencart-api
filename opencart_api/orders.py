@@ -566,6 +566,57 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
     recurring_profile_doc.insert(ignore_permissions=True)
 
 
+def add_lustcobox_order_part_to_profile(recurring_profile, sales_order):
+    recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
+    doc_sales_order = frappe.get_doc("Sales Order", sales_order)
+    get_order_success, oc_order = oc_api.get(doc_sales_order.oc_site).get_order_json(doc_sales_order.oc_order_id)
+
+    lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
+    lustcobox.update({
+        "cc_token": doc_sales_order.oc_cc_token_id,
+        "conv_tr_id": doc_sales_order.oc_initial_transaction_id,
+        "have_first_box": doc_sales_order.oc_have_first_box
+    })
+
+    doc_billing_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order, address_type='Billing')
+    oc_order_copy = copy.deepcopy(oc_order)
+    for k, v in lustcobox.items():
+        if k.startswith("shipping_"):
+            oc_order_copy.update({k: v})
+    doc_shipping_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order_copy, address_type='Shipping')
+    recurring_profile_doc.update({
+        "cc_token_id": lustcobox.get("cc_token"),
+        "initial_transaction_id": lustcobox.get("conv_tr_id"),
+        "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
+        "month_free": cint(lustcobox.get("second_month_free")),
+
+        "payment_address": doc_billing_address.name,
+        "payment_email": doc_billing_address.email_id,
+        "payment_phone": doc_billing_address.phone,
+        "payment_first_name": doc_billing_address.first_name,
+        "payment_last_name": doc_billing_address.last_name,
+        "payment_address_1": doc_billing_address.address_line1,
+        "payment_address_2": doc_billing_address.address_line2,
+        "payment_city": doc_billing_address.city,
+        "payment_postcode": doc_billing_address.pincode,
+        "payment_country": doc_billing_address.country,
+        "payment_zone": doc_billing_address.state,
+
+        "shipping_address": doc_shipping_address.name,
+        "shipping_email": doc_shipping_address.email_id,
+        "shipping_phone": doc_shipping_address.phone,
+        "shipping_first_name": doc_shipping_address.first_name,
+        "shipping_last_name": doc_shipping_address.last_name,
+        "shipping_address_1": doc_shipping_address.address_line1,
+        "shipping_address_2": doc_shipping_address.address_line2,
+        "shipping_city": doc_shipping_address.city,
+        "shipping_postcode": doc_shipping_address.pincode,
+        "shipping_country": doc_shipping_address.country,
+        "shipping_zone": doc_shipping_address.state,
+    })
+    recurring_profile_doc.save()
+
+
 def on_sales_order_added(doc_sales_order, oc_order):
     if sales_order.is_oc_lustcobox_order_doc(doc_sales_order):
         try:
@@ -1169,6 +1220,33 @@ def _pull_by_order_ids(site_name, oc_order_ids):
         'success': success,
     }
     return results
+
+
+def sync_payment_method_from_oc(sales_order):
+    doc_order = frappe.get_doc("Sales Order", sales_order)
+    get_order_success, oc_order = oc_api.get(doc_order.oc_site).get_order_json(doc_order.oc_order_id)
+    if not get_order_success:
+        frappe.throw("Cannot get Sales Order with order id {} from Opencart Site {}".format(doc_order.oc_order_id, doc_order.oc_site))
+        oc_order_type = oc_order.get('order_type')
+
+    # payment method
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pm_title", oc_order.get('payment_method'))
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pm_code", oc_order.get('payment_code'))
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pa_firstname", oc_order.get('payment_firstname'))
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pa_lastname", oc_order.get('payment_lastname'))
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pa_company", oc_order.get('payment_company'))
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pa_country_id", oc_order.get('payment_country_id'))
+    frappe.db.set_value("Sales Order", doc_order.name, "oc_pa_country", oc_order.get('payment_country'))
+
+    if sales_order.is_oc_lustcobox_order_type(oc_order_type):
+        lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
+        frappe.db.set_value("Sales Order", doc_order.name, "oc_cc_token_id", lustcobox.get("cc_token"))
+        frappe.db.set_value("Sales Order", doc_order.name, "oc_initial_transaction_id", lustcobox.get("conv_tr_id"))
+        frappe.db.set_value("Sales Order", doc_order.name, "oc_have_first_box", 1 if cint(lustcobox.get("have_first_box")) else 0)
+
+        doc_order = frappe.get_doc("Sales Order", doc_order.name)
+        if doc_order.oc_cc_token_id and not frappe.db.get("Credit Card", {"card_token": doc_order.oc_cc_token_id}):
+            add_existed_credit_card({"customer": doc_order.customer, "card_token": doc_order.oc_cc_token_id})
 
 
 def resolve_customer_group_rules(oc_order, doc_customer, params):
