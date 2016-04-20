@@ -538,6 +538,7 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
         "initial_transaction_id": lustcobox.get("conv_tr_id"),
         "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
         "month_free": cint(lustcobox.get("second_month_free")),
+        "skip_month": cint(lustcobox.get("skip_month")),
 
         "payment_address": doc_billing_address.name,
         "payment_email": doc_billing_address.email_id,
@@ -570,6 +571,8 @@ def add_lustcobox_order_part_to_profile(recurring_profile, so):
     recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
     doc_sales_order = frappe.get_doc("Sales Order", so)
     get_order_success, oc_order = oc_api.get(doc_sales_order.oc_site).get_order_json(doc_sales_order.oc_order_id)
+    if not get_order_success:
+        frappe.throw("Cannot get Sales Order with order id {} from Opencart Site {}".format(doc_sales_order.oc_order_id, doc_sales_order.oc_site))
 
     lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
     lustcobox.update({
@@ -589,6 +592,7 @@ def add_lustcobox_order_part_to_profile(recurring_profile, so):
         "initial_transaction_id": lustcobox.get("conv_tr_id"),
         "have_first_box": 1 if cint(lustcobox.get("have_first_box")) else 0,
         "month_free": cint(lustcobox.get("second_month_free")),
+        "skip_month": cint(lustcobox.get("skip_month")),
 
         "payment_address": doc_billing_address.name,
         "payment_email": doc_billing_address.email_id,
@@ -1222,7 +1226,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
     return results
 
 
-def sync_payment_method_from_oc(so):
+def sync_lustcobox_order_part_from_oc(so):
     doc_order = frappe.get_doc("Sales Order", so)
     get_order_success, oc_order = oc_api.get(doc_order.oc_site).get_order_json(doc_order.oc_order_id)
     if not get_order_success:
