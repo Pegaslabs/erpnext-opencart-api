@@ -44,9 +44,7 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         'address_line2': cstr(oc_order.get('payment_address_2'))
     }
     if address_type == 'Shipping':
-        if (oc_order.get('shipping_postcode') and oc_order.get('shipping_country') and
-            oc_order.get('shipping_zone') and oc_order.get('shipping_city') and
-            oc_order.get('shipping_address_1')):
+        if (oc_order.get('shipping_country') and oc_order.get('shipping_zone') and oc_order.get('shipping_city') and oc_order.get('shipping_address_1')):
             address_filter = {
                 'customer': customer,
                 'address_type': address_type,
@@ -211,8 +209,7 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
     countries.create_if_does_not_exist(shipping_country)
     doc_address = get_address_by_oc_order(customer, oc_order, 'Shipping')
     if not doc_address:
-        if not (oc_order.get('shipping_postcode') and oc_order.get('shipping_country') and
-            oc_order.get('shipping_zone') and oc_order.get('shipping_city') and oc_order.get('shipping_address_1')):
+        if not (oc_order.get('shipping_country') and oc_order.get('shipping_zone') and oc_order.get('shipping_city') and oc_order.get('shipping_address_1')):
             address_params = {
                 'doctype': 'Address',
                 'address_type': 'Shipping',
