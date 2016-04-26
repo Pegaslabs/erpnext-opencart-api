@@ -60,15 +60,9 @@ class OpencartApi(object):
         for c in categories_resp:
             yield OpencartCategory(self, categories_resp.get(c)[0], parent=parent_id)
 
-    def get_all_categories(self, parent_id=None):
-        if parent_id:
-            categories = self.get_categories_by_parent(parent_id)
-        else:
-            categories = self.get_categories_by_level()
-        for category in categories:
-            yield category
-            for sub_category in self.get_all_categories(category.category_id):
-                yield sub_category
+    def get_all_categories(self):
+        success, resp = oc_request(self.url + '/list_all_categories', headers=self.headers, method='GET')
+        return resp.get('data', []) if success else []
 
     def get_all_products(self, limit=100, page=1):
         while True:

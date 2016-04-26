@@ -827,8 +827,9 @@ def pull_products_from_oc(site_name, silent=False):
         sync_info([], 'Please specify a Default Warehouse and proceed.', stop=True, silent=silent)
 
     for oc_category in opencart_api.get_all_categories():
-        doc_item_group = item_groups.get_item_group(site_name, oc_category.id)
-        for oc_product in opencart_api.get_products_by_category(oc_category.id):
+        oc_category = frappe._dict(oc_category)
+        doc_item_group = item_groups.get_item_group(site_name, oc_category.category_id)
+        for oc_product in opencart_api.get_products_by_category(oc_category.category_id):
             print("processing oc product: %s" % str(oc_product.get('model')))
             check_count += 1
             item_code = oc_product.get('model', '').upper()
@@ -976,7 +977,7 @@ def get_manufacturer_id(site_name, name):
 @frappe.whitelist()
 def get_category_id(site_name, name):
     categories = oc_site.get_all_categories()[site_name] or []
-    return next((category.id for category in categories if category.name.upper() == name.upper()), None)
+    return next((category.category_id for category in categories if category.name.upper() == name.upper()), None)
 
 
 @frappe.whitelist()

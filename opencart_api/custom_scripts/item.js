@@ -23,14 +23,14 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 
 frappe.ui.form.on("Item", "onload", function(frm) {
     cur_frm.category_names = {};
-    // frappe.call({
-    //     method: "opencart_api.oc_site.get_category_names",
-    //     callback: function(r) {
-    //         if(!r.exc && r.message) {
-    //             cur_frm.category_names = r.message;
-    //         }
-    //     }
-    // });
+    frappe.call({
+        method: "opencart_api.oc_site.get_category_names",
+        callback: function(r) {
+            if(!r.exc && r.message) {
+                cur_frm.category_names = r.message;
+            }
+        }
+    });
 });
 
 print_warehouses = function(message, update) {

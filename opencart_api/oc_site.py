@@ -212,14 +212,13 @@ def get_manufacturer_name(site_name, manufacturer_id):
 
 def get_all_categories():
     global OPENCART_CATEGORIES_CACHE, OC_CATEGORIES_CACHE_LAST_MODIFIED
-    site_names = frappe.db.get_all("Opencart Site", fields=["name"])
     modified_date = OC_CATEGORIES_CACHE_LAST_MODIFIED or now_datetime()
     now_date = now_datetime()
     categories = OPENCART_CATEGORIES_CACHE
     if not categories or now_date >= modified_date + datetime.timedelta(minutes=5):
-        for site_name in site_names:
-            categories = [category for category in list(oc_api.get(site_name).get_all_categories())]
-            OPENCART_CATEGORIES_CACHE[site_name.name] = categories
+        for site_name in frappe.db.get_all("Opencart Site", fields=["name"]):
+            oc_site_categories = [frappe._dict(category) for category in list(oc_api.get(site_name).get_all_categories()) if category]
+            OPENCART_CATEGORIES_CACHE[site_name.name] = oc_site_categories
             OC_CATEGORIES_CACHE_LAST_MODIFIED = now_datetime()
         categories = OPENCART_CATEGORIES_CACHE
     return categories
@@ -230,5 +229,5 @@ def get_category_names():
     categories = get_all_categories()
     category_names = {}
     for i in categories:
-        category_names[i] = [category.name for category in categories[i]]
+        category_names[i] = [category.get("name") for category in categories[i]]
     return category_names

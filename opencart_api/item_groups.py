@@ -26,11 +26,12 @@ def pull_categories_from_oc(site_name, silent=False):
     opencart_api = oc_api.get(site_name)
     doc_root_item_group = frappe.get_doc('Item Group', root_item_group)
     for oc_category in opencart_api.get_all_categories():
+        oc_category = frappe._dict(oc_category)
         # if not doc_root_item_group.get('oc_category_id'):
-        #     doc_root_item_group.update({'oc_category_id': oc_category.id})
+        #     doc_root_item_group.update({'oc_category_id': oc_category.category_id})
         #     doc_root_item_group.save()
         check_count += 1
-        doc_item_group = get_item_group(site_name, oc_category.id)
+        doc_item_group = get_item_group(site_name, oc_category.category_id)
         doc_parent_item_group = doc_root_item_group
         if oc_category.parent_id:
             doc_parent_item_group = get_item_group(site_name, oc_category.parent_id)
@@ -38,7 +39,7 @@ def pull_categories_from_oc(site_name, silent=False):
         if not doc_parent_item_group:
             skip_count += 1
             extras = (1, 'skipped', 'Skipped: parent group missed')
-            results_list.append((oc_category.name, '', oc_category.id, '', '') + extras)
+            results_list.append((oc_category.name, '', oc_category.category_id, '', '') + extras)
             continue
 
         if doc_item_group:
@@ -77,7 +78,7 @@ def pull_categories_from_oc(site_name, silent=False):
                 doc_item_group = frappe.get_doc('Item Group', oc_category.name)
                 skip_count += 1
                 extras = (1, 'skipped', 'Skipped: duplicate name')
-                results_list.append((oc_category.name, doc_parent_item_group.get('name'), oc_category.id, '', '') + extras)
+                results_list.append((oc_category.name, doc_parent_item_group.get('name'), oc_category.category_id, '', '') + extras)
                 continue
             else:
                 # creating new Item Group
@@ -86,7 +87,7 @@ def pull_categories_from_oc(site_name, silent=False):
                     'oc_site': site_name,
                     'item_group_name': oc_category.name,
                     'parent_item_group': doc_parent_item_group.get('name'),
-                    'oc_category_id': oc_category.id,
+                    'oc_category_id': oc_category.category_id,
                     'description': oc_category.description,
                     'show_in_website': 'Yes',
                     'oc_sync_from': True,
