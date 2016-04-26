@@ -361,7 +361,7 @@ cur_frm.cscript.sync_item_with_oc_site = function(doc, dt, dn) {
     // TODO: Give some warnings if some categories already has an opencart site
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.items.sync_all_items",
             api_map: doc.api_map,
@@ -413,7 +413,7 @@ cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.item_prices.pull",
             site_name: doc.name
@@ -429,7 +429,7 @@ cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.item_attributes.pull",
             site_name: doc.name
@@ -445,7 +445,7 @@ cur_frm.cscript.pull_item_attributes_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_item_groups_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.item_groups.pull_categories_from_oc",
             site_name: doc.name
@@ -461,7 +461,7 @@ cur_frm.cscript.pull_item_groups_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_items_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.items.pull_products_from_oc",
             site_name: doc.name
@@ -477,7 +477,7 @@ cur_frm.cscript.pull_items_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_items_from_inventory_spreadsheet = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.items.pull_from_inventory_spreadsheet",
             site_name: doc.name
@@ -488,7 +488,7 @@ cur_frm.cscript.pull_items_from_inventory_spreadsheet = function(doc, dt, dn) {
 
                 // clean unused file data
                 frappe.call({
-                    type: "GET",
+                    type: "POST",
                     args: {
                         cmd: "opencart_api.oc_site.clear_file_data",
                         site_name: doc.name
@@ -505,7 +505,7 @@ cur_frm.cscript.pull_items_from_inventory_spreadsheet = function(doc, dt, dn) {
 cur_frm.cscript.pull_customer_groups_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.customer_groups.pull",
             site_name: doc.name
@@ -521,7 +521,7 @@ cur_frm.cscript.pull_customer_groups_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_customers_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.customers.pull_customers_from_oc",
             site_name: doc.name
@@ -537,7 +537,7 @@ cur_frm.cscript.pull_customers_from_oc_site = function(doc, dt, dn) {
 cur_frm.cscript.pull_orders_from_oc_site = function(doc, dt, dn) {
     frappe.call({
         freeze: true,
-        type: "GET",
+        type: "POST",
         args: {
             cmd: "opencart_api.orders.pull_added_from",
             site_name: doc.name
