@@ -152,7 +152,11 @@ def sync_item_to_oc(item_code, doc_item=None, site_name=None):
         if site_name and cur_site_name != site_name:
             continue
         oc_product_id = doc_oc_product.get('oc_product_id')
-        get_product_success, oc_product = oc_api.get(cur_site_name).get_product(oc_product_id)
+        if oc_product_id:
+            get_product_success, oc_product = oc_api.get(cur_site_name).get_product(oc_product_id)
+        else:
+            get_product_success, oc_product = oc_api.get(cur_site_name).get_product_by_model(doc_oc_product.get('oc_model'))
+
         # check_readiness_to_sync_product_to_oc(doc_oc_product, oc_product)
         data = {
             'model': doc_oc_product.get('oc_model') or doc_item.get('name'),  # mandatory
@@ -375,7 +379,7 @@ def sync_item_to_oc(item_code, doc_item=None, site_name=None):
                 doc_oc_product.update({'oc_last_sync_to': datetime.now()})
             else:
                 frappe.msgprint('Product is not updated on Opencart site "%s". Error: Unknown' % cur_site_name)
-        else:
+        elif not oc_product_id and not get_product_success:
             # add new product on Opencart site
             success, product_id = oc_api.get(cur_site_name).create_product(data)
             if success:
@@ -961,10 +965,10 @@ def sync_item_from_oc(item_code):
 
 
 @frappe.whitelist()
-def get_manufacturer_names(site_name, filter_name):
+def get_manufacturer_names(site_name, filter_term):
     manufacturer_names = [manufacturer.get("name") for manufacturer in oc_site.get_manufacturers(site_name)]
-    if filter_name:
-        return filter(lambda name: name.upper().startswith(filter_name.upper()), manufacturer_names) or []
+    if filter_term:
+        return filter(lambda name: name.upper().startswith(filter_term.upper()), manufacturer_names) or []
     return manufacturer_names
 
 
@@ -975,16 +979,24 @@ def get_manufacturer_id(site_name, name):
 
 
 @frappe.whitelist()
+def get_category_names(site_name, filter_term):
+    category_names = [category.get("name") for category in oc_site.get_categories(site_name)]
+    if filter_term:
+        return filter(lambda name: name.upper().startswith(filter_term.upper()), category_names) or []
+    return category_names
+
+
+@frappe.whitelist()
 def get_category_id(site_name, name):
     categories = oc_site.get_all_categories()[site_name] or []
     return next((category.category_id for category in categories if category.name.upper() == name.upper()), None)
 
 
 @frappe.whitelist()
-def get_stock_status_names(site_name, filter_name):
+def get_stock_status_names(site_name, filter_term):
     stock_status_names = [stock_status.get("name") for stock_status in oc_site.get_oc_init(site_name).get("stock_statuses", [])]
-    if filter_name:
-        return filter(lambda name: name.upper().startswith(filter_name.upper()), stock_status_names) or []
+    if filter_term:
+        return filter(lambda name: name.upper().startswith(filter_term.upper()), stock_status_names) or []
     return stock_status_names
 
 
@@ -995,16 +1007,17 @@ def get_stock_status_id(site_name, name):
 
 
 @frappe.whitelist()
-def get_tax_class_names(site_name, filter_name):
+def get_tax_class_names(site_name, filter_term):
     oc_items = frappe.get_all("Opencart Product", fields=["name", "oc_tax_class_name", "oc_tax_class_id"], filters={"oc_site": site_name})
     tax_classes = {oc_item.oc_tax_class_id: oc_item for oc_item in oc_items}.values()
     tax_class_names = [oc_item.oc_tax_class_name for oc_item in tax_classes if oc_item.oc_tax_class_name]
-    if filter_name:
-        return filter(lambda name: name.upper().startswith(filter_name.upper()), tax_class_names) or []
+    tax_class_names = list(set(tax_class_names))
+    if filter_term:
+        return filter(lambda name: name.upper().startswith(filter_term.upper()), tax_class_names) or []
     return tax_class_names
 
 
 @frappe.whitelist()
 def get_tax_class_id(site_name, name):
-    oc_items = frappe.get_all("Opencart Product", fields=["name", "oc_tax_class_name", "oc_tax_class_id"], filters={"oc_site": site_name}) or []
-    return next((oc_item.oc_tax_class_id for oc_item in oc_items if oc_item.oc_tax_class_name.upper() == name.upper()), None)
+    oc_items = frappe.get_all("Opencart Product", fields=["name", "oc_tax_class_name", "oc_tax_class_id"], filters={"oc_site": site_name})
+    return next((oc_item.oc_tax_class_id for oc_item in oc_items if oc_item.oc_tax_class_name and oc_item.oc_tax_class_name.upper() == name.upper()), None)

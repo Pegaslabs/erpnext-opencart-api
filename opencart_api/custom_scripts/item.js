@@ -21,17 +21,33 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
     set_autocomplete_field("Opencart Product", "tax_class");
 }
 
-frappe.ui.form.on("Item", "onload", function(frm) {
-    cur_frm.category_names = {};
-    frappe.call({
-        method: "opencart_api.oc_site.get_category_names",
-        callback: function(r) {
-            if(!r.exc && r.message) {
-                cur_frm.category_names = r.message;
-            }
+cur_frm.cscript.oc_site = function(doc, cdt, cdn) {
+    var open_form = frappe.ui.form.get_open_grid_form();
+    if(open_form) {
+        var fields = ["category", "manufacturer", "stock_status", "tax_class"];
+        fields.forEach(function(entry) {
+            var oc_field_name = "oc_" + entry + "_name";
+            var oc_field_id = "oc_" + entry + "_id";
+            open_form.fields_dict[oc_field_name].set_value("");
+            open_form.fields_dict[oc_field_id].set_value("");
+        });
+        open_form.fields_dict["oc_sync_from"].set_model_value(1);
+        open_form.fields_dict["oc_sync_to"].set_model_value(1);
+    }
+}
+
+cur_frm.cscript.oc_products_on_form_rendered = function(doc, cdt, cdn) {
+    var open_form = frappe.ui.form.get_open_grid_form();
+    if(open_form) {
+        // set model and SKU as an item code by de
+        if(!open_form.fields_dict["oc_model"].value) {
+            open_form.fields_dict["oc_model"].set_value(cdn);
         }
-    });
-});
+        if(!open_form.fields_dict["oc_sku"].value) {
+            open_form.fields_dict["oc_sku"].set_value(cdn);
+        }
+    }
+}
 
 print_warehouses = function(message, update) {
     var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
@@ -90,37 +106,24 @@ set_autocomplete_field = function(doctype, field_name) {
             source: function(request, response) {
                 var open_form = frappe.ui.form.get_open_grid_form();
                 var id = open_form.fields_dict[oc_field_id];
-                var category_names = cur_frm.category_names[open_form.fields_dict.oc_site.value];
                 if(request) {
                     id.set_value("");
                     id.refresh();
                 }
-                if(field_name == "category") {
-                    if(category_names) {
-                        if(request.term) {
-                            response(filter_categories(request.term, category_names));
+                frappe.call({
+                    method: get_names_method,
+                    args: {
+                        site_name: open_form.fields_dict.oc_site.value,
+                        filter_term: request.term
+                    },
+                    callback: function(r) {
+                        if (!r.exc && r.message) {
+                            response(r.message);
                         } else {
-                            response(category_names);
+                            response(false);
                         }
-                    } else {
-                        response(false);
                     }
-                } else {
-                    frappe.call({
-                        method: get_names_method,
-                        args: {
-                            site_name: open_form.fields_dict.oc_site.value,
-                            filter_name: request.term
-                        },
-                        callback: function(r) {
-                            if (!r.exc && r.message) {
-                                response(r.message);
-                            } else {
-                                response(false);
-                            }
-                        }
-                    });
-                }
+                });
             },
             select: function(event, ui) {
                 field.$input.val(ui.item.value);

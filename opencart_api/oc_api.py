@@ -106,9 +106,7 @@ class OpencartApi(object):
                 c['options_list'] = [OpencartProductOptionExt(self, o) for o in c.get('options')] if c.get('options') else []
                 yield c
 
-    def get_product(self, product_id):
-        success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers)
-        product = resp.get('data', {})
+    def fix_product_resp(self, product):
         product['product_id'] = product.get('product_id') or product.get('id')
 
         # resolving category_id
@@ -129,6 +127,23 @@ class OpencartApi(object):
                 break
             else:
                 product[i] = first_description
+
+    def get_product(self, product_id):
+        success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers)
+        product = resp.get('data', {})
+        self.fix_product_resp(product)
+        return (success, product)
+
+    def get_product_by_sku(self, sku):
+        success, resp = oc_request(self.url + '/products_by_sku/%s' % sku, headers=self.headers)
+        product = resp.get('data', {})
+        self.fix_product_resp(product)
+        return (success, product)
+
+    def get_product_by_model(self, model):
+        success, resp = oc_request(self.url + '/products_by_model/%s' % model, headers=self.headers)
+        product = resp.get('data', {})
+        self.fix_product_resp(product)
         return (success, product)
 
     def create_product(self, data):

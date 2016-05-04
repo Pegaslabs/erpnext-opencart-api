@@ -25,7 +25,7 @@
    "in_list_view": 1, 
    "label": "Opencart Product ID", 
    "permlevel": 0, 
-   "reqd": 1
+   "reqd": 0
   }, 
   {
    "description": "", 
@@ -34,7 +34,7 @@
    "in_list_view": 0, 
    "label": "Opencart Category Name", 
    "permlevel": 0, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -53,7 +53,7 @@
    "in_list_view": 0, 
    "label": "Opencart Manufacturer Name", 
    "permlevel": 0, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -73,7 +73,7 @@
    "label": "Opencart Tax Class Name", 
    "permlevel": 0, 
    "unique": 0, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -92,7 +92,7 @@
    "in_list_view": 0, 
    "label": "Opencart Stock Status Name", 
    "permlevel": 0, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -111,7 +111,7 @@
    "in_list_view": 0, 
    "label": "Model", 
    "permlevel": 0, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 
@@ -120,7 +120,7 @@
    "in_list_view": 0, 
    "label": "SKU", 
    "permlevel": 0, 
-   "reqd": 0
+   "reqd": 1
   }, 
   {
    "description": "", 

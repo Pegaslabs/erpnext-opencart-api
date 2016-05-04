@@ -231,3 +231,7 @@ def get_category_names():
     for i in categories:
         category_names[i] = [category.get("name") for category in categories[i]]
     return category_names
+
+
+def get_categories(site_name):
+    return list(oc_api.get(site_name).get_all_categories())
