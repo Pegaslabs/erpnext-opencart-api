@@ -500,7 +500,7 @@ def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False,
     else:
         doc_customer_group = customer_groups.get(site_name, oc_discount.get('customer_group_id'))
         if not doc_customer_group:
-            frappe.throw('Cannot not found Customer Group with customer_group_id "%s" for Item "%s"' % (customer_group_id, doc_item.get('name')))
+            frappe.throw('Cannot found Customer Group with customer_group_id "{}" for Item "{}"'.format(oc_discount.get('customer_group_id'), doc_item.get('name')))
         doc_oc_discount = frappe.get_doc({
             'doctype': 'Opencart Discount',
             'oc_site': site_name,
