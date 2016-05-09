@@ -107,10 +107,10 @@ def on_submit(doc, method=None):
                 je.posting_date = doc.transaction_date
                 je.insert()
 
-                transaction_args = {
+                transaction_args = frappe._dict({
                     "rp": recurring_profile_doc.as_dict(),
                     "cc": get_credit_card_or_throw(recurring_profile_doc.cc_token_id)
-                }
+                })
                 tr = add_converge_transaction(je.name, si, transaction_args=transaction_args, transaction_id=recurring_profile_doc.initial_transaction_id)
                 tr.submit()
                 je.submit()
