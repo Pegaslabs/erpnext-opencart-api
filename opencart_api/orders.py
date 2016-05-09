@@ -101,7 +101,7 @@ def on_submit(doc, method=None):
             si.submit()
 
             from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, get_payment_entry_against_invoice, add_converge_transaction
-            from erpnext.selling.doctype.recurring_profile.recurring_profile import get_credit_card_or_throw
+            from erpnext.payments.doctype.credit_card.credit_card import get_credit_card_or_throw
             if is_converge:
                 je = frappe.get_doc(get_cc_payment_entry_against_invoice(si.doctype, si.name, is_recurring=True))
                 je.posting_date = doc.transaction_date
