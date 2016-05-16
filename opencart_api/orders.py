@@ -1327,12 +1327,12 @@ def resolve_price_list_and_warehouse(customer, doc_customer=None):
     if not price_list_name:
         frappe.throw('Please specify Default Price List for Customer Group "%s"' % cstr(doc_customer_group.get('customer_group_name')))
 
-    return {
+    return frappe._dict({
         'territory': territory,
         'price_list': price_list_name,
         # 'price_list_currency': doc_price_list.get('currency'),
         'warehouse': warehouse_name,
-    }
+    })
 
 
 @frappe.whitelist()
