@@ -118,9 +118,9 @@ def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
             "field_map": {
                 "name": "sales_order",
             },
-            "validation": {
-                "docstatus": ["=", 1]
-            }
+            # "validation": {
+            #     "docstatus": ["=", 1]
+            # }
         },
         "Sales Order Item": {
             "doctype": "Sales Invoice Item",
