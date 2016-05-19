@@ -162,18 +162,12 @@ def get_stock_status_id_by_name(site_name, stock_status_name):
 
 def get_stock_status_name_by_id(site_name, stock_status_id):
     stock_statuses = get_oc_init(site_name).get('stock_statuses', [])
-    res = next((ss.get('name') for ss in stock_statuses if ss.get('stock_status_id') == stock_status_id), None)
-    if res is None:
-        frappe.throw('Error. Cannot get stock status name by id "%s"' % stock_status_id)
-    return res
+    return next((ss.get('name') for ss in stock_statuses if ss.get('stock_status_id') == stock_status_id), None)
 
 
 def get_order_status_id_by_name(site_name, order_status_name):
     order_statuses = get_oc_init(site_name).get('order_statuses', [])
-    res = next((ss.get('stock_status_id') for ss in order_statuses if ss.get('name') == order_status_name), None)
-    if res is None:
-        frappe.throw('Error. Cannot get order status id by name "%s"' % order_status_name)
-    return res
+    return next((ss.get('stock_status_id') for ss in order_statuses if ss.get('name') == order_status_name), None)
 
 
 def get_tax_rates(site_name):
@@ -204,10 +198,7 @@ def get_manufacturer(site_name, manufacturer_id):
 
 def get_manufacturer_name(site_name, manufacturer_id):
     manufacturers = get_manufacturers(site_name)
-    res = next((m.get('name') for m in manufacturers if m.get('manufacturer_id') == manufacturer_id), None)
-    if res is None:
-        frappe.throw('Error. Cannot get manufacturer name by manufacturer id "%s" for Opencart Site "%s"' % (manufacturer_id, site_name))
-    return res
+    return next((m.get('name') for m in manufacturers if m.get('manufacturer_id') == manufacturer_id), None)
 
 
 def get_all_categories():
@@ -232,6 +223,17 @@ def get_category_names():
         category_names[i] = [category.get("name") for category in categories[i]]
     return category_names
 
+CAT = {}
+
 
 def get_categories(site_name):
-    return list(oc_api.get(site_name).get_all_categories())
+    global CAT
+    if not CAT.get(site_name):
+        categories = list(oc_api.get(site_name).get_all_categories())
+        CAT[site_name] = categories
+    return CAT.get(site_name)
+
+
+def get_category_name(site_name, category_id):
+    categories = get_categories(site_name)
+    return next((m.get('name') for m in categories if m.get('category_id') == category_id), None)
