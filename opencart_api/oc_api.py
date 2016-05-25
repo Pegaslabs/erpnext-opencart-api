@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 import posixpath
 import frappe
+from frappe.utils import cstr
+
 from models import (OpencartCategory,
                     OpencartProductOption,
                     OpencartProductOptionExt,
@@ -10,17 +12,41 @@ from models import (OpencartCategory,
 from utils import oc_request, oc_upload_file
 
 
-def get(site_name, api_base_url=None, use_pure_rest_api=False):
-        '''This method assumes to use Opencart REST Admin API'''
-        site_doc = frappe.get_doc("Opencart Site", site_name)
-        if use_pure_rest_api:
-            headers = {site_doc.get('opencart_header_key'): site_doc.get('opencart_header_value')}
-        else:
-            headers = {site_doc.get('opencart_admin_header_key'): site_doc.get('opencart_admin_header_value')}
-        opencart_api = OpencartApi(api_base_url if api_base_url else site_doc.get('server_base_url'),
-                                   use_pure_rest_api=use_pure_rest_api,
-                                   headers=headers)
-        return opencart_api
+OPENCART_API_CACHE = {}
+OPENCART_API_MULTI_CACHE = {}
+
+
+def get(site_name, use_pure_rest_api=False):
+    cache_key = cstr(site_name) + "-" + cstr(use_pure_rest_api)
+    global OPENCART_API_CACHE
+    if OPENCART_API_CACHE.get(cache_key):
+        return OPENCART_API_CACHE.get(cache_key)
+
+    headers = {}
+    site_doc = frappe.db.get("Opencart Site", site_name)
+    if use_pure_rest_api:
+        headers[site_doc.opencart_header_key] = site_doc.opencart_header_value
+    else:
+        headers[site_doc.opencart_admin_header_key] = site_doc.opencart_admin_header_value
+    OPENCART_API_CACHE[cache_key] = OpencartApi(site_doc.server_base_url, use_pure_rest_api=use_pure_rest_api, headers=headers)
+    return OPENCART_API_CACHE.get(cache_key)
+
+
+def get_multi(site_names=[], use_pure_rest_api=False):
+    # if not site_names:
+    cache_key = cstr(site_name) + "-" + cstr(use_pure_rest_api)
+    global OPENCART_API_CACHE
+    if OPENCART_API_CACHE.get(cache_key):
+        return OPENCART_API_CACHE.get(cache_key)
+
+    headers = {}
+    site_doc = frappe.db.get("Opencart Site", site_name)
+    if use_pure_rest_api:
+        headers[site_doc.opencart_header_key] = site_doc.opencart_header_value
+    else:
+        headers[site_doc.opencart_admin_header_key] = site_doc.opencart_admin_header_value
+    OPENCART_API_CACHE[cache_key] = OpencartApi(site_doc.server_base_url, use_pure_rest_api=use_pure_rest_api, headers=headers)
+    return OPENCART_API_CACHE.get(cache_key)
 
 
 class OpencartApi(object):
@@ -62,6 +88,10 @@ class OpencartApi(object):
 
     def get_all_categories(self):
         success, resp = oc_request(self.url + '/list_all_categories', headers=self.headers, method='GET')
+        return resp.get('data', []) if success else []
+
+    def get_all_attributes(self):
+        success, resp = oc_request(self.url + '/attributes', headers=self.headers, method='GET')
         return resp.get('data', []) if success else []
 
     def get_all_products(self, limit=100, page=1):
@@ -135,15 +165,15 @@ class OpencartApi(object):
         return (success, product)
 
     def get_product_by_sku(self, sku):
-        success, resp = oc_request(self.url + '/products_by_sku/%s' % sku, headers=self.headers)
+        success, resp = oc_request(self.url + '/product_by_sku/%s' % sku, headers=self.headers)
         product = resp.get('data', {})
         self.fix_product_resp(product)
         return (success, product)
 
     def get_product_by_model(self, model):
-        success, resp = oc_request(self.url + '/products_by_model/%s' % model, headers=self.headers)
+        success, resp = oc_request(self.url + '/product_by_model/%s' % model, headers=self.headers)
         product = resp.get('data', {})
-        self.fix_product_resp(product)
+        # self.fix_product_resp(product)
         return (success, product)
 
     def create_product(self, data):

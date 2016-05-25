@@ -96,22 +96,26 @@ def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False
             headers.update({'Content-type': 'application/json'})
             data = json.dumps(data)
         if method.upper() == 'GET':
+            # frappe.msgprint("GET {}\ndata: {}".format(url, data))
             response = requests.get(url, headers=headers, data=data)
         elif method.upper() == 'PUT':
+            # frappe.msgprint("PUT {}\ndata: {}".format(url, data))
             response = requests.put(url, headers=headers, data=data)
         elif method.upper() == 'POST':
+            # frappe.msgprint("POST {}\ndata: {}".format(url, data))
             response = requests.post(url, allow_redirects=False, headers=headers, data=data)
         elif method.upper() == 'DELETE':
+            # frappe.msgprint("DELETE {}\ndata: {}".format(url, data))
             response = requests.delete(url, headers=headers, data=data)
         else:
             sync_info(logs, 'Unknown HTTP method: %s' % str(method), stop=stop, silent=silent, error=error)
         json_resp = response.json(strict=False)
         # frappe.msgprint(url + "\n" + str(method) + "\n" + str(data) + "-------" *100 + str(json_resp))
-        return (json_resp.get('success', False), json_resp)
+        return (json_resp.get('success', None), json_resp)
     except requests.exceptions.RequestException as e:
         sync_info(logs, 'Error occurred while requesting Opencart site: %s\n%s' % (str(e), str(url)), stop=stop, silent=silent, error=error)
     except ValueError:
-        return (False, {})
+        return (None, {})
         # sync_info(logs, 'JSON error: %s' % str(url), stop=stop, silent=silent, error=error)
     except Exception as e:
         if response and response.status_code != requests.codes.ok:

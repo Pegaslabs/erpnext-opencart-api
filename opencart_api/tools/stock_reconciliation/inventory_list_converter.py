@@ -33,10 +33,10 @@ def process(input_file, input_erpnext_file, output_erpnext_file):
         with open(output_erpnext_file, 'wb') as out_erpnext_file:
             writer = csv.writer(out_erpnext_file, delimiter=',')
             for row in reader:
-                # item_code,oc_item_name,oc_model,warehouse,qty,valuation_rate,current_qty,current_valuation_rate
+                # item_code,item_name,model,warehouse,qty,valuation_rate,current_qty,current_valuation_rate
                 if row and row[0].startswith('ITEM-'):
-                    oc_model = row[2]
-                    quantity = item_code_to_quantity.get(oc_model.lower())
+                    model = row[2]
+                    quantity = item_code_to_quantity.get(model.lower())
                     if quantity is not None:
                         row[4] = quantity
                         writer.writerow(row)

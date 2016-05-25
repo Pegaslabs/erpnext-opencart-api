@@ -234,6 +234,17 @@ def get_categories(site_name):
     return CAT.get(site_name)
 
 
+ATTR = {}
+
+
+def get_attributes(site_name):
+    global ATTR
+    if not ATTR.get(site_name):
+        categories = list(oc_api.get(site_name).get_all_attributes())
+        ATTR[site_name] = categories
+    return ATTR.get(site_name)
+
+
 def get_category_name(site_name, category_id):
     categories = get_categories(site_name)
     return next((m.get('name') for m in categories if m.get('category_id') == category_id), None)

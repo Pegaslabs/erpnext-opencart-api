@@ -401,8 +401,8 @@ def sync_order_to_opencart(doc_order):
             'price': doc_sales_order_item.get('rate'),
             'total': doc_sales_order_item.get('amount'),
             'name': doc_item.get('item_name'),
-            'model': doc_oc_product.get('oc_model'),
-            'sku': doc_oc_product.get('oc_sku')
+            'model': doc_item.item_code,
+            'sku': doc_item.item_code
             # 'tax_class_id': '10',
             # 'reward': '0',
             # 'subtract': '0',
@@ -896,7 +896,7 @@ def _pull_added_from(site_name, silent=False):
                         'item_code': doc_item.get('item_code'),
                         # 'base_price_list_rate': price_list_rate,
                         # 'price_list_rate': price_list_rate,
-                        'warehouse': doc_order.get('warehouse') or site_doc.get('items_default_warehouse'),
+                        'warehouse': doc_order.get('warehouse') or site_doc.get('default_warehouse'),
                         'qty': flt(product.get('quantity')),
                         'currency': product.get('currency_code'),
                         'description': product.get('name')
@@ -1161,7 +1161,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                     'item_code': doc_item.get('item_code'),
                     # 'base_price_list_rate': price_list_rate,
                     # 'price_list_rate': price_list_rate,
-                    'warehouse': doc_order.get('warehouse') or site_doc.get('items_default_warehouse'),
+                    'warehouse': doc_order.get('warehouse') or site_doc.get('default_warehouse'),
                     'qty': flt(product.get('quantity')),
                     'currency': product.get('currency_code'),
                     'description': product.get('name')

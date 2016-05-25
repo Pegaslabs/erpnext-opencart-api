@@ -24,7 +24,7 @@ doc_events = {
     },
     "Item": {
         "validate": "opencart_api.items.oc_validate",
-        # "on_trash": "opencart_api.items.oc_delete"
+        "on_trash": "opencart_api.items.oc_delete"
     },
     "Item Price": {
         "validate": "opencart_api.item_prices.oc_validate",

@@ -68,40 +68,6 @@ print_sync_log_stores = function(message, update) {
     $(cur_frm.fields_dict['store_sync_log'].wrapper).html(msg);
 }
 
-print_sync_log_item_prices = function(message, update) {
-    var $table = $('<table class="table table-bordered"></table>');
-    var $th = $('<tr></tr>');
-    var $tbody = $('<tbody></tbody>');
-    $th.html('<th>Name</th><th>Item Code</th><th>Price List</th><th>Currency</th><th>Rate</th><th>Status</th>');
-    var groups = $.map(update ? message.results: message, function(o){
-        $tr = $('<tr>');
-        // Add class
-        $tr.append('<td>'+o[0]+'</td>');
-        $tr.append('<td>'+o[1]+'</td>');
-        $tr.append('<td>'+o[2]+'</td>');
-        $tr.append('<td>'+o[3]+'</td>');
-        $tr.append('<td>'+o[4]+'</td>');
-        $tr.append('<td>'+o[7]+'</td>');
-        $tbody.append($tr);
-    });
-    $table.append($th).append($tbody);
-    var $panel = $('<div class="panel"></div>');
-    var $header = $('<h4>'+__("Item Price Sync Log: ")+'</h4>');
-    $panel.append($header);
-
-    var $info;
-    if (message.add_count || message.update_count || message.skip_count) {
-        $info = $('<p></p>').html('Checked ' + message.check_count + ' item prices: ' + message.add_count + ' - added, ' + message.update_count + ' - updated, ' + message.skip_count + ' - skipped.');
-    }
-    else {
-        $info = $('<p>All item prices are up to date</p>');
-    }
-    $panel.append($info);
-    $panel.append($table);
-    var msg = $('<div>').append($panel).html();
-    $(cur_frm.fields_dict['item_price_sync_log'].wrapper).html(msg);
-}
-
 print_sync_log_item_attributes = function(message, update) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');
@@ -405,22 +371,6 @@ cur_frm.cscript.pull_stores_from_oc_site = function(doc, dt, dn) {
         callback: function(data) {
             if (data && data.message) {
                 print_sync_log_stores(data.message, true);
-            }
-        }
-    });
-}
-
-cur_frm.cscript.pull_item_prices_from_oc_site = function(doc, dt, dn) {
-    frappe.call({
-        freeze: true,
-        type: "POST",
-        args: {
-            cmd: "opencart_api.item_prices.pull",
-            site_name: doc.name
-        },
-        callback: function(data) {
-            if (data && data.message) {
-                print_sync_log_item_prices(data.message, true);
             }
         }
     });
