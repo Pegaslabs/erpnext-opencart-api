@@ -111,7 +111,8 @@ def oc_request(url, method='GET', headers={}, data=None, stop=True, silent=False
             sync_info(logs, 'Unknown HTTP method: %s' % str(method), stop=stop, silent=silent, error=error)
         json_resp = response.json(strict=False)
         # frappe.msgprint(url + "\n" + str(method) + "\n" + str(data) + "-------" *100 + str(json_resp))
-        return (json_resp.get('success', None), json_resp)
+        success = json_resp.get('success', None)
+        return (success, json_resp or ({} if success else {"error": "Unknown error"}))
     except requests.exceptions.RequestException as e:
         sync_info(logs, 'Error occurred while requesting Opencart site: %s\n%s' % (str(e), str(url)), stop=stop, silent=silent, error=error)
     except ValueError:

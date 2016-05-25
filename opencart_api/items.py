@@ -121,6 +121,10 @@ def sync_item_to_oc(doc_item, site_name=None):
                     'meta_keyword': cstr(doc_item.meta_keyword),
                 }
             ]
+
+            data['model'] = item_code
+            data['sku'] = item_code
+
             if "oc_statics" in cstr(doc_item.image):
                 data['image'] = doc_item.image
             data['product_category'] = [c.get("category_id") for c in oc_product.get("category", []) if c.get("category_id")]
@@ -316,11 +320,8 @@ def sync_item_to_oc(doc_item, site_name=None):
         if doc_oc_product.product_details_to_update and isinstance(doc_oc_product.product_details_to_update, basestring):
             pd_to_update = {}
             pd = frappe._dict(json.loads(doc_oc_product.product_details_to_update))
-            pd_to_update.update({
-                "quantity": pd.quantity,
-                "price": pd.price
-            })
 
+            # manufacturer_id
             manufacturer_id = get_manufacturer_id(cur_site_name, pd.manufacturer)
             if manufacturer_id:
                 pd_to_update["manufacturer_id"] = manufacturer_id
@@ -362,12 +363,12 @@ def sync_item_to_oc(doc_item, site_name=None):
         # updating or creating product
         if get_product_success:
             # update existed product on Opencart site
-            success = oc_api.get(cur_site_name).update_product(doc_oc_product.oc_product_id, data)
+            success, resp = oc_api.get(cur_site_name).update_product(doc_oc_product.oc_product_id, data)
             if success:
                 frappe.msgprint('Product is updated successfully on Opencart site {}'.format(cur_site_name))
                 doc_oc_product.update({'oc_last_sync_to': datetime.now()})
             else:
-                frappe.msgprint('Product is not updated on Opencart site {}. Error: Unknown'.format(cur_site_name))
+                frappe.msgprint('Product is not updated on Opencart site {}. Error: {}'.format(cur_site_name, resp.get("error")))
         elif get_product_success is False:
             # add new product on Opencart site
             success, product_id = oc_api.get(cur_site_name).create_product(data)

@@ -181,8 +181,7 @@ class OpencartApi(object):
         return (success, str(resp.get('product_id', '')))
 
     def update_product(self, product_id, data):
-        success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='PUT', data=data)
-        return success
+        return oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='PUT', data=data)
 
     def delete_product(self, product_id):
         success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='DELETE')
