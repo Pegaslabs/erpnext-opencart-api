@@ -187,6 +187,9 @@ class OpencartApi(object):
         success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='DELETE')
         return success
 
+    def update_product_quantity(self, data):
+        return oc_request(self.url + '/products/quantity', headers=self.headers, method='PUT', data=data)
+
     def set_product_image(self, product_id, file_path):
         success, resp = oc_upload_file(self.url + '/products/%s/images' % product_id, file_path, headers=self.headers)
         return success

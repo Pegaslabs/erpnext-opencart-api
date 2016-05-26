@@ -119,6 +119,7 @@ def sync_item_to_oc(doc_item, site_name=None):
                     'meta_description': cstr(doc_item.meta_description),
                     'meta_title': cstr(doc_item.meta_title),
                     'meta_keyword': cstr(doc_item.meta_keyword),
+                    'tag': cstr(doc_item.product_tag)
                 }
             ]
 
@@ -227,6 +228,7 @@ def sync_item_to_oc(doc_item, site_name=None):
                         'meta_description': cstr(doc_item.meta_description),
                         'meta_title': cstr(doc_item.meta_title),
                         'meta_keyword': cstr(doc_item.meta_keyword),
+                        'tag': cstr(doc_item.product_tag)
                     }
                 ]
                 # 'product_option': [
