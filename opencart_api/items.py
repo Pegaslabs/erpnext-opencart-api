@@ -267,7 +267,6 @@ def sync_item_to_oc(doc_item, site_name=None):
 
                 # product_store
                 product_store = []
-                frappe.msgprint(pd.store_names)
                 for store_name in cstr(pd.store_names).split(","):
                     store_id = get_store_id(cur_site_name, store_name)
                     if store_id:
