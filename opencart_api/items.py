@@ -245,6 +245,9 @@ def sync_item_to_oc(doc_item, site_name=None):
                 #     }
                 # ]
             }
+        else:
+            frappe.msgprint('Skipping product update on Opencart site {}. Error: cannot get product by model {}'.format(cur_site_name, item_code))
+            continue
 
         if doc_oc_product.product_details_to_update and isinstance(doc_oc_product.product_details_to_update, basestring):
             pd = frappe._dict(json.loads(doc_oc_product.product_details_to_update))
@@ -305,6 +308,7 @@ def sync_item_to_oc(doc_item, site_name=None):
             "quantity": actual_qty,
             "stock_status_id": stock_status_id
         })
+
         # updating or creating product
         if get_product_success:
             # update existed product on Opencart site
