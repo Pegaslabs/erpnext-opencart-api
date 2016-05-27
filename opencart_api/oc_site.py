@@ -16,14 +16,14 @@ OPENCART_CATEGORIES_CACHE = {}
 OC_CATEGORIES_CACHE_LAST_MODIFIED = None
 
 
-def get_oc_init(site_name):
+def get_oc_init(oc_site):
     global OPENCART_INIT_CACHE
-    init_data = OPENCART_INIT_CACHE.get(site_name)
+    init_data = OPENCART_INIT_CACHE.get(oc_site)
     if not init_data:
-        success, data = oc_api.get(site_name).get_init()
+        success, data = oc_api.get(oc_site).get_init()
         if not success:
-            frappe.throw('Exception: Cannot get init data from Opencart site "%s"' % site_name)
-        OPENCART_INIT_CACHE[site_name] = data
+            frappe.throw('Cannot get init data from Opencart site "{}". Error: {}'.format(oc_site. data.get("error")))
+        OPENCART_INIT_CACHE[oc_site] = data
         init_data = data
     return init_data
 

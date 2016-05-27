@@ -19,12 +19,14 @@ app_version = "0.0.1"
 # app_include_js = "/assets/js/opencart_site.js"
 
 doc_events = {
+    "Bin": {
+        "on_update": "opencart_api.items.on_bin_update"
+    },
     "Opencart Site": {
         "validate": "opencart_api.oc_site.oc_validate"
     },
     "Item": {
-        "validate": "opencart_api.items.oc_validate",
-        "on_trash": "opencart_api.items.oc_delete"
+        "validate": "opencart_api.items.oc_validate"
     },
     "Item Price": {
         "validate": "opencart_api.item_prices.oc_validate",

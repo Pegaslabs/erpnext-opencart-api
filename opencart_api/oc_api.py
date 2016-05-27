@@ -184,8 +184,7 @@ class OpencartApi(object):
         return oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='PUT', data=data)
 
     def delete_product(self, product_id):
-        success, resp = oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='DELETE')
-        return success
+        return oc_request(self.url + '/products/%s' % product_id, headers=self.headers, method='DELETE')
 
     def update_product_quantity(self, data):
         return oc_request(self.url + '/products/quantity', headers=self.headers, method='PUT', data=data)
@@ -316,7 +315,7 @@ class OpencartApi(object):
 
     def get_init(self):
         success, resp = oc_request(self.url + '/init', headers=self.headers)
-        return (success, resp.get('data', {}) if success else {})
+        return (success, resp.get('data', {}) if success else {"error": "Unknown Error"})
 
     def get_order_statuses(self):
         success, resp = oc_request(self.url + '/order_statuses', headers=self.headers)
