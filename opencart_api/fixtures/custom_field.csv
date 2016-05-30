@@ -182,7 +182,7 @@
 "","""Bin-brand""","Bin","Data","Brand","","",0,"","","","brand",0,0,0,0,0,"","",0,"",0,0,0,1,1,0
 "","""Item-oc_warehouses""","Item","Table","Warehouses","oc_warehouse_settings","",0,"","Opencart Warehouse","","oc_warehouses",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_warehouse_settings""","Item","Section Break","Optional Warehouses","","",0,"","","","oc_warehouse_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Shipping Rule-customer_group""","Shipping Rule","Link","Customer Group","","",0,"","Customer Group","","customer_group",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Shipping Rule-customer_group""","Shipping Rule","Link","Customer Group","calculate_based_on","",0,"","Customer Group","","customer_group",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-postal_code""","Warehouse","Data","Postal Code","","",0,"","","","postal_code",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Price List-oc_customer_group""","Price List","Link","Customer Group","oc_settings","",0,"","Customer Group","","oc_customer_group",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Price List-oc_settings""","Price List","Section Break","Opencart Settings","countries","",0,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
