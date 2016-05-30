@@ -334,27 +334,29 @@ def sync_item_to_oc(doc_item, site_name=None):
 
 
 def on_bin_update(self, method=None):
-    return
-    oc_products = frappe.db.get_all("Opencart Product", filters={"parent": self.item_code}, fields=["parent", "name", "oc_site", "oc_product_id", "oc_category_id", "oc_manufacturer_id", "oc_stock_status_id", "oc_category_name", "oc_manufacturer_name", "oc_stock_status_name"])
-    for pr in oc_products:
-        item_code = pr.parent
-        oc_site = pr.oc_site
-        warehouse = frappe.db.get_value("Opencart Site", oc_site, "default_warehouse")
-        if warehouse != self.warehouse:
-            continue
-        success, oc_product = oc_api.get(oc_site).get_product_by_model(item_code)
-        if success:
-            available_qty = get_fuse_available_qty(item_code, warehouse)
-            actual_qty = flt(available_qty.actual_qty)
-            update_success, resp = oc_api.get(oc_site).update_product_quantity([{
-                "product_id": oc_product.get("product_id") or oc_product.get("id"),
-                "quantity": cstr(actual_qty),
-                "stock_status_name": "In Stock" if actual_qty else "Out Of Stock"
-            }])
-            if not update_success:
-                frappe.msgprint("Stock quantity for {} item is not uptated on Opencart site {}".format(item_code, oc_site))
-        else:
-            pass
+    if self.get("__islocal"):
+        return
+    if flt(self.actual_qty) != flt(frappe.db.get_value("Bin", self.name, "actual_qty")):
+        oc_products = frappe.db.get_all("Opencart Product", filters={"parent": self.item_code}, fields=["parent", "name", "oc_site", "oc_product_id", "oc_category_id", "oc_manufacturer_id", "oc_stock_status_id", "oc_category_name", "oc_manufacturer_name", "oc_stock_status_name"])
+        for pr in oc_products:
+            item_code = pr.parent
+            oc_site = pr.oc_site
+            warehouse = frappe.db.get_value("Opencart Site", oc_site, "default_warehouse")
+            if warehouse != self.warehouse:
+                continue
+            success, oc_product = oc_api.get(oc_site).get_product_by_model(item_code)
+            if success:
+                available_qty = get_fuse_available_qty(item_code, warehouse)
+                actual_qty = flt(available_qty.actual_qty)
+                update_success, resp = oc_api.get(oc_site).update_product_quantity([{
+                    "product_id": oc_product.get("product_id") or oc_product.get("id"),
+                    "quantity": cstr(actual_qty),
+                    "stock_status_name": "In Stock" if actual_qty else "Out Of Stock"
+                }])
+                if not update_success:
+                    frappe.msgprint("Stock quantity for {} item is not uptated on Opencart site {}".format(item_code, oc_site))
+            else:
+                pass
 
 
 @sync_item_to_opencart
