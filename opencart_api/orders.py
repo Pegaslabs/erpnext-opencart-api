@@ -1343,7 +1343,21 @@ def get_customer_selling_info(customer, doc_customer=None):
 
 
 @frappe.whitelist()
-def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None):
+def get_shipping_rule(oc_shipping_method_code):
+    if not oc_shipping_method_code:
+        return
+    all_shipping_rules = frappe.db.get_all("Shipping Rule", fields=["name", "oc_shipping_method_code"], filters={"oc_shipping_method_code": ("like", "%" + cstr(oc_shipping_method_code) + "%")})
+    for shipping_rule in all_shipping_rules:
+        if oc_shipping_method_code in [c.strip() for c in cstr(shipping_rule.oc_shipping_method_code).split(",")]:
+            return shipping_rule.name
+
+
+@frappe.whitelist()
+def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None, oc_shipping_method_code=None):
+    shipping_rule = get_shipping_rule(oc_shipping_method_code)
+    if shipping_rule:
+        return shipping_rule
+
     if db_customer is not None:
         obj_customer = db_customer
     elif doc_customer is not None:
@@ -1419,7 +1433,9 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
     doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
     if not doc_oc_store:
         frappe.throw('Cannot resolve Opencart Store for site "{}" and with store id "{}"'.format(site_name, oc_order.get('store_id')))
-    shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
+    shipping_rule = get_shipping_rule(oc_order.get('shipping_code'))
+    if not shipping_rule:
+        shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
     if not shipping_rule:
         frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))
 
