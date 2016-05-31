@@ -1343,18 +1343,19 @@ def get_customer_selling_info(customer, doc_customer=None):
 
 
 @frappe.whitelist()
-def get_shipping_rule(oc_shipping_method_code):
-    if not oc_shipping_method_code:
+def get_shipping_rule(oc_shipping_method_code, company):
+    if not oc_shipping_method_code or not company:
         return
     all_shipping_rules = frappe.db.get_all("Shipping Rule", fields=["name", "oc_shipping_method_code"], filters={"oc_shipping_method_code": ("like", "%" + cstr(oc_shipping_method_code) + "%")})
     for shipping_rule in all_shipping_rules:
-        if oc_shipping_method_code in [c.strip() for c in cstr(shipping_rule.oc_shipping_method_code).split(",")]:
-            return shipping_rule.name
+        if frappe.db.get_all("Shipping Rule Company", filters={"parent": shipping_rule.name, "company": company}):
+            if oc_shipping_method_code in [c.strip() for c in cstr(shipping_rule.oc_shipping_method_code).split(",")]:
+                return shipping_rule.name
 
 
 @frappe.whitelist()
-def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None, oc_shipping_method_code=None):
-    shipping_rule = get_shipping_rule(oc_shipping_method_code)
+def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None, oc_shipping_method_code=None, company=None):
+    shipping_rule = get_shipping_rule(oc_shipping_method_code, company)
     if shipping_rule:
         return shipping_rule
 
