@@ -95,8 +95,7 @@ def sync_item_to_oc(doc_item, site_name=None):
                                 'price': item_price.price_list_rate
                             }]
                         })
-            if product_discount:
-                data['product_discount'] = product_discount
+            data['product_discount'] = product_discount
 
         elif get_product_success is False:
             data = {
