@@ -1434,7 +1434,7 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
     doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
     if not doc_oc_store:
         frappe.throw('Cannot resolve Opencart Store for site "{}" and with store id "{}"'.format(site_name, oc_order.get('store_id')))
-    shipping_rule = get_shipping_rule(oc_order.get('shipping_code'))
+    shipping_rule = get_shipping_rule(oc_order.get('shipping_code'), company)
     if not shipping_rule:
         shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
     if not shipping_rule:
