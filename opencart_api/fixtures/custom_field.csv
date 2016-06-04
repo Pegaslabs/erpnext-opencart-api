@@ -162,8 +162,10 @@
 "","""Item Attribute-oc_site""","Item Attribute","Link","Site","oc_is_updating","",0,"","Opencart Site","","oc_site",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_is_updating""","Item Attribute","Check","Is Updating","oc_settings","",0,"","","","oc_is_updating",0,0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Item Attribute-oc_settings""","Item Attribute","Section Break","Opencart Settings","item_attribute_values","",0,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-warehouses""","Item","HTML","Item","warehouse_settings","",0,"","Inventory per Warehouse","","warehouses",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Item-warehouse_settings""","Item","Section Break","Inventory per Warehouse","","",0,"","","","warehouse_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_discounts_sb""","Item","Section Break","Opencart Discounts","oc_last_sync_to","",0,"","","","oc_discounts_sb",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-oc_discounts""","Item","HTML","Opencart Discounts","oc_discounts_sb","",0,"","","","oc_discounts",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-warehouse_settings""","Item","Section Break","Inventory per Warehouse","oc_discounts","",0,"","","","warehouse_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item-warehouses""","Item","HTML","Inventory per Warehouse","warehouse_settings","",0,"","","","warehouses",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_last_sync_to""","Item","Datetime","Last sync","oc_sync_to","",0,"","","","oc_last_sync_to",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_sync_to""","Item","Check","Sync to Opencart","oc_item_settings_cb","",0,"","","","oc_sync_to",0,0,0,0,0,"","1",0,"",0,0,0,0,0,0
 "","""Item-oc_item_settings_cb""","Item","Column Break","","oc_last_sync_from","",0,"","","","oc_item_settings_cb",0,0,0,0,0,"","",0,"",0,0,0,0,0,0

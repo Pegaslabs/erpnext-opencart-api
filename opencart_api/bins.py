@@ -8,5 +8,5 @@ def get_bin_location(item_code, warehouse):
 
 
 @frappe.whitelist()
-def get_warehouses(item_code):
+def get_inventory_per_warehouse(item_code):
     return frappe.db.get_values("Bin", {"item_code": item_code}, ["warehouse", "actual_qty", "stock_value"])

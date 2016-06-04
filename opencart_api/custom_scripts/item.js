@@ -2,13 +2,14 @@
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
     if(!doc.__islocal) {
         frappe.call({
-            method:"opencart_api.bins.get_warehouses",
+            method:"opencart_api.bins.get_inventory_per_warehouse",
             args: {
                 "item_code": doc.item_code,
             },
             callback: function(r) {
                 if(!r.exc && r.message) {
-                    cur_frm.cscript.print_warehouses(r.message);
+                    var inventories_html = frappe.render_template("inventory_per_warehouse", {"inventories": r.message || []});
+                    $(cur_frm.fields_dict['warehouses'].wrapper).html(inventories_html);
                 }
             }
         });
@@ -154,27 +155,6 @@ cur_frm.cscript.oc_products_on_form_hide = function(doc, cdt, cdn) {
     }
 }
 
-cur_frm.cscript.print_warehouses = function(message, update) {
-    var $table = $('<table class="table table-hover" style="border: 1px solid #D1D8DD;"></table>');
-    var $th = $('<tr style="background-color: #F7FAFC; font-size: 85%; color: #8D99A6"></tr>');
-    var $tbody = $('<tbody style="font-family: Helvetica Neue, Helvetica, Arial, "Open Sans", sans-serif;font-size: 11.9px; line-height: 17px; color: #8D99A6;  background-color: #fff;"></tbody>');
-    $th.html('<th>Warehouse</th><th>Actual Quantity</th><th>Stock Value</th>');
-    var groups = $.map(message, function(o){
-        $tr = $('<tr>');
-        $tr.append('<td>' + o[0] + '</td>');
-        $tr.append('<td>' + o[1] + '</td>');
-        if (o[1]> 0) {
-            $tr.append('<td>' + o[2] + '</td>');
-        }
-        $tbody.append($tr);
-    })
-    $table.append($th).append($tbody);
-    var $panel = $('<div class="panel"></div>');  
-    $panel.append($table);
-    var msg = $('<div>').append($panel).html();
-    $(cur_frm.fields_dict['warehouses'].wrapper).html(msg);
-}
-
 cur_frm.cscript.sync_item_from_opencart = function(label, status) {
     var doc = cur_frm.doc;
     frappe.call({
@@ -201,6 +181,9 @@ cur_frm.cscript.init_oc_products = function () {
           if(!r.exc && r.message) {
               cur_frm.oc_products_raw = r.message;
               cur_frm.oc_products_raw_ready = true;
+
+            var oc_discounts_html = frappe.render_template("opencart_discounts", {"oc_products_raw": cur_frm.oc_products_raw});
+            $(cur_frm.fields_dict['oc_discounts'].wrapper).html(oc_discounts_html);
           }
         }
     });
