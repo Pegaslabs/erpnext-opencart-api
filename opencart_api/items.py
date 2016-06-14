@@ -59,8 +59,69 @@ def sync_item_to_oc(doc_item, site_name=None):
 
             # discounts
             not_reset_discounts = oc_product.get("not_reset_discounts") or False
+            multi_currency_prices = oc_product.get("multi_currency_prices") or False
             if not_reset_discounts:
                 product_discount = oc_product.get("discounts") or []
+                product_discount_map = {}
+                for d in product_discount:
+                    d_hash = "{}-{}-{}".format(
+                        cstr(d.get("customer_group_id")).strip(),
+                        cstr(d.get("priority")).strip(),
+                        cstr(d.get("quantity")).strip())
+                    if product_discount_map.get(d_hash):
+                        frappe.msgprint("Discounts conflict detected for product on Opencart site {}!".format(cur_site_name))
+                    product_discount_map[d_hash] = d
+
+                item_prices = frappe.db.get_all("Item Price", fields=["*"], filters={"item_code": item_code})
+                for item_price in item_prices:
+                    db_oc_price_list = frappe.db.get('Opencart Price List', {'price_list': item_price.price_list})
+                    if not db_oc_price_list:
+                        continue
+                    db_oc_store = frappe.db.get(db_oc_price_list.get('parenttype'), db_oc_price_list.get('parent'))
+                    oc_store_oc_site = db_oc_store.oc_site
+                    if doc_oc_product.oc_site != oc_store_oc_site:
+                        continue
+                    if db_oc_price_list.is_master:
+                        if multi_currency_prices:
+                            for p in oc_product.get("prices", []) or []:
+                                if p.get("code") == item_price.currency:
+                                    p["price"] = cstr(item_price.price_list_rate)
+                        else:
+                            data.update({
+                                'price': item_price.price_list_rate
+                            })
+                    else:
+                        db_customer_group = frappe.db.get('Customer Group', {'name': db_oc_price_list.customer_group})
+                        if not db_customer_group:
+                            frappe.msgprint('Customer Group is not set for Opencart Price List in Opencart Store "{}"'.format(db_oc_store.name))
+                            continue
+                        customer_group_id = db_customer_group.oc_customer_group_id
+                        if customer_group_id:
+                            discount_hash = "{}-{}-{}".format(cstr(customer_group_id), '0', '1')
+                            oc_discount = product_discount_map.get(discount_hash)
+                            if oc_discount:
+                                if multi_currency_prices:
+                                    oc_discount["price"] = item_price.price_list_rate
+                                    for p in oc_discount.get("prices", []) or []:
+                                        if p.get("code") == item_price.currency:
+                                            p["price"] = cstr(item_price.price_list_rate)
+                                else:
+                                    oc_discount.update({
+                                        'price': item_price.price_list_rate
+                                    })
+                            else:
+                                product_discount.append({
+                                    'customer_group_id': customer_group_id,
+                                    'price': item_price.price_list_rate,
+                                    'priority': '0',
+                                    'quantity': '1',
+                                    'date_start': '',
+                                    'date_end': '',
+                                    'prices': [{
+                                        'code': item_price.currency,
+                                        'price': item_price.price_list_rate
+                                    }]
+                                })
             else:
                 product_discount = []
                 item_prices = frappe.db.get_all("Item Price", fields=["*"], filters={"item_code": item_code})
@@ -427,73 +488,6 @@ def get_opencart_product(site_name, item_name):
     db_item = frappe.db.get('Opencart Product', {'oc_site': site_name, 'parent': item_name})
     if db_item:
         return frappe.get_doc('Opencart Product', {'oc_site': site_name, 'parent': item_name})
-
-
-# def update_discount_price(doc_oc_discount, currency, price):
-#     doc_oc_discount.update({get_price_field_name(currency): price})
-
-
-# def update_discount_prices(doc_oc_discount, oc_discount):
-#     doc_oc_discount.update({'price': oc_discount.get('price')})
-#     if oc_discount.get('prices'):
-#         if not oc_discount.get('multi_currency_price_unknown'):
-#             # update multi_currency_price flag only in the case oc_discount is from Opencart
-#             doc_oc_discount.update({'multi_currency_price': 1})
-#         for prouct_price in oc_discount.get('prices'):
-#             update_discount_price(doc_oc_discount, prouct_price.get('code'), float(prouct_price.get('price', 0)))
-
-
-# def update_or_create_item_discount(site_name, doc_item, oc_discount, save=False, is_updating=False):
-#     disc_template = '{customer_group_id}-{quantity}-{priority}-{date_start}-{date_end}'
-
-#     oc_discount_copy = dict(oc_discount)
-#     oc_discount_copy.update({
-#         'date_start': parse_date(str(oc_discount.get('date_start'))) if oc_discount.get('date_start') else '',
-#         'date_end': parse_date(str(oc_discount.get('date_end'))) if oc_discount.get('date_end') else ''
-#     })
-#     oc_discount_hash = disc_template.format(**oc_discount_copy)
-#     for doc_oc_discount in doc_item.get('oc_discounts'):
-#         if site_name != doc_oc_discount.get('oc_site'):
-#             continue
-#         doc_customer_group = frappe.get_doc('Customer Group', doc_oc_discount.get('customer_group'))
-#         if site_name != doc_customer_group.get('oc_site'):
-#             continue
-#         customer_group_id = doc_customer_group.get('oc_customer_group_id')
-#         if not customer_group_id:
-#             frappe.throw('customer_group_id is not set in Customer Group "%s"' % doc_oc_discount.get('customer_group'))
-#         doc_discount_hash = disc_template.format(**{
-#             'customer_group_id': customer_group_id,
-#             # 'price': doc_oc_discount.get('price'),
-#             'priority': int(doc_oc_discount.get('priority', 0)),
-#             'quantity': int(doc_oc_discount.get('quantity', 0)),
-#             'date_start': parse_date(str(doc_oc_discount.get('date_start'))) if doc_oc_discount.get('date_start') else '',
-#             'date_end': parse_date(str(doc_oc_discount.get('date_end'))) if doc_oc_discount.get('date_end') else '',
-#         })
-#         if oc_discount_hash == doc_discount_hash:
-#             update_discount_prices(doc_oc_discount, oc_discount)
-#             doc_oc_discount.save()
-#             break
-#     else:
-#         doc_customer_group = customer_groups.get(site_name, oc_discount.get('customer_group_id'))
-#         if not doc_customer_group:
-#             frappe.throw('Cannot found Customer Group with customer_group_id "{}" for Item "{}"'.format(oc_discount.get('customer_group_id'), doc_item.get('name')))
-#         doc_oc_discount = frappe.get_doc({
-#             'doctype': 'Opencart Discount',
-#             'oc_site': site_name,
-#             'item_name': doc_item.get('name'),
-#             'customer_group': doc_customer_group.get('name'),
-#             'quantity': oc_discount.get('quantity'),
-#             'priority': oc_discount.get('priority'),
-#             'price': oc_discount.get('price'),
-#             'date_start': oc_discount.get('date_start'),
-#             'date_end': oc_discount.get('date_end'),
-#         })
-#         update_discount_prices(doc_oc_discount, oc_discount)
-#         doc_item.append('oc_discounts', doc_oc_discount)
-#         if is_updating:
-#             doc_item.update({'oc_is_updating': 1})
-#         if save:
-#             doc_item.save()
 
 
 def update_or_create_opencart_product(site_name, doc_item, oc_product, save=False, is_updating=False):
