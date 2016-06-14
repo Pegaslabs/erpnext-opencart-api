@@ -58,43 +58,47 @@ def sync_item_to_oc(doc_item, site_name=None):
             data['product_category'] = [c.get("category_id") for c in oc_product.get("category", []) if c.get("category_id")]
 
             # discounts
-            product_discount = []
-            item_prices = frappe.db.get_all("Item Price", fields=["*"], filters={"item_code": item_code})
-            for item_price in item_prices:
-                db_oc_price_list = frappe.db.get('Opencart Price List', {'price_list': item_price.price_list})
-                if not db_oc_price_list:
-                    continue
-                db_oc_store = frappe.db.get(db_oc_price_list.get('parenttype'), db_oc_price_list.get('parent'))
-                oc_store_oc_site = db_oc_store.oc_site
-                if doc_oc_product.oc_site != oc_store_oc_site:
-                    continue
-                if db_oc_price_list.is_master:
-                    data.update({
-                        'price': item_price.price_list_rate,
-                        'prices': [{
-                            'code': item_price.currency,
-                            'price': item_price.price_list_rate
-                        }]
-                    })
-                else:
-                    db_customer_group = frappe.db.get('Customer Group', {'name': db_oc_price_list.customer_group})
-                    if not db_customer_group:
-                        frappe.msgprint('Customer Group is not set for Opencart Price List in Opencart Store "{}"'.format(db_oc_store.name))
+            not_reset_discounts = oc_product.get("not_reset_discounts") or False
+            if not_reset_discounts:
+                product_discount = oc_product.get("discounts") or []
+            else:
+                product_discount = []
+                item_prices = frappe.db.get_all("Item Price", fields=["*"], filters={"item_code": item_code})
+                for item_price in item_prices:
+                    db_oc_price_list = frappe.db.get('Opencart Price List', {'price_list': item_price.price_list})
+                    if not db_oc_price_list:
                         continue
-                    customer_group_id = db_customer_group.oc_customer_group_id
-                    if customer_group_id:
-                        product_discount.append({
-                            'customer_group_id': customer_group_id,
+                    db_oc_store = frappe.db.get(db_oc_price_list.get('parenttype'), db_oc_price_list.get('parent'))
+                    oc_store_oc_site = db_oc_store.oc_site
+                    if doc_oc_product.oc_site != oc_store_oc_site:
+                        continue
+                    if db_oc_price_list.is_master:
+                        data.update({
                             'price': item_price.price_list_rate,
-                            'priority': '0',
-                            'quantity': '1',
-                            'date_start': '',
-                            'date_end': '',
                             'prices': [{
                                 'code': item_price.currency,
                                 'price': item_price.price_list_rate
                             }]
                         })
+                    else:
+                        db_customer_group = frappe.db.get('Customer Group', {'name': db_oc_price_list.customer_group})
+                        if not db_customer_group:
+                            frappe.msgprint('Customer Group is not set for Opencart Price List in Opencart Store "{}"'.format(db_oc_store.name))
+                            continue
+                        customer_group_id = db_customer_group.oc_customer_group_id
+                        if customer_group_id:
+                            product_discount.append({
+                                'customer_group_id': customer_group_id,
+                                'price': item_price.price_list_rate,
+                                'priority': '0',
+                                'quantity': '1',
+                                'date_start': '',
+                                'date_end': '',
+                                'prices': [{
+                                    'code': item_price.currency,
+                                    'price': item_price.price_list_rate
+                                }]
+                            })
             data['product_discount'] = product_discount
 
         elif get_product_success is False:
