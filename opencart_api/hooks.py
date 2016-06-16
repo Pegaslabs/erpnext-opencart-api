@@ -20,7 +20,7 @@ app_version = "0.0.1"
 
 doc_events = {
     "Bin": {
-        "on_update": "opencart_api.items.on_bin_update"
+        "validate": "opencart_api.items.on_bin_update"
     },
     "Opencart Site": {
         "validate": "opencart_api.oc_site.oc_validate"
