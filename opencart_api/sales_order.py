@@ -97,6 +97,9 @@ def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
         target.run_method("calculate_taxes_and_totals")
 
     def update_item(source, target, source_parent):
+        target.income_account = None
+        target.cost_center = None
+
         if is_recurring:
             target.amount = flt(source.amount)
         else:
@@ -105,7 +108,6 @@ def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
         target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
         if is_recurring:
             target.qty = source.qty
-        target.income_account = get_income_account(source_parent)
         target.bo_qty = 0.0
 
     oc_order_type = frappe.db.get_value("Sales Order", source_name, "oc_order_type")
@@ -142,13 +144,6 @@ def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
     }, target_doc, postprocess)
 
     return doclist
-
-
-def get_income_account(doc):
-    income_account = frappe.db.get_value("Warehouse", doc.warehouse, "default_income_account") or ''
-    if not income_account:
-        income_account = frappe.db.get_value("Company", doc.company, "default_income_account") or ''
-    return income_account
 
 
 def get_cash_bank_account(doc, mode_of_payment=None):

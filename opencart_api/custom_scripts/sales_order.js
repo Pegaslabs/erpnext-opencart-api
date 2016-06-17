@@ -23,10 +23,3 @@ cur_frm.cscript.oc_is_shipping_included_in_total = function() {
 	var me = this;
     me.shipping_rule();
 }
-
-cur_frm.cscript.make_sales_invoice = function() {
-	frappe.model.open_mapped_doc({
-		method: "opencart_api.sales_order.make_sales_invoice",
-		frm: cur_frm
-	})
-}
