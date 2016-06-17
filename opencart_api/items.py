@@ -320,26 +320,24 @@ def sync_item_to_oc(doc_item, site_name=None):
 
                 # manufacturer_id
                 manufacturer_id = get_manufacturer_id(cur_site_name, pd.manufacturer)
-                if manufacturer_id:
+                if manufacturer_id not in (None, ""):
                     pd_to_update["manufacturer_id"] = manufacturer_id
 
                 # product_category
                 product_category = []
                 for category_name in cstr(pd.category_names).split(","):
                     category_id = get_category_id(cur_site_name, category_name)
-                    if category_id:
+                    if category_id not in (None, ""):
                         product_category.append(category_id)
-                if product_category:
-                    pd_to_update["product_category"] = product_category
+                pd_to_update["product_category"] = product_category
 
                 # product_store
                 product_store = []
                 for store_name in cstr(pd.store_names).split(","):
                     store_id = get_store_id(cur_site_name, store_name)
-                    if store_id:
+                    if store_id not in (None, ""):
                         product_store.append(store_id)
-                if product_store:
-                    pd_to_update["product_store"] = product_store
+                pd_to_update["product_store"] = product_store
 
                 # product_attributes
                 product_attributes = []
@@ -351,8 +349,7 @@ def sync_item_to_oc(doc_item, site_name=None):
                         if attribute:
                             attribute["text"] = attribute_text
                             product_attributes.append(attribute)
-                if product_attributes:
-                    pd_to_update["product_attribute"] = product_attributes
+                pd_to_update["product_attribute"] = product_attributes
 
                 # status
                 pd_to_update["status"] = "0" if doc_item.disabled else pd.status
