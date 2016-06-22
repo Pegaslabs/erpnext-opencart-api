@@ -521,8 +521,17 @@ def add_lustcobox_order_part(doc_sales_order, oc_order=None):
     if not is_later_add and not oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {}).get("conv_tr_id"):
         frappe.throw("Lustcobox Sales Orders should have initial transaction id")
 
+    oc_rp_tag = None
+    order_products = oc_order.get("products") or []
+    if order_products and isinstance(order_products, list):
+        if order_products[0] and isinstance(order_products[0], dict):
+            product_option = order_products[0].get("option", {}) or {}
+            if product_option and isinstance(order_products, list):
+                product_option = product_option[0] or {}
+            oc_rp_tag = product_option.get("value")
+
     from erpnext.selling.doctype.recurring_profile.recurring_profile import make_recurring_profile
-    recurring_profile_doc = make_recurring_profile(doc_sales_order)
+    recurring_profile_doc = make_recurring_profile(doc_sales_order, oc_rp_tag)
 
     doc_billing_address = addresses.get_from_oc_order(doc_sales_order.oc_site, doc_sales_order.customer, oc_order, address_type='Billing')
     oc_order_copy = copy.deepcopy(oc_order)
