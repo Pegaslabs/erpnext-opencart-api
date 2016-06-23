@@ -80,7 +80,6 @@ doctype_js = {
     "Item": ["custom_scripts/item.js"],
     "Sales Order": ["custom_scripts/sales_order.js"],
     "Sales Invoice": ["custom_scripts/sales_invoice.js"],
-    "Packing Slip": ["custom_scripts/packing_slip.js"],
     "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"],
     "Warehouse": ["custom_scripts/warehouse.js"]
 }
