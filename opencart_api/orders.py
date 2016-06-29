@@ -93,6 +93,7 @@ def on_submit(doc, method=None):
 
             si = sales_order.make_sales_invoice(doc.name, is_recurring=True)
             si.update({
+                "is_pos": 0,
                 "reference_type": "Recurring Profile",
                 "reference_name": recurring_profile_doc.name,
                 "posting_date": doc.transaction_date
