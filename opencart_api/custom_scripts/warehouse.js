@@ -1,4 +1,3 @@
-
 print_update_inventory_log = function(message) {
     var $table = $('<table class="table table-bordered"></table>');
     var $th = $('<tr></tr>');

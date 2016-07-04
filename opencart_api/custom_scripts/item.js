@@ -1,4 +1,3 @@
-
 cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
     if(!doc.__islocal) {
         frappe.call({

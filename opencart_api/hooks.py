@@ -1,17 +1,11 @@
-"""
-Author: Nathan Do
-Email: nathan.dole@gmail.com
-Description: Hooks for Opencart API app
-"""
-
 app_name = "opencart_api"
 app_title = "Opencart API"
-app_publisher = "Nathan (Hoovix Consulting Pte. Ltd.)"
-app_description = "App for connecting Opencart through APIs. Updating Products, recording transactions"
+app_publisher = "olhonko"
+app_description = "App for connecting Opencart through APIs."
 app_icon = "icon-book"
 app_color = "#589494"
-app_email = "nathan.dole@gmail.com"
-app_url = "https://github.com/nathando/erpnext-opencart-api.git"
+app_email = "olhonko@gmail.com"
+app_url = "https://github.com/olhonko/erpnext-opencart-api.git"
 app_version = "0.0.1"
 
 # include js, css files in header of desk.html
@@ -68,29 +62,15 @@ doc_events = {
     }
 }
 
-
 doctype_js = {
-    "Journal Entry": ["custom_scripts/journal_entry.js"],
-    "Purchase Order": ["custom_scripts/purchase_order.js"],
-    "Supplier Quotation": ["custom_scripts/supplier_quotation.js"],
-    "Quotation": ["custom_scripts/quotation.js"],
-    "Material Request": ["custom_scripts/material_request.js"],
-    "Purchase Receipt": ["custom_scripts/purchase_receipt.js"],
-    "Stock Entry": ["custom_scripts/stock_entry.js"],
     "Item": ["custom_scripts/item.js"],
     "Sales Order": ["custom_scripts/sales_order.js"],
-    "Sales Invoice": ["custom_scripts/sales_invoice.js"],
     "Stock Reconciliation": ["custom_scripts/stock_reconciliation.js"],
     "Warehouse": ["custom_scripts/warehouse.js"]
 }
 
 doctype_list_js = {
-    "Delivery Note": ["custom_scripts/delivery_note_list.js"],
 }
-
-# Note on Fixtures (Nathan Do):
-# csv fixtures files after being exported should be
-# manually edited to maintain correct order as of ERPNext 4.9.2
 
 fixtures = ["Custom Field", "Custom Script"]
 
