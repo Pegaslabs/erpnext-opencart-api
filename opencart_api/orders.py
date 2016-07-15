@@ -101,10 +101,10 @@ def on_submit(doc, method=None):
             si.insert()
             si.submit()
 
-            from erpnext.accounts.doctype.journal_entry.journal_entry import get_cc_payment_entry_against_invoice, get_payment_entry_against_invoice, add_converge_transaction
+            from erpnext.accounts.doctype.journal_entry.journal_entry import make_cc_payment_entry_against_invoice, add_converge_ccsale_tr
             from erpnext.payments.doctype.credit_card.credit_card import get_credit_card_or_throw
             if is_converge:
-                je = frappe.get_doc(get_cc_payment_entry_against_invoice(si.doctype, si.name, is_recurring=True))
+                je = frappe.get_doc(make_cc_payment_entry_against_invoice(si.doctype, si.name, is_recurring=True))
                 je.posting_date = doc.transaction_date
                 je.insert()
 
@@ -112,7 +112,7 @@ def on_submit(doc, method=None):
                     "rp": recurring_profile_doc.as_dict(),
                     "cc": get_credit_card_or_throw(recurring_profile_doc.cc_token_id)
                 })
-                tr = add_converge_transaction(je.name, si, transaction_args=transaction_args, transaction_id=recurring_profile_doc.initial_transaction_id)
+                tr = add_converge_ccsale_tr(je.name, si, transaction_args=transaction_args, transaction_id=recurring_profile_doc.initial_transaction_id, is_recurring=True)
                 tr.submit()
                 je.submit()
 
