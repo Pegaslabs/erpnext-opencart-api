@@ -394,7 +394,7 @@ def sync_item_to_oc(doc_item, site_name=None):
             frappe.msgprint('Product is not updated on Opencart site {}. Error: cannot get product by model {}'.format(cur_site_name, item_code))
 
 
-def _on_bin_update(bin_name):
+def _on_bin_update(bin_name, actual_qty_diff):
     bin_doc = frappe.get_doc("Bin", bin_name)
     oc_products = frappe.db.get_all("Opencart Product", filters={"parent": bin_doc.item_code}, fields=["parent", "name", "oc_site", "oc_product_id", "oc_category_id", "oc_manufacturer_id", "oc_stock_status_id", "oc_category_name", "oc_manufacturer_name", "oc_stock_status_name"])
     for pr in oc_products:
@@ -406,7 +406,7 @@ def _on_bin_update(bin_name):
         success, oc_product = oc_api.get(oc_site).get_product_by_model(item_code)
         if success:
             available_qty = get_fuse_available_qty(item_code, warehouse)
-            actual_qty = flt(available_qty.actual_qty)
+            actual_qty = flt(available_qty.actual_qty) + actual_qty_diff
             update_success, resp = oc_api.get(oc_site).update_product_quantity([{
                 "product_id": oc_product.get("product_id") or oc_product.get("id"),
                 "quantity": cstr(actual_qty),
@@ -419,15 +419,16 @@ def _on_bin_update(bin_name):
 
 
 def on_bin_update(self, method=None):
-    if self.get("__islocal") or flt(self.actual_qty) == flt(frappe.db.get_value("Bin", self.name, "actual_qty")):
+    db_actual_qty = flt(frappe.db.get_value("Bin", self.name, "actual_qty"))
+    if self.get("__islocal") or flt(self.actual_qty) == db_actual_qty:
         return
-    # trick to update stock properly on OC
-    frappe.db.set_value("Bin", self.name, "actual_qty", flt(self.actual_qty))
+
+    actual_qty_diff = flt(self.actual_qty) - db_actual_qty
     if getattr(frappe.local, "is_ajax", False):
         from tasks import on_bin_update_task
-        on_bin_update_task.delay(frappe.local.site, self.name, event="bulk_long")
+        on_bin_update_task.delay(frappe.local.site, self.name, actual_qty_diff, event="bulk_long")
     else:
-        return _on_bin_update(self.name)
+        return _on_bin_update(self.name, actual_qty_diff)
 
 
 @sync_item_to_opencart

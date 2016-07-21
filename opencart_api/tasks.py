@@ -69,13 +69,13 @@ def daily(site_name=None):
 
 
 @celery_task()
-def on_bin_update_task(site, bin_name, event):
+def on_bin_update_task(site, bin_name, actual_qty_diff, event):
     try:
         frappe.connect(site=site)
         from items import _on_bin_update
         for i in xrange(3):
             try:
-                _on_bin_update(bin_name)
+                _on_bin_update(bin_name, actual_qty_diff)
             except MySQLdb.OperationalError, e:
                 # deadlock, try again
                 if e.args[0] == 1213:
