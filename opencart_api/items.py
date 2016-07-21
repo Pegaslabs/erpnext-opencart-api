@@ -394,16 +394,15 @@ def sync_item_to_oc(doc_item, site_name=None):
             frappe.msgprint('Product is not updated on Opencart site {}. Error: cannot get product by model {}'.format(cur_site_name, item_code))
 
 
-def on_bin_update(self, method=None):
-    if self.get("__islocal"):
-        return
-    if flt(self.actual_qty) != flt(frappe.db.get_value("Bin", self.name, "actual_qty")):
-        oc_products = frappe.db.get_all("Opencart Product", filters={"parent": self.item_code}, fields=["parent", "name", "oc_site", "oc_product_id", "oc_category_id", "oc_manufacturer_id", "oc_stock_status_id", "oc_category_name", "oc_manufacturer_name", "oc_stock_status_name"])
+def _on_bin_update(bin_name):
+    bin_doc = frappe.get_doc("Bin", bin_name)
+    if flt(bin_doc.actual_qty) != flt(frappe.db.get_value("Bin", bin_doc.name, "actual_qty")):
+        oc_products = frappe.db.get_all("Opencart Product", filters={"parent": bin_doc.item_code}, fields=["parent", "name", "oc_site", "oc_product_id", "oc_category_id", "oc_manufacturer_id", "oc_stock_status_id", "oc_category_name", "oc_manufacturer_name", "oc_stock_status_name"])
         for pr in oc_products:
             item_code = pr.parent
             oc_site = pr.oc_site
             warehouse = frappe.db.get_value("Opencart Site", oc_site, "default_warehouse")
-            if warehouse != self.warehouse:
+            if warehouse != bin_doc.warehouse:
                 continue
             success, oc_product = oc_api.get(oc_site).get_product_by_model(item_code)
             if success:
@@ -418,6 +417,16 @@ def on_bin_update(self, method=None):
                     frappe.msgprint("Stock quantity for {} item is not uptated on Opencart site {}".format(item_code, oc_site))
             else:
                 pass
+
+
+def on_bin_update(self, method=None):
+    if self.get("__islocal") or flt(self.actual_qty) == flt(frappe.db.get_value("Bin", self.name, "actual_qty")):
+        return
+    if getattr(frappe.local, "is_ajax", False):
+        from tasks import on_bin_update_task
+        on_bin_update_task.delay(frappe.local.site, self.name, event="bulk_long")
+    else:
+        return _on_bin_update(self.name)
 
 
 @sync_item_to_opencart

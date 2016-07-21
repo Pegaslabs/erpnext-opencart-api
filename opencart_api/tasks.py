@@ -2,10 +2,14 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 import frappe
+from frappe.celery_app import celery_task, task_logger
 
 from items import pull_products_from_oc
 from item_groups import pull_categories_from_oc
 import oc_api
+
+import time
+import MySQLdb
 
 
 EMAIL_SENDER = "scheduler@abc.com"
@@ -62,3 +66,35 @@ def daily(site_name=None):
 
     results['success'] = success
     return results
+
+
+@celery_task()
+def on_bin_update_task(site, bin_name, event):
+    try:
+        frappe.connect(site=site)
+        from items import _on_bin_update
+        for i in xrange(3):
+            try:
+                _on_bin_update(bin_name)
+            except MySQLdb.OperationalError, e:
+                # deadlock, try again
+                if e.args[0] == 1213:
+                    frappe.db.rollback()
+                    time.sleep(1)
+                    continue
+                else:
+                    raise
+            else:
+                break
+    except:
+        frappe.db.rollback()
+        task_logger.warn(frappe.get_traceback())
+
+        frappe.db.commit()
+        raise
+
+    else:
+        frappe.db.commit()
+
+    finally:
+        frappe.destroy()
