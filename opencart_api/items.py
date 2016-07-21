@@ -421,6 +421,8 @@ def _on_bin_update(bin_name):
 def on_bin_update(self, method=None):
     if self.get("__islocal") or flt(self.actual_qty) == flt(frappe.db.get_value("Bin", self.name, "actual_qty")):
         return
+    # trick to update stock properly on OC
+    frappe.db.set_value("Bin", self.name, "actual_qty", flt(self.actual_qty))
     if getattr(frappe.local, "is_ajax", False):
         from tasks import on_bin_update_task
         on_bin_update_task.delay(frappe.local.site, self.name, event="bulk_long")
