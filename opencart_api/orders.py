@@ -1353,19 +1353,28 @@ def get_customer_selling_info(customer, doc_customer=None):
 
 
 @frappe.whitelist()
-def get_shipping_rule(oc_shipping_method_code, company):
-    if not oc_shipping_method_code or not company:
+def get_shipping_rule(oc_shipping_method_code, oc_shipping_method_title, company):
+    oc_shipping_method_code = cstr(oc_shipping_method_code).strip()
+    oc_shipping_method_title = cstr(oc_shipping_method_title).strip()
+    if not oc_shipping_method_code or not oc_shipping_method_title or not company:
         return
+
     all_shipping_rules = frappe.db.get_all("Shipping Rule", fields=["name", "oc_shipping_method_code"], filters={"oc_shipping_method_code": ("like", "%" + cstr(oc_shipping_method_code) + "%")})
     for shipping_rule in all_shipping_rules:
         if frappe.db.get_all("Shipping Rule Company", filters={"parent": shipping_rule.name, "company": company}):
             if oc_shipping_method_code in [c.strip() for c in cstr(shipping_rule.oc_shipping_method_code).split(",")]:
                 return shipping_rule.name
 
+    all_shipping_rules = frappe.db.get_all("Shipping Rule", fields=["name", "oc_shipping_method_title"], filters={"oc_shipping_method_title": ("like", "%" + cstr(oc_shipping_method_title) + "%")})
+    for shipping_rule in all_shipping_rules:
+        if frappe.db.get_all("Shipping Rule Company", filters={"parent": shipping_rule.name, "company": company}):
+            if oc_shipping_method_title in [c.strip() for c in cstr(shipping_rule.oc_shipping_method_title).split(",")]:
+                return shipping_rule.name
+
 
 @frappe.whitelist()
-def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None, oc_shipping_method_code=None, company=None):
-    shipping_rule = get_shipping_rule(oc_shipping_method_code, company)
+def resolve_shipping_rule(customer, db_customer=None, doc_customer=None, doc_oc_store=None, oc_shipping_method_code=None, oc_shipping_method_title=None, company=None):
+    shipping_rule = get_shipping_rule(oc_shipping_method_code, oc_shipping_method_title, company)
     if shipping_rule:
         return shipping_rule
 
@@ -1444,7 +1453,7 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
     doc_oc_store = oc_stores.get(site_name, oc_order.get('store_id'))
     if not doc_oc_store:
         frappe.throw('Cannot resolve Opencart Store for site "{}" and with store id "{}"'.format(site_name, oc_order.get('store_id')))
-    shipping_rule = get_shipping_rule(oc_order.get('shipping_code'), company)
+    shipping_rule = get_shipping_rule(oc_order.get('shipping_code'), oc_order.get('shipping_method'), company)
     if not shipping_rule:
         shipping_rule = resolve_shipping_rule(doc_customer.get('name'), doc_customer=doc_customer, doc_oc_store=doc_oc_store)
     if not shipping_rule:
