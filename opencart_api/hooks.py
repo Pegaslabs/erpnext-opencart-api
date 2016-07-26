@@ -23,7 +23,7 @@ doc_events = {
         "validate": "opencart_api.items.oc_validate"
     },
     "Item Price": {
-        "validate": "opencart_api.item_prices.oc_validate",
+        "on_update": "opencart_api.item_prices.oc_on_update",
     },
     "Customer": {
         "validate": "opencart_api.customers.oc_validate",
