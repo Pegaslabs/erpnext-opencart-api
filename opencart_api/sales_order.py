@@ -81,6 +81,18 @@ def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
         target.cash_bank_account = get_cash_bank_account(source, mode_of_payment=target.mode_of_payment)
         target.is_pos = 0
 
+        if is_recurring:
+            if len(target.items) > 1 and len(frappe.db.get_all("Sales Invoice", filters={"sales_order": source_name})) > 0:
+                target.discount_amount_in_percents = 0.0
+                target.discount_amount = 0.0
+                target.base_discount_amount = 0.0
+
+            new_items = []
+            for i in target.items:
+                if cstr(i.item_code).lower().startswith("lustcobox"):
+                    new_items.append(i)
+            target.set("items", new_items)
+
         if is_oc_sales_order(source):
             target.is_pos = is_pos_payment_method(source.oc_pm_code)
             payment_territory = territories.get_by_country(source.oc_pa_country)
