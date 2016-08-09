@@ -51,6 +51,7 @@ def sync_item_to_oc(doc_item, site_name=None):
 
             data['model'] = item_code
             data['sku'] = item_code
+            data['keyword'] = doc_item.seo_url
             data['status'] = "0" if doc_item.disabled else data.get("status", "1")
 
             if "oc_statics" in cstr(doc_item.image):
@@ -166,7 +167,7 @@ def sync_item_to_oc(doc_item, site_name=None):
             data = {
                 'model': item_code,
                 'sku': item_code,
-
+                'keyword': doc_item.seo_url,
                 # 'quantity': 1000,
                 # 'price': 100,
                 # 'tax_class_id': 13,
