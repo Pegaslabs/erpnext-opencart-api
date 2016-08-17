@@ -63,6 +63,7 @@ def are_totals_equal(total1, total2):
 
 
 def before_save(doc, method=None):
+    return
     sync_order_to_opencart(doc)
 
 
@@ -204,6 +205,7 @@ def on_cancel(doc, method=None):
 
 @sync_to_opencart
 def on_trash(doc, method=None):
+    return
     site_name = doc.get('oc_site')
     oc_order_id = doc.get('oc_order_id')
     success, resp = oc_api.get(site_name).delete_order(oc_order_id)
@@ -229,6 +231,7 @@ def check_oc_sales_order_totals(doc):
 
 @sync_to_opencart
 def sync_order_status_to_opencart(doc_order, new_order_status=None, new_order_status_id=None):
+    return
     ret = False
     site_name = doc_order.get('oc_site')
     oc_order_id = doc_order.get('oc_order_id')
@@ -253,6 +256,7 @@ def sync_order_status_to_opencart(doc_order, new_order_status=None, new_order_st
 
 @sync_to_opencart
 def sync_order_to_opencart(doc_order):
+    return
     if sales_order.is_oc_lustcobox_order_doc(doc_order):
         return
 
