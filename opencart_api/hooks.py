@@ -54,9 +54,6 @@ doc_events = {
     },
     "Stock Entry": {
     },
-    "Comment": {
-        "before_save": "opencart_api.comments.before_save",
-    },
     "Communication": {
         "before_save": "opencart_api.communications.before_save",
     }

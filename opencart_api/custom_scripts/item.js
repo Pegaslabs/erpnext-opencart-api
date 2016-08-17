@@ -23,17 +23,18 @@ cur_frm.cscript.oc_site = function(doc, cdt, cdn) {
 
 cur_frm.cscript.render_product_details = function(doc, cdt, cdn) {
     var open_form = frappe.ui.form.get_open_grid_form();
-    var oc_site = open_form.fields_dict["oc_site"].value;
+    var fields_dict = open_form ? open_form.grid_form.fields_dict : undefined;
+    var oc_site = open_form ? fields_dict["oc_site"].value : undefined;
     if(open_form && oc_site) {
         if(cur_frm.oc_products_raw_ready) {
             var product_details = cur_frm.oc_products_raw[oc_site] || {};
             if(product_details.success) {
                 var data_html = frappe.render_template("opencart_product_data", product_details);
-                $(open_form.fields_dict["data_html"].$wrapper).html(data_html);
+                $(fields_dict["data_html"].$wrapper).html(data_html);
 
 
                 var links_html = frappe.render_template("opencart_product_links", product_details);
-                var links_html_field = $(open_form.fields_dict["links_html"].$wrapper);
+                var links_html_field = $(fields_dict["links_html"].$wrapper);
                 links_html_field.html(links_html);
 
                 // manufacturer
@@ -77,7 +78,7 @@ cur_frm.cscript.render_product_details = function(doc, cdt, cdn) {
 
                 // attribute section
                 var attribute_html = frappe.render_template("opencart_product_attribute", product_details);
-                var attribute_html_field = $(open_form.fields_dict["attribute_html"].$wrapper);
+                var attribute_html_field = $(fields_dict["attribute_html"].$wrapper);
                 attribute_html_field.html(attribute_html);
                 attribute_html_field.find('input.attribute').typeahead({
                     source: product_details.attribute_names || [],
@@ -120,18 +121,19 @@ cur_frm.cscript.oc_products_on_form_hide = function(doc, cdt, cdn) {
     var product_details_to_update = {};
     if(cur_frm.oc_products_raw_ready) {
         var open_form = frappe.ui.form.get_open_grid_form();
-        var oc_site = open_form.fields_dict["oc_site"].value;
+        var fields_dict = open_form ? open_form.grid_form.fields_dict : undefined;
+        var oc_site = open_form ? fields_dict["oc_site"].value : undefined;
         if(open_form && oc_site) {
             var product_details = cur_frm.oc_products_raw[oc_site] || {};
             if(product_details.success) {
-                $(open_form.fields_dict["data_html"].$wrapper).find("input, select").each(function() {
+                $(fields_dict["data_html"].$wrapper).find("input, select").each(function() {
                     var fieldname = $(this).attr("data-fieldname");
                     if(fieldname) {
                         product_details_to_update[fieldname] = $(this).val();
                     }
                 });
 
-                $(open_form.fields_dict["links_html"].$wrapper).find("input").each(function() {
+                $(fields_dict["links_html"].$wrapper).find("input").each(function() {
                     var fieldname = $(this).attr("data-fieldname");
                     if(fieldname) {
                         product_details_to_update[fieldname] = $(this).val();
@@ -139,7 +141,7 @@ cur_frm.cscript.oc_products_on_form_hide = function(doc, cdt, cdn) {
                 });
 
                 // attributes
-                var attribute_html_field = $(open_form.fields_dict["attribute_html"].$wrapper);
+                var attribute_html_field = $(fields_dict["attribute_html"].$wrapper);
                 var attributes_values = [];
                 attribute_html_field.find('tr').each(function () {
                     var name = $(this).find('input.attribute').val();
@@ -148,7 +150,7 @@ cur_frm.cscript.oc_products_on_form_hide = function(doc, cdt, cdn) {
                 });
                 product_details_to_update["attributes_values"] = attributes_values;
 
-                open_form.fields_dict["product_details_to_update"].set_model_value(JSON.stringify(product_details_to_update));
+                fields_dict["product_details_to_update"].set_model_value(JSON.stringify(product_details_to_update));
             }
         }
     }
