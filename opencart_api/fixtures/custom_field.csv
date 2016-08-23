@@ -48,7 +48,6 @@
 "","""Sales Invoice-oc_pm_code""","Sales Invoice","Small Text","Payment Method Code","oc_pm_title","",0,"","","","oc_pm_code",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Invoice-oc_pm_title""","Sales Invoice","Small Text","Payment Method","oc_payment_settings","",0,"","","","oc_pm_title",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Invoice-oc_payment_settings""","Sales Invoice","Section Break","Opencart Payment Method","ignore_pricing_rule","",1,"","","","oc_payment_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_is_shipping_included_in_total""","Sales Order","Check","Include Shipping in Total","taxes_and_charges","",0,"","","","oc_is_shipping_included_in_total",0,0,0,0,0,"","1",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country""","Sales Order","Small Text","Country","oc_sa_country_id","",0,"","Country","","oc_sa_country",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_country_id""","Sales Order","Small Text","Country ID","oc_sa_zone_code","",0,"","Country ID","","oc_sa_country_id",0,0,0,1,0,"","",1,"",0,0,0,0,0,0
 "","""Sales Order-oc_sa_zone_code""","Sales Order","Small Text","Zone Code","oc_sa_zone","",0,"","Zone Code","","oc_sa_zone_code",0,0,0,1,0,"","",0,"",0,0,0,0,0,0

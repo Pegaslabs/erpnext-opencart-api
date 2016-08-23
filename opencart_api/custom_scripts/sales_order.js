@@ -18,8 +18,3 @@ cur_frm.cscript.custom_refresh = function(doc, dt, dn) {
 		});
 	}
 }
-
-cur_frm.cscript.oc_is_shipping_included_in_total = function() {
-	var me = this;
-    me.shipping_rule();
-}

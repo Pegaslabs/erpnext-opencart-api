@@ -1464,7 +1464,6 @@ def resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name
         frappe.throw('Cannot resolve Shipping Rule for Opencart Store "%s" and Territory "%s" and customer from "%s" Customer Group' % (doc_oc_store.get('name'), doc_customer.get('territory'), doc_customer.get('customer_group')))
 
     doc_order.update({
-        'oc_is_shipping_included_in_total': 1,
         'taxes_and_charges': template or '',
         'shipping_rule': shipping_rule or ''
     })
