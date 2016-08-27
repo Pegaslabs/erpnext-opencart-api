@@ -181,16 +181,17 @@ def on_submit(doc, method=None):
             frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
 
     else:
-        # create delivery note
-        dn = erpnext_sales_order.make_delivery_note(doc.name)
-        dn.insert()
-        frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
+        if doc.reference_type != "Return Receipt":
+            # create delivery note
+            dn = erpnext_sales_order.make_delivery_note(doc.name)
+            dn.insert()
+            frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
 
-        # create packing slip
-        ps = make_packing_slip(dn.name)
-        ps.get_items()
-        ps.insert()
-        frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
+            # create packing slip
+            ps = make_packing_slip(dn.name)
+            ps.get_items()
+            ps.insert()
+            frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
 
     # # update Opencart status
     # if doc_order.get('status') is None or doc_order.get('status') == 'Draft':
