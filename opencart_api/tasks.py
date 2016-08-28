@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 import frappe
-from frappe.celery_app import celery_task, task_logger
+from frappe.utils.background_jobs import enqueue
 
 from items import pull_products_from_oc
 from item_groups import pull_categories_from_oc
@@ -68,14 +68,14 @@ def daily(site_name=None):
     return results
 
 
-@celery_task()
 def on_bin_update_task(site, bin_name, actual_qty_diff, event):
     try:
         frappe.connect(site=site)
         from items import _on_bin_update
         for i in xrange(3):
             try:
-                _on_bin_update(bin_name, actual_qty_diff)
+                # _on_bin_update(bin_name, actual_qty_diff)
+                enqueue(_on_bin_update, queue="default", timeout=300, event=event, bin_name=bin_name, actual_qty_diff=actual_qty_diff)
             except MySQLdb.OperationalError, e:
                 # deadlock, try again
                 if e.args[0] == 1213:
@@ -88,8 +88,7 @@ def on_bin_update_task(site, bin_name, actual_qty_diff, event):
                 break
     except:
         frappe.db.rollback()
-        task_logger.warn(frappe.get_traceback())
-
+        frappe.logger(__name__).error(frappe.get_traceback())
         frappe.db.commit()
         raise
 

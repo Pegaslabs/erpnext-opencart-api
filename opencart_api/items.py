@@ -420,6 +420,7 @@ def _on_bin_update(bin_name, actual_qty_diff):
 
 
 def on_bin_update(self, method=None):
+    return
     db_actual_qty = flt(frappe.db.get_value("Bin", self.name, "actual_qty"))
     if self.get("__islocal") or flt(self.actual_qty) == db_actual_qty:
         return
@@ -427,7 +428,7 @@ def on_bin_update(self, method=None):
     actual_qty_diff = flt(self.actual_qty) - db_actual_qty
     if getattr(frappe.local, "is_ajax", False):
         from tasks import on_bin_update_task
-        on_bin_update_task.delay(frappe.local.site, self.name, actual_qty_diff, event="bulk_long")
+        on_bin_update_task(frappe.local.site, self.name, actual_qty_diff, event="bulk_long")
     else:
         return _on_bin_update(self.name, actual_qty_diff)
 
