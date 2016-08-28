@@ -19,7 +19,6 @@ OC_MANDATORY_FIELDS = ('firstname', 'lastname', 'email', 'telephone')
 
 @sync_to_opencart
 def oc_validate(doc, method=None):
-    return
     site_name = doc.get('oc_site')
     customer_group_name = doc.get('customer_group')
     valid_customer_group_names = [customer_group.get('name') for customer_group in customer_groups.get_all_by_oc_site(site_name) if customer_group.get('oc_customer_group_id')]

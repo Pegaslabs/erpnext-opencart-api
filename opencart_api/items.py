@@ -19,7 +19,6 @@ from utils import sync_info
 
 
 def sync_item_to_oc(doc_item, site_name=None):
-    return
     item_code = doc_item.item_code
     for doc_oc_product in doc_item.oc_products:
         if not doc_oc_product.oc_sync_to:
@@ -397,7 +396,6 @@ def sync_item_to_oc(doc_item, site_name=None):
 
 
 def _on_bin_update(bin_name, actual_qty_diff):
-    return
     bin_doc = frappe.get_doc("Bin", bin_name)
     oc_products = frappe.db.get_all("Opencart Product", filters={"parent": bin_doc.item_code}, fields=["parent", "name", "oc_site", "oc_product_id", "oc_category_id", "oc_manufacturer_id", "oc_stock_status_id", "oc_category_name", "oc_manufacturer_name", "oc_stock_status_name"])
     for pr in oc_products:
@@ -422,7 +420,6 @@ def _on_bin_update(bin_name, actual_qty_diff):
 
 
 def on_bin_update(self, method=None):
-    return
     db_actual_qty = flt(frappe.db.get_value("Bin", self.name, "actual_qty"))
     if self.get("__islocal") or flt(self.actual_qty) == db_actual_qty:
         return
@@ -437,7 +434,6 @@ def on_bin_update(self, method=None):
 
 @sync_item_to_opencart
 def oc_validate(self, method=None):
-    return
     # delete producs from Opencart site
     if not self.get("__islocal"):
         item_doc = frappe.get_doc("Item", self.item_code)
@@ -452,7 +448,6 @@ def oc_validate(self, method=None):
 
 @sync_item_to_opencart
 def on_trash_oc_product(oc_product_doc):
-    return
     if not oc_product_doc.oc_sync_to:
         return
     oc_site = oc_product_doc.oc_site
