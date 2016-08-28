@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-from frappe import _
 
 import frappe
 from frappe.utils import cstr
@@ -11,8 +10,8 @@ COMMENT_ADDED_FROM_TEMPLATE = '''&nbsp<small class="text-muted"><span>comment fr
 def before_save(doc, method=None):
     if not doc.is_origin_comment or doc.reference_doctype not in ('Sales Order', 'Sales Invoice', 'Packing Slip', 'Delivery Note'):
         return
-    if doc.reference_doctype in ("Sales Order", "Sales Invoice", "Delivery Note", "Packing Slip"):
-        doc_comment = frappe.get_doc(_(doc.reference_doctype), doc.reference_name)
+    if doc.reference_name and doc.reference_doctype in ("Sales Order", "Sales Invoice", "Delivery Note", "Packing Slip"):
+        doc_comment = frappe.get_doc(doc.reference_doctype, doc.reference_name)
         if not doc.content:
             return
         comment = cstr(doc.content) + COMMENT_ADDED_FROM_TEMPLATE % doc.reference_name
