@@ -75,7 +75,7 @@ def make_sales_invoice(source_name, target_doc=None, is_recurring=False):
     def postprocess(source, target):
         set_missing_values(source, target)
         #  Get the advance paid Journal Entries in Sales Invoice Advance
-        target.get_advances()
+        target.set_advances()
 
     def set_missing_values(source, target):
         target.cash_bank_account = get_cash_bank_account(source, mode_of_payment=target.mode_of_payment)
