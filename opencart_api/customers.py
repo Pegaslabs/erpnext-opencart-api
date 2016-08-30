@@ -149,6 +149,7 @@ def oc_validate(doc, method=None):
 
 @sync_to_opencart
 def oc_delete(doc, method=None):
+    return
     site_name = doc.get('oc_site')
     oc_customer_id = doc.get('oc_customer_id')
     success, resp = oc_api.get(site_name).delete_customer(oc_customer_id)
