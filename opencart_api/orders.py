@@ -946,7 +946,7 @@ def _pull_added_from(site_name, silent=False):
                         resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                     except Exception as ex:
                         add_count += 1
-                        extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(ex))
+                        extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(frappe.get_traceback()))
                         results_list.append((doc_order.get('name'),
                                              doc_order.get('oc_order_id'),
                                              doc_order.get_formatted('oc_last_sync_from'),
