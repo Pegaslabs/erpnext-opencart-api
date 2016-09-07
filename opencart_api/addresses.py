@@ -61,7 +61,8 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
                 'address_line1': cstr(oc_order.get('shipping_address_1')),
                 'address_line2': cstr(oc_order.get('shipping_address_2'))
             }
-    db_addresses = frappe.db.sql("""select name
+
+    sql_filter = """select name
         from `tabAddress`
         where ifnull(customer, '')=%(customer)s and
         ifnull(address_type, '')=%(address_type)s and
@@ -76,7 +77,9 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         ifnull(state, '')=%(state)s and
         ifnull(city, '')=%(city)s and
         ifnull(address_line1, '')=%(address_line1)s and
-        ifnull(address_line2, '')=%(address_line2)s""", address_filter, as_dict=1)
+        ifnull(address_line2, '')=%(address_line2)s"""
+    # frappe.msgprint(sql_filter % address_filter)
+    db_addresses = frappe.db.sql(sql_filter, address_filter, as_dict=1)
 
     if db_addresses:
         return frappe.get_doc('Address', db_addresses[0].get('name'))
