@@ -19,47 +19,47 @@ def get_address_by_customer(customer, address_type):
 
 
 def get_payment_customer_name(oc_order):
-    return cstr(oc_order.get('payment_firstname')) + ' ' + cstr(oc_order.get('payment_lastname')).strip()
+    return cstr(oc_order.get('payment_firstname')).strip() + ' ' + cstr(oc_order.get('payment_lastname')).strip()
 
 
 def get_shipping_customer_name(oc_order):
-    return cstr(oc_order.get('shipping_firstname')) + ' ' + cstr(oc_order.get('shipping_lastname')).strip()
+    return cstr(oc_order.get('shipping_firstname')).strip() + ' ' + cstr(oc_order.get('shipping_lastname')).strip()
 
 
 def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
     address_filter = {
         'customer': customer,
         'address_type': address_type,
-        'phone': cstr(oc_order.get('telephone')),
-        'fax': cstr(oc_order.get('fax')),
-        'email_id': cstr(oc_order.get('email')),
+        'phone': cstr(oc_order.get('telephone')).strip(),
+        'fax': cstr(oc_order.get('fax')).strip(),
+        'email_id': cstr(oc_order.get('email')).strip(),
         'customer_name': get_payment_customer_name(oc_order),
-        'first_name': oc_order.get('payment_firstname'),
-        'last_name': oc_order.get('payment_lastname'),
-        'pincode': cstr(oc_order.get('payment_postcode')),
-        'country': cstr(oc_order.get('payment_country')),
-        'state': cstr(oc_order.get('payment_zone')),
-        'city': cstr(oc_order.get('payment_city')),
-        'address_line1': cstr(oc_order.get('payment_address_1')),
-        'address_line2': cstr(oc_order.get('payment_address_2'))
+        'first_name': oc_order.get('payment_firstname').strip(),
+        'last_name': oc_order.get('payment_lastname').strip(),
+        'pincode': cstr(oc_order.get('payment_postcode')).strip(),
+        'country': cstr(oc_order.get('payment_country')).strip(),
+        'state': cstr(oc_order.get('payment_zone')).strip(),
+        'city': cstr(oc_order.get('payment_city')).strip(),
+        'address_line1': cstr(oc_order.get('payment_address_1')).strip(),
+        'address_line2': cstr(oc_order.get('payment_address_2')).strip()
     }
     if address_type == 'Shipping':
         if (oc_order.get('shipping_country') and oc_order.get('shipping_zone') and oc_order.get('shipping_city') and oc_order.get('shipping_address_1')):
             address_filter = {
                 'customer': customer,
                 'address_type': address_type,
-                'phone': cstr(oc_order.get('telephone')),
-                'fax': cstr(oc_order.get('fax')),
-                'email_id': cstr(oc_order.get('email')),
-                'customer_name': get_shipping_customer_name(oc_order),
-                'first_name': oc_order.get('shipping_firstname'),
-                'last_name': oc_order.get('shipping_lastname'),
-                'pincode': cstr(oc_order.get('shipping_postcode')),
-                'country': cstr(oc_order.get('shipping_country')),
-                'state': cstr(oc_order.get('shipping_zone')),
-                'city': cstr(oc_order.get('shipping_city')),
-                'address_line1': cstr(oc_order.get('shipping_address_1')),
-                'address_line2': cstr(oc_order.get('shipping_address_2'))
+                'phone': cstr(oc_order.get('telephone')).strip(),
+                'fax': cstr(oc_order.get('fax')).strip(),
+                'email_id': cstr(oc_order.get('email')).strip(),
+                'customer_name': get_shipping_customer_name(oc_order).strip(),
+                'first_name': oc_order.get('shipping_firstname').strip(),
+                'last_name': oc_order.get('shipping_lastname').strip(),
+                'pincode': cstr(oc_order.get('shipping_postcode')).strip(),
+                'country': cstr(oc_order.get('shipping_country')).strip(),
+                'state': cstr(oc_order.get('shipping_zone')).strip(),
+                'city': cstr(oc_order.get('shipping_city')).strip(),
+                'address_line1': cstr(oc_order.get('shipping_address_1')).strip(),
+                'address_line2': cstr(oc_order.get('shipping_address_2')).strip()
             }
 
     sql_filter = """select name
@@ -69,7 +69,6 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         ifnull(phone, '')=%(phone)s and
         ifnull(fax, '')=%(fax)s and
         ifnull(email_id, '')=%(email_id)s and
-        ifnull(customer_name, '') like %(customer_name)s and
         (ifnull(first_name, '')='' or ifnull(first_name, '')=%(first_name)s) and
         (ifnull(last_name, '')='' or ifnull(last_name, '')=%(last_name)s) and
         ifnull(pincode, '')=%(pincode)s and
@@ -78,7 +77,7 @@ def get_address_by_oc_order(customer, oc_order, address_type='Shipping'):
         ifnull(city, '')=%(city)s and
         ifnull(address_line1, '')=%(address_line1)s and
         ifnull(address_line2, '')=%(address_line2)s"""
-    # frappe.msgprint(sql_filter % address_filter)
+
     db_addresses = frappe.db.sql(sql_filter, address_filter, as_dict=1)
 
     if db_addresses:
@@ -106,8 +105,8 @@ def create_or_update(site_name, oc_customer, doc_customer):
         return
 
     countries.create_if_does_not_exist(oc_address.get('country'))
-    first_name = oc_address.get('firstname') or oc_customer.get('firstname') or ''
-    last_name = oc_address.get('lastname') or oc_customer.get('lastname') or ''
+    first_name = cstr(oc_address.get('firstname')).strip() or cstr(oc_customer.get('firstname')).strip() or ''
+    last_name = cstr(oc_address.get('lastname')).strip() or cstr(oc_customer.get('lastname')).strip() or ''
     customer_name = first_name + ' ' + last_name
     oc_address_id = oc_address.get('address_id')
     # doc_address = get_address(site_name, oc_address_id)
@@ -183,18 +182,18 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
             # 'is_primary_address': 1,
             'is_shipping_address': 0,
             'customer': customer,
-            'phone': cstr(oc_order.get('telephone')),
-            'fax': cstr(oc_order.get('fax')),
-            'email_id': cstr(oc_order.get('email')),
+            'phone': cstr(oc_order.get('telephone')).strip(),
+            'fax': cstr(oc_order.get('fax')).strip(),
+            'email_id': cstr(oc_order.get('email')).strip(),
             'customer_name': get_payment_customer_name(oc_order),
-            'first_name': oc_order.get('payment_firstname'),
-            'last_name': oc_order.get('payment_lastname'),
-            'pincode': cstr(oc_order.get('payment_postcode')),
-            'country': cstr(oc_order.get('payment_country')),
-            'state': cstr(oc_order.get('payment_zone')),
-            'city': cstr(oc_order.get('payment_city')),
-            'address_line1': cstr(oc_order.get('payment_address_1')),
-            'address_line2': cstr(oc_order.get('payment_address_2')),
+            'first_name': cstr(oc_order.get('payment_firstname')).strip(),
+            'last_name': cstr(oc_order.get('payment_lastname')).strip(),
+            'pincode': cstr(oc_order.get('payment_postcode')).strip(),
+            'country': cstr(oc_order.get('payment_country')).strip(),
+            'state': cstr(oc_order.get('payment_zone')).strip(),
+            'city': cstr(oc_order.get('payment_city')).strip(),
+            'address_line1': cstr(oc_order.get('payment_address_1')).strip(),
+            'address_line2': cstr(oc_order.get('payment_address_2')).strip(),
             'oc_site': site_name,
         }
         doc_address = frappe.get_doc(address_params)
@@ -203,8 +202,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
     if address_type == 'Billing':
         ret_doc_address = doc_address
         if not ret_doc_address.first_name or not ret_doc_address.last_name:
-            ret_doc_address.first_name = oc_order.get('payment_firstname')
-            ret_doc_address.last_name = oc_order.get('payment_lastname')
+            ret_doc_address.first_name = cstr(oc_order.get('payment_firstname')).strip()
+            ret_doc_address.last_name = cstr(oc_order.get('payment_lastname')).strip()
             ret_doc_address.save()
 
     # shipping address
@@ -220,18 +219,18 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
                 'is_primary_address': 0,
                 'is_shipping_address': 1,
                 'customer': customer,
-                'phone': cstr(oc_order.get('telephone')),
-                'fax': cstr(oc_order.get('fax')),
-                'email_id': cstr(oc_order.get('email')),
+                'phone': cstr(oc_order.get('telephone')).strip(),
+                'fax': cstr(oc_order.get('fax')).strip(),
+                'email_id': cstr(oc_order.get('email')).strip(),
                 'customer_name': get_payment_customer_name(oc_order),
-                'first_name': oc_order.get('payment_firstname'),
-                'last_name': oc_order.get('payment_lastname'),
-                'pincode': cstr(oc_order.get('payment_postcode')),
-                'country': cstr(oc_order.get('payment_country')),
-                'state': cstr(oc_order.get('payment_zone')),
-                'city': cstr(oc_order.get('payment_city')),
-                'address_line1': cstr(oc_order.get('payment_address_1')),
-                'address_line2': cstr(oc_order.get('payment_address_2')),
+                'first_name': cstr(oc_order.get('payment_firstname')).strip(),
+                'last_name': cstr(oc_order.get('payment_lastname')).strip(),
+                'pincode': cstr(oc_order.get('payment_postcode')).strip(),
+                'country': cstr(oc_order.get('payment_country')).strip(),
+                'state': cstr(oc_order.get('payment_zone')).strip(),
+                'city': cstr(oc_order.get('payment_city')).strip(),
+                'address_line1': cstr(oc_order.get('payment_address_1')).strip(),
+                'address_line2': cstr(oc_order.get('payment_address_2')).strip(),
                 'oc_site': site_name,
             }
         else:
@@ -242,18 +241,18 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
                 'is_primary_address': 0,
                 'is_shipping_address': 1,
                 'customer': customer,
-                'phone': cstr(oc_order.get('telephone')),
-                'fax': cstr(oc_order.get('fax')),
-                'email_id': cstr(oc_order.get('email')),
+                'phone': cstr(oc_order.get('telephone')).strip(),
+                'fax': cstr(oc_order.get('fax')).strip(),
+                'email_id': cstr(oc_order.get('email')).strip(),
                 'customer_name': get_shipping_customer_name(oc_order),
-                'first_name': oc_order.get('shipping_firstname'),
-                'last_name': oc_order.get('shipping_lastname'),
-                'pincode': cstr(oc_order.get('shipping_postcode')),
-                'country': cstr(oc_order.get('shipping_country')),
-                'state': cstr(oc_order.get('shipping_zone')),
-                'city': cstr(oc_order.get('shipping_city')),
-                'address_line1': cstr(oc_order.get('shipping_address_1')),
-                'address_line2': cstr(oc_order.get('shipping_address_2')),
+                'first_name': cstr(oc_order.get('shipping_firstname')).strip(),
+                'last_name': cstr(oc_order.get('shipping_lastname')).strip(),
+                'pincode': cstr(oc_order.get('shipping_postcode')).strip(),
+                'country': cstr(oc_order.get('shipping_country')).strip(),
+                'state': cstr(oc_order.get('shipping_zone')).strip(),
+                'city': cstr(oc_order.get('shipping_city')).strip(),
+                'address_line1': cstr(oc_order.get('shipping_address_1')).strip(),
+                'address_line2': cstr(oc_order.get('shipping_address_2')).strip(),
                 'oc_site': site_name,
             }
         # create new Address (Shipping)
@@ -263,8 +262,8 @@ def get_from_oc_order(site_name, customer, oc_order, address_type='Shipping'):
     if address_type == 'Shipping':
         ret_doc_address = doc_address
         if not ret_doc_address.first_name or not ret_doc_address.last_name:
-            ret_doc_address.first_name = oc_order.get('shipping_firstname')
-            ret_doc_address.last_name = oc_order.get('shipping_lastname')
+            ret_doc_address.first_name = cstr(oc_order.get('shipping_firstname')).strip()
+            ret_doc_address.last_name = cstr(oc_order.get('shipping_lastname')).strip()
             ret_doc_address.save()
 
     return ret_doc_address
