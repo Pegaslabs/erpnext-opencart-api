@@ -100,6 +100,8 @@ def on_submit(doc, method=None):
                 "posting_date": doc.transaction_date
             })
             si.insert()
+            si = frappe.get_doc("Sales Invoice", si.name)
+            si.save()
             si.submit()
 
             from erpnext.accounts.doctype.journal_entry.journal_entry import make_cc_payment_entry_against_invoice, add_converge_ccsale_tr
@@ -225,9 +227,9 @@ def check_oc_sales_order_totals(doc):
             oc_total = get_rate_from_total_str(doc.get('oc_total') or '')
 
             if not are_totals_equal(doc.get('total'), oc_sub_total):
-                frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.name, str(doc.get('total')), str(oc_sub_total)))
+                frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.name, cstr(doc.get('total')), cstr(oc_sub_total)))
             if not are_totals_equal(doc.get('grand_total'), oc_total):
-                frappe.throw('%s: Order\'s Grand Total ($%s) does not equal to Total ($%s) from Opencart site' % (doc.name, str(doc.get('grand_total')), str(oc_total)))
+                frappe.throw('%s: Order\'s Grand Total ($%s) does not equal to Total ($%s) from Opencart site' % (doc.name, cstr(doc.get('grand_total')), cstr(oc_total)))
 
 
 @sync_to_opencart
@@ -657,13 +659,14 @@ def on_sales_order_added(doc_sales_order, oc_order):
             si = sales_order.make_sales_invoice(doc_sales_order.name)
             si.insert()
             si = frappe.get_doc('Sales Invoice', si.name)
+            si.save()
             try:
                 if is_pos_payment_method(si.oc_pm_code):
                     si.submit()
                 else:
                     return
-            except Exception as ex:
-                frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (si.name, str(ex)))
+            except Exception:
+                frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (si.name, cstr(frappe.get_traceback())))
             else:
                 dn = erpnext_sales_invoice.make_delivery_note(si.name)
                 dn.insert()
@@ -759,7 +762,7 @@ def _pull_added_from(site_name, silent=False):
                         doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
                     except Exception as ex:
                         skip_count += 1
-                        extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), str(ex)))
+                        extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), cstr(ex)))
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
 
@@ -813,7 +816,7 @@ def _pull_added_from(site_name, silent=False):
                     resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                 except Exception as ex:
                     update_count += 1
-                    extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % str(ex))
+                    extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % cstr(ex))
                     results_list.append((doc_order.get('name'),
                                          doc_order.get('oc_order_id'),
                                          doc_order.get_formatted('oc_last_sync_from'),
@@ -946,7 +949,7 @@ def _pull_added_from(site_name, silent=False):
                         resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                     except Exception as ex:
                         add_count += 1
-                        extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(frappe.get_traceback()))
+                        extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % cstr(frappe.get_traceback()))
                         results_list.append((doc_order.get('name'),
                                              doc_order.get('oc_order_id'),
                                              doc_order.get_formatted('oc_last_sync_from'),
@@ -1024,7 +1027,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                     doc_customer = customers.create_from_oc(site_name, oc_order.get('customer_id'), oc_order)
                 except Exception as ex:
                     skip_count += 1
-                    extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), str(ex)))
+                    extras = (1, 'skipped', 'Skipped: error occurred on getting customer with id "%s".\n%s' % (oc_order.get('customer_id', ''), cstr(ex)))
                     results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                     continue
 
@@ -1078,7 +1081,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                 resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
             except Exception as ex:
                 update_count += 1
-                extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % str(ex))
+                extras = (1, 'updated', 'Updated, but shipping rule is not resolved: %s' % cstr(ex))
                 results_list.append((doc_order.get('name'),
                                      doc_order.get('oc_order_id'),
                                      doc_order.get_formatted('oc_last_sync_from'),
@@ -1211,7 +1214,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                     resolve_shipping_rule_and_taxes(oc_order, doc_order, doc_customer, site_name, company)
                 except Exception as ex:
                     add_count += 1
-                    extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % str(ex))
+                    extras = (1, 'added', 'Added, but shipping rule is not resolved: %s' % cstr(ex))
                     results_list.append((doc_order.get('name'),
                                          doc_order.get('oc_order_id'),
                                          doc_order.get_formatted('oc_last_sync_from'),

@@ -11,6 +11,8 @@ def on_submit(self, method=None):
     if not erpnext_sales_order.has_active_si(sales_order):
         si = erpnext_delivery_note.make_sales_invoice(self.get('name'))
         si.insert()
+        si = frappe.get_doc("Sales Invoice", si.name)
+        si.save()
         try:
             si.submit()
         except Exception as ex:
