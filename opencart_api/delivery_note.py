@@ -8,11 +8,14 @@ from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_ord
 
 def on_submit(self, method=None):
     sales_order = frappe.db.get_value('Delivery Note', self.name, 'sales_order')
-    if not erpnext_sales_order.has_active_si(sales_order):
+    if erpnext_sales_order.has_active_si(sales_order):
+        for si in frappe.get_all('Sales Invoice', fields=['name'], filters={'sales_order': sales_order, 'docstatus': 0}):
+            si = frappe.get_doc('Sales Invoice', si.get('name'))
+            si.submit()
+            frappe.msgprint('Sales Invoice %s was submitted automatically' % si.get('name'))
+    else:
         si = erpnext_delivery_note.make_sales_invoice(self.get('name'))
         si.insert()
-        si = frappe.get_doc("Sales Invoice", si.name)
-        si.save()
         try:
             si.submit()
         except Exception as ex:
@@ -20,8 +23,3 @@ def on_submit(self, method=None):
         else:
             frappe.msgprint('Sales Invoice %s was created and submitted automatically' % si.get('name'))
         frappe.clear_cache()
-    else:
-        for si in frappe.get_all('Sales Invoice', fields=['name'], filters={'sales_order': sales_order, 'docstatus': 0}):
-            si = frappe.get_doc('Sales Invoice', si.get('name'))
-            si.submit()
-            frappe.msgprint('Sales Invoice %s was submitted automatically' % si.get('name'))

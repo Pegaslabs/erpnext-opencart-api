@@ -100,8 +100,6 @@ def on_submit(doc, method=None):
                 "posting_date": doc.transaction_date
             })
             si.insert()
-            si = frappe.get_doc("Sales Invoice", si.name)
-            si.save()
             si.submit()
 
             from erpnext.accounts.doctype.journal_entry.journal_entry import make_cc_payment_entry_against_invoice, add_converge_ccsale_tr
@@ -658,8 +656,6 @@ def on_sales_order_added(doc_sales_order, oc_order):
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
             si = sales_order.make_sales_invoice(doc_sales_order.name)
             si.insert()
-            si = frappe.get_doc('Sales Invoice', si.name)
-            si.save()
             try:
                 if is_pos_payment_method(si.oc_pm_code):
                     si.submit()
