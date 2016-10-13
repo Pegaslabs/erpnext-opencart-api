@@ -73,9 +73,8 @@ def validate(doc, method=None):
 
 
 def on_submit(doc, method=None):
-    if sales_order.is_oc_sales_order(doc):
-        if sales_order.is_oc_lustcobox_order_doc(doc):
-            check_oc_sales_order_totals(doc)
+    if sales_order.is_oc_sales_order(doc) and sales_order.is_oc_lustcobox_order_doc(doc):
+            doc.check_oc_sales_order_totals()
 
             recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
             is_converge = sales_order.is_converge_sales_order_doc(doc)
@@ -92,7 +91,7 @@ def on_submit(doc, method=None):
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
             recurring_profile_doc.activate(send_email_notifications=doc.oc_send_welcome_email)
 
-            si = sales_order.make_sales_invoice(doc.name, is_recurring=True)
+            si = erpnext_sales_order.make_sales_invoice(doc.name, is_recurring=True)
             si.update({
                 "is_pos": 0,
                 "reference_type": "Recurring Profile",
@@ -159,45 +158,6 @@ def on_submit(doc, method=None):
                 })
                 ps.get_items()
                 ps.insert(ignore_permissions=True)
-
-        elif not doc.get('oc_is_auto_processing'):
-            check_oc_sales_order_totals(doc)
-            if is_pos_payment_method(doc.get('oc_pm_code')):
-                # submitting orders manually
-                # create sales invoice
-                si = sales_order.make_sales_invoice(doc.name)
-                si.insert()
-                frappe.msgprint('Sales Invoice %s was created automatically' % si.name)
-
-            # create delivery note
-            dn = erpnext_sales_order.make_delivery_note(doc.name)
-            dn.insert()
-            frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
-
-            # create packing slip
-            ps = make_packing_slip(dn.name)
-            ps.get_items()
-            ps.insert()
-            frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
-
-    else:
-        if doc.reference_type != "Return Receipt":
-            # create delivery note
-            dn = erpnext_sales_order.make_delivery_note(doc.name)
-            dn.insert()
-            frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
-
-            # create packing slip
-            ps = make_packing_slip(dn.name)
-            ps.get_items()
-            ps.insert()
-            frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
-
-    # # update Opencart status
-    # if doc_order.get('status') is None or doc_order.get('status') == 'Draft':
-    # elif doc_order.get('status') == 'Submitted':
-    # elif doc_order.get('status') == 'Stopped':
-    # elif doc_order.get('status') == 'Cancelled':
 
 
 def on_cancel(doc, method=None):
@@ -636,14 +596,14 @@ def add_lustcobox_order_part_to_profile(recurring_profile, so):
 def on_sales_order_added(doc_sales_order, oc_order):
     if sales_order.is_oc_lustcobox_order_doc(doc_sales_order):
         try:
-            check_oc_sales_order_totals(doc_sales_order)
+            doc_sales_order.check_oc_sales_order_totals()
             add_lustcobox_order_part(doc_sales_order, oc_order)
             on_lustcobox_order_added(doc_sales_order, oc_order)
             return
         except Exception:
             pass
     try:
-        check_oc_sales_order_totals(doc_sales_order)
+        doc_sales_order.check_oc_sales_order_totals()
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
             doc_sales_order.submit()
     except Exception:
@@ -654,7 +614,7 @@ def on_sales_order_added(doc_sales_order, oc_order):
             sync_order_status_to_opencart(doc_sales_order, new_order_status=OC_ORDER_STATUS_PROCESSING)
 
         if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
-            si = sales_order.make_sales_invoice(doc_sales_order.name)
+            si = erpnext_sales_order.make_sales_invoice(doc_sales_order.name)
             si.insert()
             try:
                 if is_pos_payment_method(si.oc_pm_code):
@@ -673,10 +633,10 @@ def on_sales_order_added(doc_sales_order, oc_order):
                 ps.insert()
                 frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
         else:
-            is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company)
+            is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company, show_warning=False)
             if is_credit_ok:
                 pass
-                # si = sales_order.make_sales_invoice(doc_sales_order.name)
+                # si = erpnext_sales_order.make_sales_invoice(doc_sales_order.name)
                 # si.insert()
             else:
                 so_names = '["' + doc_sales_order.name + '"]'
