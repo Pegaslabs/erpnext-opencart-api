@@ -830,10 +830,11 @@ def _pull_added_from(site_name, silent=False):
                     'oc_sa_country_id': oc_order.get('shipping_country_id'),
                     'oc_sa_country': oc_order.get('shipping_country'),
                     #
-                    'oc_sync_from': True,
+                    'oc_sync_from': 1,
                     'oc_last_sync_from': datetime.now(),
-                    'oc_sync_to': True,
+                    'oc_sync_to': 1,
                     'oc_last_sync_to': datetime.now(),
+                    'oc_check_totals': 1
                 })
 
                 # updating fiscal year
@@ -1095,10 +1096,11 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                 'oc_sa_country_id': oc_order.get('shipping_country_id'),
                 'oc_sa_country': oc_order.get('shipping_country'),
                 #
-                'oc_sync_from': True,
+                'oc_sync_from': 1,
                 'oc_last_sync_from': datetime.now(),
-                'oc_sync_to': True,
+                'oc_sync_to': 1,
                 'oc_last_sync_to': datetime.now(),
+                'oc_check_totals': 1
             })
 
             # updating fiscal year

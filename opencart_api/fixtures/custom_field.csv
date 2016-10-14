@@ -80,7 +80,7 @@
 "","""Sales Order-oc_pm_code""","Sales Order","Small Text","Payment Method Code","oc_pm_title","",0,"","","","oc_pm_code",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_pm_title""","Sales Order","Small Text","Payment Method","oc_payment_settings","",0,"","","","oc_pm_title",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_payment_settings""","Sales Order","Section Break","Opencart Payment Settings","oc_check_totals","",1,"","","","oc_payment_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Sales Order-oc_check_totals""","Sales Order","Check","Check totals on submit","oc_last_sync_to","",0,"","","","oc_check_totals",0,0,0,0,0,"","1",0,"",0,0,0,0,0,0
+"","""Sales Order-oc_check_totals""","Sales Order","Check","Check totals on submit","oc_last_sync_to","",0,"","","","oc_check_totals",0,0,0,0,0,"","0",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_last_sync_to""","Sales Order","Datetime","Last sync","oc_sync_to","",0,"","","","oc_last_sync_to",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_sync_to""","Sales Order","Check","Sync to Opencart","oc_last_sync_from","",0,"","","","oc_sync_to",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Order-oc_last_sync_from""","Sales Order","Datetime","Last sync","oc_sync_from","",0,"","","","oc_last_sync_from",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
