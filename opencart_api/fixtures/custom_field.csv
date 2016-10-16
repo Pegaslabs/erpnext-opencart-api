@@ -123,7 +123,7 @@
 "","""Customer-oc_customer_id""","Customer","Data","Opencart Customer ID","oc_site","",0,"","Opencart Customer ID","","oc_customer_id",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_site""","Customer","Link","Site","oc_is_updating","",0,"","Opencart Site","","oc_site",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer-oc_is_updating""","Customer","Check","Is Updating","oc_settings","",0,"","","","oc_is_updating",0,0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Customer-oc_settings""","Customer","Section Break","Opencart Settings","contact_html","",0,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Customer-oc_settings""","Customer","Section Break","Opencart Settings","contact_html","",1,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer Group-shipping_rule""","Customer Group","Link","Shipping Rule","is_group","",0,"","Shipping Rule","","shipping_rule",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer Group-oc_customer_group_rule""","Customer Group","Table","Customer Group Rules","oc_settings2","",0,"","Opencart Customer Group Rule","","oc_customer_group_rule",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Customer Group-oc_settings2""","Customer Group","Section Break","Customer Group Rules","oc_last_sync_to","",0,"","","","oc_settings2",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
