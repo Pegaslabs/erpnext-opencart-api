@@ -48,10 +48,6 @@ doc_events = {
     },
     "Purchase Receipt": {
     },
-    "Delivery Note": {
-        # "before_submit": "opencart_api.delivery_note.before_submit",
-        "on_submit": "opencart_api.delivery_note.on_submit"
-    },
     "Stock Entry": {
     },
     "Communication": {
