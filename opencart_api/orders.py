@@ -639,10 +639,9 @@ def on_sales_order_added(doc_sales_order, oc_order):
                 # si = erpnext_sales_order.make_sales_invoice(doc_sales_order.name)
                 # si.insert()
             else:
-                so_names = '["' + doc_sales_order.name + '"]'
-                erpnext_sales_order.stop_or_unstop_sales_orders(so_names, "Stopped")
+                doc_sales_order.db_set("custom_status", "Stopped")
     finally:
-        frappe.db.set_value('Sales Order', doc_sales_order.name, 'oc_is_auto_processing', 0)
+        doc_sales_order.db_set("oc_is_auto_processing", 0)
 
 
 @frappe.whitelist()
