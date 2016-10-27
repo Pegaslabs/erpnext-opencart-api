@@ -9,7 +9,8 @@ from erpnext.accounts.doctype.sales_invoice import sales_invoice as erpnext_sale
 from erpnext.selling.doctype.sales_order import sales_order as erpnext_sales_order
 from erpnext.stock.doctype.delivery_note.delivery_note import make_packing_slip
 from erpnext.selling.doctype.customer.customer import check_credit_limit, add_existed_credit_card
-from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import is_pos_payment_method
+from erpnext.accounts.doctype.mode_of_payment.mode_of_payment import resolve_mode_of_payment, is_pos_payment_method
+from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 from erpnext.accounts.utils import get_fiscal_year
 
 from utils import sync_info
@@ -23,7 +24,7 @@ import items
 import territories
 import sales_taxes_and_charges_template
 import sales_order
-
+import territories
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
 OC_ORDER_STATUS_PROCESSING = 'Processing'
@@ -72,8 +73,63 @@ def validate(doc, method=None):
         frappe.throw("Cannot find Credit Card with token id {}, Sales Order {}, OC Order ID {}".format(doc.oc_cc_token_id, doc.name, doc.oc_order_id))
 
 
+def parse_payment_info(oc_order=None, sales_order_doc=None):
+    oc_cheque_no, oc_cheque_date = None, None
+    if not sales_order_doc and not oc_order:
+        frappe.throw("Either Sales Order document or Opencart document should be specified.")
+    if not oc_order and sales_order_doc.oc_site and sales_order_doc.oc_order_id:
+        get_order_success, oc_order = oc_api.get(sales_order_doc.oc_site).get_order_json(sales_order_doc.oc_order_id)
+        if get_order_success:
+            for h in oc_order.get("histories", []) or []:
+                if h and isinstance(h, dict):
+                    m = re.search("[.\s]*Approval[_\s]?Code[:\s]*([a-z0-9_-]+)\s?[.\s]*", cstr(h.get("comment")), re.IGNORECASE)
+                    oc_cheque_no = m.group(1) if m else None
+                    if not oc_cheque_no:
+                        m = re.search("[.\s]*TRANSACTION[_\s]?ID[:\s]*([a-z0-9_-]+)\s?[.\s]*", cstr(h.get("comment")), re.IGNORECASE)
+                        oc_cheque_no = m.group(1) if m else None
+                    try:
+                        oc_cheque_date = datetime.strptime(cstr(h.get("date_added")), "%d/%m/%Y").date()
+                    except ValueError:
+                        oc_cheque_date = getdate(cstr(h.get("date_added")))
+                    transaction_date = getdate(oc_order.get("date_added"))
+                    if transaction_date > oc_cheque_date:
+                        oc_cheque_date = None
+                    if oc_cheque_no and oc_cheque_date:
+                        break
+    return oc_cheque_no, oc_cheque_date
+
+
+def check_on_custom_order(doc, method=None):
+    if sales_order.is_oc_sales_order(doc):
+        doc.is_custom_order_flag = True
+
+
+def custom_on_submit(doc, method=None):
+    if sales_order.is_oc_sales_order(doc):
+        doc.check_oc_sales_order_totals()
+        if is_pos_payment_method(doc.oc_pm_code):
+            pe = get_payment_entry("Sales Order", doc.name)
+            payment_territory = territories.get_by_country(doc.oc_pa_country)
+            pe.mode_of_payment = resolve_mode_of_payment(doc.customer, payment_method_code=doc.oc_pm_code, country_territory=payment_territory)
+            pe.posting_date = doc.transaction_date
+            if doc.oc_cheque_no and doc.oc_cheque_date:
+                pe.reference_no = doc.oc_cheque_no
+                pe.reference_date = doc.oc_cheque_date
+            else:
+                oc_cheque_no, oc_cheque_date = parse_payment_info(sales_order_doc=doc)
+                if oc_cheque_no and oc_cheque_date:
+                    pe.reference_no = oc_cheque_no
+                    pe.reference_date = oc_cheque_date
+                else:
+                    frappe.throw("Cannot fetch Transaction ID and Transaction Date from Opencart order.")
+            pe.insert()
+            pe.submit()
+        doc.create_ps_and_dn()
+
+
 def on_submit(doc, method=None):
-    if sales_order.is_oc_sales_order(doc) and sales_order.is_oc_lustcobox_order_doc(doc):
+    if sales_order.is_oc_sales_order(doc):
+        if sales_order.is_oc_lustcobox_order_doc(doc):
             doc.check_oc_sales_order_totals()
 
             recurring_profile = frappe.db.get_value("Recurring Profile", {"sales_order": doc.name}, "name")
@@ -604,44 +660,22 @@ def on_sales_order_added(doc_sales_order, oc_order):
             pass
     try:
         doc_sales_order.check_oc_sales_order_totals()
-        if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
+        if is_pos_payment_method(doc_sales_order.oc_pm_code):
+            frappe.db.commit()
             doc_sales_order.submit()
+            frappe.db.commit()
     except Exception:
-        pass
+        # in this case it will be possible later to submit Sales Order manually
+        frappe.db.rollback()
     else:
         # update sales order status in Opencart site
-        if doc_sales_order.get('oc_status') == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
+        if doc_sales_order.oc_status == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
             sync_order_status_to_opencart(doc_sales_order, new_order_status=OC_ORDER_STATUS_PROCESSING)
 
-        if is_pos_payment_method(doc_sales_order.get('oc_pm_code')):
-            si = erpnext_sales_order.make_sales_invoice(doc_sales_order.name)
-            si.insert()
-            try:
-                if is_pos_payment_method(si.oc_pm_code):
-                    si.submit()
-                else:
-                    return
-            except Exception:
-                frappe.msgprint('Sales Invoice "%s" was not submitted.\n%s' % (si.name, cstr(frappe.get_traceback())))
-            else:
-                dn = erpnext_sales_invoice.make_delivery_note(si.name)
-                dn.insert()
-                frappe.msgprint('Delivery Note %s was created automatically' % dn.name)
-
-                ps = make_packing_slip(dn.name)
-                ps.get_items()
-                ps.insert()
-                frappe.msgprint('Packing Slip %s was created automatically' % ps.name)
-        else:
+        if not is_pos_payment_method(doc_sales_order.oc_pm_code):
             is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company, show_warning=False)
-            if is_credit_ok:
-                pass
-                # si = erpnext_sales_order.make_sales_invoice(doc_sales_order.name)
-                # si.insert()
-            else:
+            if not is_credit_ok:
                 doc_sales_order.db_set("custom_status", "Stopped")
-    finally:
-        doc_sales_order.db_set("oc_is_auto_processing", 0)
 
 
 @frappe.whitelist()
@@ -651,7 +685,6 @@ def pull_added_from(site_name, silent=False):
     except:
         raise
     else:
-        frappe.db.commit()
         return ret
 
 
@@ -729,6 +762,9 @@ def _pull_added_from(site_name, silent=False):
                     continue
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
+                oc_cheque_no, oc_cheque_date = parse_payment_info(oc_order=oc_order)
+                oc_cheque_no = doc_order.oc_cheque_no or oc_cheque_no
+                oc_cheque_date = doc_order.oc_cheque_date or oc_cheque_date
                 params.update({
                     'oc_order_type': oc_order_type,
                     'currency': oc_order.get('currency_code'),
@@ -755,6 +791,9 @@ def _pull_added_from(site_name, silent=False):
                     'oc_sa_company': oc_order.get('shipping_company'),
                     'oc_sa_country_id': oc_order.get('shipping_country_id'),
                     'oc_sa_country': oc_order.get('shipping_country'),
+                    #
+                    'oc_cheque_no': oc_cheque_no,
+                    'oc_cheque_date': oc_cheque_date,
                     #
                     'oc_last_sync_from': datetime.now(),
                 })
@@ -794,6 +833,7 @@ def _pull_added_from(site_name, silent=False):
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
                 doc_shipping_address = addresses.get_from_oc_order(site_name, doc_customer.name, oc_order, address_type='Shipping')
+                oc_cheque_no, oc_cheque_date = parse_payment_info(oc_order=oc_order)
 
                 # creating new Sales Order
                 params.update({
@@ -808,7 +848,6 @@ def _pull_added_from(site_name, silent=False):
                     'delivery_date': add_days(nowdate(), 7),
                     'shipping_address_name': doc_shipping_address.name,
                     'oc_is_updating': 1,
-                    'oc_is_auto_processing': 1,
                     'oc_site': site_name,
                     'oc_order_id': oc_order.get('order_id'),
                     'oc_status': order_status_name,
@@ -828,6 +867,9 @@ def _pull_added_from(site_name, silent=False):
                     'oc_sa_company': oc_order.get('shipping_company'),
                     'oc_sa_country_id': oc_order.get('shipping_country_id'),
                     'oc_sa_country': oc_order.get('shipping_country'),
+                    #
+                    'oc_cheque_no': oc_cheque_no,
+                    'oc_cheque_date': oc_cheque_date,
                     #
                     'oc_sync_from': 1,
                     'oc_last_sync_from': datetime.now(),
@@ -1074,7 +1116,6 @@ def _pull_by_order_ids(site_name, oc_order_ids):
                 'delivery_date': add_days(nowdate(), 7),
                 'shipping_address_name': doc_shipping_address.name,
                 'oc_is_updating': 1,
-                'oc_is_auto_processing': 1,
                 'oc_site': site_name,
                 'oc_order_id': oc_order.get('order_id'),
                 'oc_status': order_status_name,

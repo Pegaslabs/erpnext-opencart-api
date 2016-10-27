@@ -47,7 +47,7 @@ def is_converge_sales_order_doc(sales_order_doc):
 
 
 def is_oc_sales_order(doc):
-    return bool(doc.get('oc_site'))
+    return bool(doc.oc_site and doc.oc_order_id)
 
 
 def is_oc_lustcobox_order_doc(sales_order_doc):
