@@ -658,15 +658,19 @@ def on_sales_order_added(doc_sales_order, oc_order):
             return
         except Exception:
             pass
+
+    need_to_rollback = False
     try:
         doc_sales_order.check_oc_sales_order_totals()
         if is_pos_payment_method(doc_sales_order.oc_pm_code):
             frappe.db.commit()
+            need_to_rollback = True
             doc_sales_order.submit()
             frappe.db.commit()
     except Exception:
         # in this case it will be possible later to submit Sales Order manually
-        frappe.db.rollback()
+        if need_to_rollback:
+            frappe.db.rollback()
     else:
         # update sales order status in Opencart site
         if doc_sales_order.oc_status == OC_ORDER_STATUS_AWAITING_FULFILLMENT:
