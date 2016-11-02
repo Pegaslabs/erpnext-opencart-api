@@ -24,7 +24,6 @@ import items
 import territories
 import sales_taxes_and_charges_template
 import sales_order
-import territories
 
 OC_ORDER_STATUS_AWAITING_FULFILLMENT = 'Awaiting Fulfillment'
 OC_ORDER_STATUS_PROCESSING = 'Processing'
@@ -40,7 +39,7 @@ TOTALS_PRECISION = 0.02
 
 
 def get_currency_from_total_str(total_str):
-    '''Getting currency from the strings like "$ 123.456$ CAD"'''
+    """Getting currency from the strings like "$ 123.456$ CAD"."""
     currency_code = ''
     s = OC_CURRENCY_REGEX.search(total_str)
     if s:
@@ -48,13 +47,13 @@ def get_currency_from_total_str(total_str):
     return currency_code
 
 
-def get_rate_from_total_str(total_str):
-    '''Getting rate from the strings like "$ 123.456$ CAD"'''
-    price = 0.0
+def get_amount_from_total_str(total_str):
+    """Getting amount from the strings like "$123.456 CAD"."""
+    amount = 0.0
     s = OC_TOTAL_REGEX.search(total_str)
     if s:
-        price = float(s.group(1).replace(',', ''))
-    return price
+        amount = flt(s.group(1).replace(',', ''))
+    return amount
 
 
 def are_totals_equal(total1, total2):
@@ -235,10 +234,8 @@ def on_trash(doc, method=None):
 def check_oc_sales_order_totals(doc):
     if sales_order.is_oc_sales_order(doc):
         if doc.get('oc_check_totals'):
-            oc_sub_total = get_rate_from_total_str(doc.get('oc_sub_total') or '')
-            # oc_shipping_total = get_rate_from_total_str(doc.get('oc_shipping_total') or '')
-            # oc_tax_total = get_rate_from_total_str(doc.get('oc_tax_total') or '')
-            oc_total = get_rate_from_total_str(doc.get('oc_total') or '')
+            oc_sub_total = get_amount_from_total_str(doc.get('oc_sub_total') or '')
+            oc_total = get_amount_from_total_str(doc.get('oc_total') or '')
 
             if not are_totals_equal(doc.get('total'), oc_sub_total):
                 frappe.throw('%s: Order\'s Total ($%s) does not equal to Sub Total ($%s) from Opencart site' % (doc.name, cstr(doc.get('total')), cstr(oc_sub_total)))
@@ -486,7 +483,6 @@ def get_order(site_name, oc_order_id):
 
 def update_totals(doc_order, oc_order, tax_rate_names=[]):
     sub_total = ''
-    bundle_discount_total = ''
     shipping_total = ''
     tax_rate_name = ''
     tax_total = ''
@@ -501,24 +497,55 @@ def update_totals(doc_order, oc_order, tax_rate_names=[]):
         elif t.get('title') in tax_rate_names or t.get('title') == 'VAT':
             tax_rate_name = t.get('title')
             tax_total = t.get('text')
-        elif t.get('title') == 'Bundle Discount':
-            bundle_discount_total = t.get('text')
-        else:
-            frappe.msgprint('Unknown total entity "%s" for order %s' % (t.get('title'), oc_order.get('order_id')))
 
     doc_order.update({
         'oc_sub_total': sub_total,
-        'oc_bundle_discount_total': bundle_discount_total,
         'oc_shipping_total': shipping_total,
         'oc_tax_rate_name': tax_rate_name,
         'oc_tax_total': tax_total,
         'oc_total': total
     })
-    if bundle_discount_total:
+
+
+def update_discounts_and_coupons(doc_order, oc_order):
+    doc_order.set("discounts_and_coupons", [])
+    discount_amount = 0.0
+    for t in oc_order.get("totals", []):
+        amount = get_amount_from_total_str(t.get("text"))
+        if amount < 0:
+            discount_amount += abs(amount)
+            discount_or_coupon_name = cstr(t.get("title"))
+            if discount_or_coupon_name:
+                if frappe.db.exists("Discount and Coupon", discount_or_coupon_name):
+                    doc_order.append("discounts_and_coupons", {
+                        "discount_or_coupon": discount_or_coupon_name
+                    })
+                else:
+                    dac = frappe.new_doc("Discount and Coupon")
+                    dac.update({
+                        "discount_or_coupon_name": discount_or_coupon_name,
+                        "amount": abs(amount)
+                    })
+                    dac.insert(ignore_permissions=True)
+                    doc_order.append("discounts_and_coupons", {
+                        "discount_or_coupon": discount_or_coupon_name
+                    })
+
+    if discount_amount:
         doc_order.update({
-            'discount_amount': abs(get_rate_from_total_str(bundle_discount_total)),
+            'discount_amount': discount_amount,
             'apply_discount_on': 'Net Total',
         })
+
+    for c in oc_order.get("coupons", []):
+        coupon_code = c.get("code")
+        amount = flt(c.get("amount"))
+        if coupon_code and amount:
+            sales_partner = frappe.db.get("Sales Partner", {"coupon_code": coupon_code})
+            if sales_partner:
+                doc_order.sales_partner = sales_partner.name
+                doc_order.commission_rate = amount
+                doc_order.total_commission = amount
 
 
 def on_lustcobox_order_added(doc_sales_order, oc_order):
@@ -677,7 +704,7 @@ def on_sales_order_added(doc_sales_order, oc_order):
             sync_order_status_to_opencart(doc_sales_order, new_order_status=OC_ORDER_STATUS_PROCESSING)
 
         if not is_pos_payment_method(doc_sales_order.oc_pm_code):
-            is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company, show_warning=False)
+            is_credit_ok = check_credit_limit(doc_sales_order.customer, doc_sales_order.company, show_warning=False, ignore_permissions=True)
             if not is_credit_ok:
                 doc_sales_order.db_set("custom_status", "Stopped")
 
@@ -766,13 +793,10 @@ def _pull_added_from(site_name, silent=False):
                     continue
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
-                oc_cheque_no, oc_cheque_date = parse_payment_info(oc_order=oc_order)
-                oc_cheque_no = doc_order.oc_cheque_no or oc_cheque_no
-                oc_cheque_date = doc_order.oc_cheque_date or oc_cheque_date
                 params.update({
                     'oc_order_type': oc_order_type,
                     'currency': oc_order.get('currency_code'),
-                    # 'conversion_rate': float(oc_order.currency_value),
+                    # 'conversion_rate': flt(oc_order.currency_value),
                     'base_net_total': oc_order.get('total'),
                     'total': oc_order.get('total'),
                     'company': company,
@@ -796,11 +820,15 @@ def _pull_added_from(site_name, silent=False):
                     'oc_sa_country_id': oc_order.get('shipping_country_id'),
                     'oc_sa_country': oc_order.get('shipping_country'),
                     #
-                    'oc_cheque_no': oc_cheque_no,
-                    'oc_cheque_date': oc_cheque_date,
-                    #
                     'oc_last_sync_from': datetime.now(),
                 })
+
+                # updating cheque_no and cheque_date
+                if sales_order.is_paypal_sales_order_doc(doc_order):
+                    doc_order.oc_cheque_no, doc_order.oc_cheque_date = doc_order.oc_cheque_no or "paypal", doc_order.oc_cheque_date or doc_order.transaction_date
+                else:
+                    oc_cheque_no, oc_cheque_date = parse_payment_info(oc_order=oc_order)
+                    doc_order.oc_cheque_no, doc_order.oc_cheque_date = doc_order.oc_cheque_no or oc_cheque_no, doc_order.oc_cheque_date or oc_cheque_date
 
                 # updating fiscal year
                 fiscal_year = get_fiscal_year(date=getdate(oc_order.get('date_added', '')), company=company)
@@ -837,7 +865,6 @@ def _pull_added_from(site_name, silent=False):
                 params = {}
                 resolve_customer_group_rules(oc_order, doc_customer, params)
                 doc_shipping_address = addresses.get_from_oc_order(site_name, doc_customer.name, oc_order, address_type='Shipping')
-                oc_cheque_no, oc_cheque_date = parse_payment_info(oc_order=oc_order)
 
                 # creating new Sales Order
                 params.update({
@@ -848,6 +875,7 @@ def _pull_added_from(site_name, silent=False):
                     'total': oc_order.get('total'),
                     'company': company,
                     'customer': doc_customer.name,
+                    'ignore_pricing_rule': 1,
                     'transaction_date': getdate(oc_order.get('date_added', '')),
                     'delivery_date': add_days(nowdate(), 7),
                     'shipping_address_name': doc_shipping_address.name,
@@ -872,9 +900,6 @@ def _pull_added_from(site_name, silent=False):
                     'oc_sa_country_id': oc_order.get('shipping_country_id'),
                     'oc_sa_country': oc_order.get('shipping_country'),
                     #
-                    'oc_cheque_no': oc_cheque_no,
-                    'oc_cheque_date': oc_cheque_date,
-                    #
                     'oc_sync_from': 1,
                     'oc_last_sync_from': datetime.now(),
                     'oc_sync_to': 1,
@@ -888,6 +913,14 @@ def _pull_added_from(site_name, silent=False):
                     params.update({'fiscal_year': fiscal_year[0]})
 
                 doc_order = frappe.get_doc(params)
+
+                # updating cheque_no and cheque_date
+                if sales_order.is_paypal_sales_order_doc(doc_order):
+                    doc_order.oc_cheque_no, doc_order.oc_cheque_date = doc_order.oc_cheque_no or "paypal", doc_order.oc_cheque_date or doc_order.transaction_date
+                else:
+                    oc_cheque_no, oc_cheque_date = parse_payment_info(oc_order=oc_order)
+                    doc_order.oc_cheque_no, doc_order.oc_cheque_date = doc_order.oc_cheque_no or oc_cheque_no, doc_order.oc_cheque_date or oc_cheque_date
+
                 if not oc_order.get('products'):
                     skip_count += 1
                     extras = (1, 'skipped', 'Skipped: missed products')
@@ -937,6 +970,7 @@ def _pull_added_from(site_name, silent=False):
                         results_list.append(('', oc_order.get('order_id'), '', '') + extras)
                         continue
                     update_totals(doc_order, oc_order, tax_rate_names)
+                    update_discounts_and_coupons(doc_order, oc_order)
                     if sales_order.is_oc_lustcobox_order_type(oc_order_type):
                         lustcobox = oc_order.get(sales_order.OC_ORDER_TYPE_LUSTCOBOX, {})
                         doc_order.update({
@@ -1044,7 +1078,7 @@ def _pull_by_order_ids(site_name, oc_order_ids):
             params.update({
                 'oc_order_type': oc_order_type,
                 'currency': oc_order.get('currency_code'),
-                # 'conversion_rate': float(oc_order.currency_value),
+                # 'conversion_rate': flt(oc_order.currency_value),
                 'base_net_total': oc_order.get('total'),
                 'total': oc_order.get('total'),
                 'company': company,
