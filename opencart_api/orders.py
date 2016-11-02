@@ -544,7 +544,7 @@ def update_discounts_and_coupons(doc_order, oc_order):
             sales_partner = frappe.db.get("Sales Partner", {"coupon_code": coupon_code})
             if sales_partner:
                 doc_order.sales_partner = sales_partner.name
-                doc_order.commission_rate = amount
+                doc_order.commission_rate = sales_partner.commission_rate
                 doc_order.total_commission = amount
 
 
