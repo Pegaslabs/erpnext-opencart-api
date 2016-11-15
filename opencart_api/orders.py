@@ -146,7 +146,7 @@ def on_submit(doc, method=None):
             recurring_profile_doc = frappe.get_doc("Recurring Profile", recurring_profile)
             recurring_profile_doc.activate(send_email_notifications=doc.oc_send_welcome_email)
 
-            si = erpnext_sales_order.make_sales_invoice(doc.name, is_recurring=True)
+            si = erpnext_sales_order.make_sales_invoice(doc.name, is_recurring=True, ignore_permissions=True)
             si.update({
                 "is_pos": 0,
                 "reference_type": "Recurring Profile",
