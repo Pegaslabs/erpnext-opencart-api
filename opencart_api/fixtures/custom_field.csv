@@ -31,8 +31,7 @@
 "","""Warehouse-update_inventory_log""","Warehouse","HTML","Update Inventory Log","update_inventory","",0,"","","","update_inventory_log",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-update_inventory""","Warehouse","Button","Update Inventory from File","inventory_file","",0,"","Update Inventory from File","","update_inventory",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-inventory_file""","Warehouse","Attach","Inventory CSV File","inventory_updater","",0,"","Inventory Spreadsheet File","","inventory_file",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Warehouse-inventory_updater""","Warehouse","Section Break","Inventory Updater","default_income_account","",0,"","","","inventory_updater",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
-"","""Warehouse-default_income_account""","Warehouse","Link","Default Income Account","oc_column_break_accounts_settings","",0,"","Account","","default_income_account",0,0,0,0,0,"","",0,"",0,1,0,0,0,0
+"","""Warehouse-inventory_updater""","Warehouse","Section Break","Inventory Updater","oc_column_break_accounts_settings","",0,"","","","inventory_updater",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_column_break_accounts_settings""","Warehouse","Column Break","","oc_accounts_settings","",0,"","","","oc_column_break_accounts_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Warehouse-oc_accounts_settings""","Warehouse","Section Break","Accounts Settings","postal_code","",0,"","","","oc_accounts_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Sales Taxes and Charges-oc_is_shipping_entry""","Sales Taxes and Charges","Check","Is Shipping Tax Entry","included_in_print_rate","",0,"","","","oc_is_shipping_entry",0,0,0,0,0,"","0",0,"",0,0,0,0,0,0
@@ -159,7 +158,7 @@
 "","""Item Attribute-oc_option_id""","Item Attribute","Data","Opencart Option ID","oc_site","",0,"","","","oc_option_id",0,0,0,1,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_site""","Item Attribute","Link","Site","oc_is_updating","",0,"","Opencart Site","","oc_site",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item Attribute-oc_is_updating""","Item Attribute","Check","Is Updating","oc_settings","",0,"","","","oc_is_updating",0,0,0,1,0,"","",1,"",0,0,0,0,0,0
-"","""Item Attribute-oc_settings""","Item Attribute","Section Break","Opencart Settings","item_attribute_values","",0,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
+"","""Item Attribute-oc_settings""","Item Attribute","Section Break","Opencart Settings","item_attribute_values","",1,"","","","oc_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_discounts_sb""","Item","Section Break","Opencart Discounts","oc_last_sync_to","",0,"","","","oc_discounts_sb",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-oc_discounts""","Item","HTML","Opencart Discounts","oc_discounts_sb","",0,"","","","oc_discounts",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
 "","""Item-warehouse_settings""","Item","Section Break","Inventory per Warehouse","oc_discounts","",0,"","","","warehouse_settings",0,0,0,0,0,"","",0,"",0,0,0,0,0,0
