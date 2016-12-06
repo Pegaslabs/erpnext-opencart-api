@@ -199,7 +199,7 @@ def on_submit(doc, method=None):
                 ps.get_items()
                 ps.insert(ignore_permissions=True)
                 ps.receive_all_items()
-                ps.oc_tracking_number = "Box was given on hands"
+                ps.shipping_tracking_number = "Box was given on hands"
 
                 ps.save()
                 ps.start_picking()
