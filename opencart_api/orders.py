@@ -107,19 +107,9 @@ def custom_on_submit(doc, method=None):
     if sales_order.is_oc_sales_order(doc):
         doc.check_oc_sales_order_totals()
         if is_pos_payment_method(doc.oc_pm_code):
-            from erpnext.accounts.party import get_party_account
-            from erpnext.accounts.utils import get_account_currency
-            party_account = get_party_account("Customer", doc.customer, doc.company)
-            party_account_currency = doc.currency or get_account_currency(party_account)
-            bank_amount = doc.base_grand_total
-            if party_account_currency == doc.company_currency:
-                party_amount = doc.base_grand_total
-            else:
-                party_amount = doc.grand_total
-
-            pe = get_payment_entry("Sales Order", doc.name, party_amount=party_amount, bank_amount=bank_amount)
             payment_territory = territories.get_by_country(doc.oc_pa_country)
-            pe.mode_of_payment = resolve_mode_of_payment(doc.customer, payment_method_code=doc.oc_pm_code, country_territory=payment_territory)
+            mode_of_payment = resolve_mode_of_payment(doc.customer, payment_method_code=doc.oc_pm_code, country_territory=payment_territory)
+            pe = get_payment_entry("Sales Order", doc.name, mode_of_payment=mode_of_payment)
             pe.posting_date = doc.transaction_date
             if doc.oc_cheque_no and doc.oc_cheque_date:
                 pe.reference_no = doc.oc_cheque_no
